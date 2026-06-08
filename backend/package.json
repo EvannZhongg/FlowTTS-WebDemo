@@ -1,0 +1,23 @@
+{
+  "name": "flowtts-webdemo-backend",
+  "version": "1.0.0",
+  "description": "FlowTTS WebDemo Backend - TTS + Voice Clone",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.86.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "pino": "^8.16.2"
+  },
+  "devDependencies": {
+    "pino-pretty": "^10.2.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
