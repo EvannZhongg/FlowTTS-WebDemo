@@ -38,7 +38,8 @@ router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res
             audioData,
             voiceName,
             audioDuration,
-            description
+            description,
+            model // 可选: flow_02_turbo | flow_01_ex
         } = req.body;
 
         if (!audioData) {
@@ -57,9 +58,13 @@ router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res
         }
 
         // Call Tencent VoiceClone API
+        const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
+        const resolvedModel = (model && VALID_MODELS.includes(model)) ? model : null;
+        logger.info({ userId: req.user.id, model, resolvedModel }, '🎙️ Voice Clone model');
         const params = {
             SdkAppId: parseInt(SDK_APP_ID),
-            PromptAudio: audioData
+            PromptAudio: audioData,
+            ...(resolvedModel ? { Model: resolvedModel } : {})
         };
 
         if (voiceName) {
@@ -90,7 +95,7 @@ router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res
                 user_id: req.user.id,
                 voice_id: response.VoiceId,
                 voice_name: voiceName || null,
-                model: null, // 不指定 model，克隆音色由腾讯云自动选择
+                model: resolvedModel,
                 description: description || null,
                 audio_duration: audioDuration || null
             })

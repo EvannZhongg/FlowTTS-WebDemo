@@ -1095,7 +1095,7 @@
                     <div class="form-group">
                         <label data-i18n="label.voice">音色</label>
                         <div class="voice-grid" id="tts-voices"></div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px;">
                             <div>
                                 <label class="form-label-small" data-i18n="label.voiceIdOptional">Voice ID（可选）</label>
                                 <input type="text" id="tts-custom-voice" data-i18n-placeholder="placeholder.customVoiceId" placeholder="输入自定义 Voice ID" style="font-size: 13px; padding: 10px 14px;">
@@ -1114,6 +1114,14 @@
                                     <option value="vi" data-i18n="select.lang.vi">越南语</option>
                                     <option value="id" data-i18n="select.lang.id">印尼语</option>
                                     <option value="ar" data-i18n="select.lang.ar">阿拉伯语</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label-small">Model</label>
+                                <select id="tts-model" style="font-size: 13px; padding: 10px 14px;">
+                                    <option value="">自动</option>
+                                    <option value="flow_02_turbo">flow_02_turbo</option>
+                                    <option value="flow_01_ex">flow_01_ex</option>
                                 </select>
                             </div>
                         </div>
@@ -1167,7 +1175,7 @@
                     <div class="form-group">
                         <label data-i18n="label.voice">音色</label>
                         <div class="voice-grid" id="streaming-voices"></div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 16px;">
                             <div>
                                 <label class="form-label-small" data-i18n="label.voiceIdOptional">Voice ID（可选）</label>
                                 <input type="text" id="streaming-custom-voice" data-i18n-placeholder="placeholder.customVoiceId" placeholder="输入自定义 Voice ID" style="font-size: 13px; padding: 10px 14px;">
@@ -1186,6 +1194,14 @@
                                     <option value="vi" data-i18n="select.lang.vi">越南语</option>
                                     <option value="id" data-i18n="select.lang.id">印尼语</option>
                                     <option value="ar" data-i18n="select.lang.ar">阿拉伯语</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label-small">Model</label>
+                                <select id="streaming-model" style="font-size: 13px; padding: 10px 14px;">
+                                    <option value="">自动</option>
+                                    <option value="flow_02_turbo">flow_02_turbo</option>
+                                    <option value="flow_01_ex">flow_01_ex</option>
                                 </select>
                             </div>
                         </div>
@@ -1294,6 +1310,14 @@
                             </div>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label-small">Model</label>
+                        <select id="clone-model" style="font-size: 13px; padding: 10px 14px;">
+                            <option value="">自动</option>
+                            <option value="flow_02_turbo">flow_02_turbo</option>
+                            <option value="flow_01_ex">flow_01_ex</option>
+                        </select>
+                    </div>
                     <div class="button-group">
                         <button class="btn btn-primary" onclick="cloneVoice()" id="clone-btn" data-i18n="btn.cloneVoice">克隆声音</button>
                         <button class="btn btn-secondary" onclick="clearClone()" data-i18n="btn.reset">重置</button>
@@ -1341,10 +1365,8 @@
                             <option value="ar" data-i18n="select.lang.ar">阿拉伯语</option>
                         </select>
                     </div>
-                    <div class="form-group">
-                        <div class="button-group">
-                            <button class="btn btn-primary" onclick="synthesizeWithClonedVoice()" id="clone-tts-btn" data-i18n="btn.synthesizeShort">合成</button>
-                        </div>
+                    <div class="button-group">
+                        <button class="btn btn-primary" onclick="synthesizeWithClonedVoice()" id="clone-tts-btn" data-i18n="btn.synthesizeShort">合成</button>
                     </div>
                     <div id="clone-tts-loading" class="loading">
                         <div class="spinner"></div>
@@ -2749,18 +2771,16 @@
                     text: params.Text,
                     voiceId: params.Voice.VoiceId
                 };
-                if (params.Language) {
-                    body.language = params.Language;
-                }
+                if (params.Language) body.language = params.Language;
+                if (params.Model) body.model = params.Model;
             } else if (type === 'TextToSpeechSSE') {
                 endpoint = '/api/tts/synthesize-stream';
                 body = {
                     text: params.Text,
                     voiceId: params.Voice.VoiceId
                 };
-                if (params.Language) {
-                    body.language = params.Language;
-                }
+                if (params.Language) body.language = params.Language;
+                if (params.Model) body.model = params.Model;
             } else if (type === 'VoiceClone') {
                 endpoint = '/api/voice/clone';
                 body = params;
@@ -2877,7 +2897,8 @@
                 const data = await callBackendAPI('TextToSpeech', {
                     Text: text,
                     Voice: { VoiceId: requestBody.voiceId },
-                    Language: requestBody.language
+                    Language: requestBody.language,
+                    ...(requestBody.model ? { Model: requestBody.model } : {})
                 });
 
                 if (data.audio) {
@@ -2925,13 +2946,14 @@
 
             // 获取语言参数（可选）
             const language = document.getElementById('tts-language').value;
+            const model = document.getElementById('tts-model').value;
 
             await performTTS({
                 type: 'tts',
                 textId: 'tts-text',
                 playerId: 'tts-player',
                 messageId: 'tts-message',
-                requestBody: { voiceId, language },
+                requestBody: { voiceId, language, model },
                 historyType: 'tts',
                 historyMeta: { voiceId, language }
             });
@@ -2966,6 +2988,7 @@
 
             // 获取语言参数（可选）
             const language = document.getElementById('streaming-language').value;
+            const model = document.getElementById('streaming-model').value;
 
             setLoading('streaming', true);
             initStreamingStatus();
@@ -2987,9 +3010,8 @@
                     voiceId: voiceId
                 };
 
-                if (language) {
-                    requestBody.language = language;
-                }
+                if (language) requestBody.language = language;
+                if (model) requestBody.model = model;
 
                 const response = await fetch(`${API_BASE_URL}/api/tts/synthesize-stream`, {
                     method: 'POST',
@@ -3365,7 +3387,8 @@
                 const data = await callBackendAPI('VoiceClone', {
                     voiceName: voiceName,
                     audioData: audioBase64,
-                    audioDuration: processed.duration
+                    audioDuration: processed.duration,
+                    model: document.getElementById('clone-model').value || undefined
                 });
 
                 if (data.voiceId) {

@@ -110,6 +110,7 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
             text,
             voiceId = 'v-female-R2s4N9qJ', // 默认音色：温柔姐姐
             language, // 可选语言参数
+            model: requestedModel, // 可选 model 参数: flow_02_turbo | flow_01_ex
             format, // 音频格式: pcm | wav | mp3 (默认 pcm)
             sampleRate, // 采样率: 16000 | 24000 (默认 24000)
             speed = 1, // 语速 (0.5-2.0)
@@ -137,8 +138,11 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
         // Get Tencent Cloud credentials from environment
         const { secretId, secretKey } = getTencentCredentials();
 
-        // 动态获取 model：Turbo 音色不传 Model（自动选择最新），Ex 音色传 'flow_01_ex'
-        const model = await voiceLibraryManager.getModelForVoice(voiceId);
+        // model 优先级：前端显式指定 > voice-library-manager 自动判断
+        const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
+        const model = (requestedModel && VALID_MODELS.includes(requestedModel))
+            ? requestedModel
+            : await voiceLibraryManager.getModelForVoice(voiceId);
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';
@@ -227,7 +231,8 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
         const {
             text,
             voiceId = 'v-female-R2s4N9qJ', // 默认音色：温柔姐姐
-            language // 可选语言参数
+            language, // 可选语言参数
+            model: requestedModel // 可选 model 参数: flow_02_turbo | flow_01_ex
         } = req.body;
 
         if (!text) {
@@ -245,8 +250,11 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        // 动态获取 model：Turbo 音色不传 Model，Ex 音色传 'flow_01_ex'
-        const model = await voiceLibraryManager.getModelForVoice(voiceId);
+        // model 优先级：前端显式指定 > voice-library-manager 自动判断
+        const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
+        const model = (requestedModel && VALID_MODELS.includes(requestedModel))
+            ? requestedModel
+            : await voiceLibraryManager.getModelForVoice(voiceId);
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';
