@@ -115,7 +115,8 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
             sampleRate, // 采样率: 16000 | 24000 (默认 24000)
             speed = 1, // 语速 (0.5-2.0)
             volume = 1, // 音量 (0.5-2.0)
-            pitch = 0 // 音高 (-10 to 10)
+            pitch = 0, // 音高 (-10 to 10)
+            emotion // 情感风格 (可选, 仅 flow_01_ex 模型生效): happy|sad|angry|fearful|disgusted|surprised|calm|fluent|whisper
         } = req.body;
 
         if (!text) {
@@ -147,6 +148,22 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';
 
+        // emotion 参数校验：仅 flow_01_ex 模型生效，其他模型忽略
+        const SUPPORTED_EMOTIONS = ['happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'fluent', 'whisper'];
+        let validatedEmotion = null;
+        if (emotion && typeof emotion === 'string' && emotion.trim()) {
+            if (model !== 'flow_01_ex') {
+                logger.warn(`[TTS] emotion 参数仅 flow_01_ex 模型生效，当前 model=${model}，已忽略 emotion=${emotion}`);
+            } else if (!SUPPORTED_EMOTIONS.includes(emotion)) {
+                return res.status(400).json({
+                    code: 'invalid_emotion',
+                    message: `emotion 取值无效: ${emotion}，支持: ${SUPPORTED_EMOTIONS.join(', ')}`
+                });
+            } else {
+                validatedEmotion = emotion;
+            }
+        }
+
         // Call Tencent TextToSpeech API
         // Build parameters according to Tencent Cloud API format
         const params = {
@@ -157,7 +174,8 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
                 VoiceId: voiceId,
                 Speed: validatedSpeed, // 支持动态语速
                 Volume: validatedVolume, // 支持动态音量
-                Pitch: validatedPitch // 支持动态音高
+                Pitch: validatedPitch, // 支持动态音高
+                ...(validatedEmotion ? { Emotion: validatedEmotion } : {}) // 情感风格，仅 flow_01_ex 生效
             },
             AudioFormat: {
                 Format: validatedFormat, // ✅ 支持 pcm/wav/mp3
@@ -176,9 +194,10 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
             speed: validatedSpeed,
             volume: validatedVolume,
             pitch: validatedPitch,
+            emotion: validatedEmotion,
             providerAutoDetect: !requestedLanguage, // 是否由云端自动检测
             textLength: text.length
-        }, `🎤 TTS Synthesize: ${voiceId} (${validatedFormat}/${validatedSampleRate}Hz, speed: ${validatedSpeed}, volume: ${validatedVolume}, ${text.length} chars)`);
+        }, `🎤 TTS Synthesize: ${voiceId} (${validatedFormat}/${validatedSampleRate}Hz, speed: ${validatedSpeed}, volume: ${validatedVolume}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
 
         const response = await callTencentAPI(
             TTS_SERVICE,
@@ -201,7 +220,8 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
             appliedParams: { // 返回实际使用的参数
                 speed: validatedSpeed,
                 volume: validatedVolume,
-                pitch: validatedPitch
+                pitch: validatedPitch,
+                emotion: validatedEmotion || null
             },
             quota: req.quotaInfo // { daily, used, remaining }
         });
@@ -232,7 +252,8 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
             text,
             voiceId = 'v-female-R2s4N9qJ', // 默认音色：温柔姐姐
             language, // 可选语言参数
-            model: requestedModel // 可选 model 参数: flow_02_turbo | flow_01_ex
+            model: requestedModel, // 可选 model 参数: flow_02_turbo | flow_01_ex
+            emotion // 情感风格 (可选, 仅 flow_01_ex 模型生效): happy|sad|angry|fearful|disgusted|surprised|calm|fluent|whisper
         } = req.body;
 
         if (!text) {
@@ -259,13 +280,30 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';
 
+        // emotion 参数校验：仅 flow_01_ex 模型生效，其他模型忽略
+        const SUPPORTED_EMOTIONS_STREAM = ['happy', 'sad', 'angry', 'fearful', 'disgusted', 'surprised', 'calm', 'fluent', 'whisper'];
+        let validatedEmotion = null;
+        if (emotion && typeof emotion === 'string' && emotion.trim()) {
+            if (model !== 'flow_01_ex') {
+                logger.warn(`[TTS Stream] emotion 参数仅 flow_01_ex 模型生效，当前 model=${model}，已忽略 emotion=${emotion}`);
+            } else if (!SUPPORTED_EMOTIONS_STREAM.includes(emotion)) {
+                return res.status(400).json({
+                    code: 'invalid_emotion',
+                    message: `emotion 取值无效: ${emotion}，支持: ${SUPPORTED_EMOTIONS_STREAM.join(', ')}`
+                });
+            } else {
+                validatedEmotion = emotion;
+            }
+        }
+
         // Call Tencent TextToSpeechSSE API
         const params = {
             SdkAppId: SDK_APP_ID,
             Text: text,
             ...(model ? { Model: model } : {}), // 仅 Ex 音色传 Model
             Voice: {
-                VoiceId: voiceId
+                VoiceId: voiceId,
+                ...(validatedEmotion ? { Emotion: validatedEmotion } : {}) // 情感风格，仅 flow_01_ex 生效
             },
             ...(requestedLanguage ? { Language: requestedLanguage } : {}) // 未指定时由云端自动检测
         };
@@ -277,9 +315,10 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
             email: req.user.email,
             voiceId,
             language: requestedLanguage || '(provider-auto)',
+            emotion: validatedEmotion,
             providerAutoDetect: !requestedLanguage,
             textLength: text.length
-        }, `🎤 TTS Synthesize Stream: ${voiceId} (${requestedLanguage || 'provider-auto'}, ${text.length} chars)`);
+        }, `🎤 TTS Synthesize Stream: ${voiceId} (${requestedLanguage || 'provider-auto'}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
 
         await callTencentAPIStream(
             TTS_SERVICE,

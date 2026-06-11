@@ -1118,12 +1118,27 @@
                             </div>
                             <div>
                                 <label class="form-label-small">Model</label>
-                                <select id="tts-model" style="font-size: 13px; padding: 10px 14px;">
+                                <select id="tts-model" style="font-size: 13px; padding: 10px 14px;" onchange="onModelChange('tts')">
                                     <option value="">自动</option>
                                     <option value="flow_02_turbo">flow_02_turbo</option>
                                     <option value="flow_01_ex">flow_01_ex</option>
                                 </select>
                             </div>
+                        </div>
+                        <div id="tts-emotion-group" style="margin-top: 12px; display: none;">
+                            <label class="form-label-small" data-i18n="label.emotion">情感风格（仅 flow_01_ex）</label>
+                            <select id="tts-emotion" style="font-size: 13px; padding: 10px 14px; width: 100%;">
+                                <option value="" data-i18n="select.emotion.none">无（默认）</option>
+                                <option value="happy">happy — 高兴</option>
+                                <option value="sad">sad — 悲伤</option>
+                                <option value="angry">angry — 愤怒</option>
+                                <option value="fearful">fearful — 恐惧</option>
+                                <option value="disgusted">disgusted — 厌恶</option>
+                                <option value="surprised">surprised — 惊讶</option>
+                                <option value="calm">calm — 平静</option>
+                                <option value="fluent">fluent — 流畅</option>
+                                <option value="whisper">whisper — 低语</option>
+                            </select>
                         </div>
                     </div>
                     <div class="button-group">
@@ -1198,12 +1213,27 @@
                             </div>
                             <div>
                                 <label class="form-label-small">Model</label>
-                                <select id="streaming-model" style="font-size: 13px; padding: 10px 14px;">
+                                <select id="streaming-model" style="font-size: 13px; padding: 10px 14px;" onchange="onModelChange('streaming')">
                                     <option value="">自动</option>
                                     <option value="flow_02_turbo">flow_02_turbo</option>
                                     <option value="flow_01_ex">flow_01_ex</option>
                                 </select>
                             </div>
+                        </div>
+                        <div id="streaming-emotion-group" style="margin-top: 12px; display: none;">
+                            <label class="form-label-small" data-i18n="label.emotion">情感风格（仅 flow_01_ex）</label>
+                            <select id="streaming-emotion" style="font-size: 13px; padding: 10px 14px; width: 100%;">
+                                <option value="" data-i18n="select.emotion.none">无（默认）</option>
+                                <option value="happy">happy — 高兴</option>
+                                <option value="sad">sad — 悲伤</option>
+                                <option value="angry">angry — 愤怒</option>
+                                <option value="fearful">fearful — 恐惧</option>
+                                <option value="disgusted">disgusted — 厌恶</option>
+                                <option value="surprised">surprised — 惊讶</option>
+                                <option value="calm">calm — 平静</option>
+                                <option value="fluent">fluent — 流畅</option>
+                                <option value="whisper">whisper — 低语</option>
+                            </select>
                         </div>
                     </div>
                     <div class="button-group">
@@ -1364,6 +1394,33 @@
                             <option value="id" data-i18n="select.lang.id">印尼语</option>
                             <option value="ar" data-i18n="select.lang.ar">阿拉伯语</option>
                         </select>
+                    </div>
+                    <div class="form-group">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <div>
+                                <label class="form-label-small">Model</label>
+                                <select id="clone-tts-model" style="font-size: 13px; padding: 10px 14px; width: 100%;" onchange="onModelChange('clone-tts')">
+                                    <option value="">自动</option>
+                                    <option value="flow_02_turbo">flow_02_turbo</option>
+                                    <option value="flow_01_ex">flow_01_ex</option>
+                                </select>
+                            </div>
+                            <div id="clone-tts-emotion-group" style="display: none;">
+                                <label class="form-label-small" data-i18n="label.emotion">情感风格（仅 flow_01_ex）</label>
+                                <select id="clone-tts-emotion" style="font-size: 13px; padding: 10px 14px; width: 100%;">
+                                    <option value="" data-i18n="select.emotion.none">无（默认）</option>
+                                    <option value="happy">happy — 高兴</option>
+                                    <option value="sad">sad — 悲伤</option>
+                                    <option value="angry">angry — 愤怒</option>
+                                    <option value="fearful">fearful — 恐惧</option>
+                                    <option value="disgusted">disgusted — 厌恶</option>
+                                    <option value="surprised">surprised — 惊讶</option>
+                                    <option value="calm">calm — 平静</option>
+                                    <option value="fluent">fluent — 流畅</option>
+                                    <option value="whisper">whisper — 低语</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                     <div class="button-group">
                         <button class="btn btn-primary" onclick="synthesizeWithClonedVoice()" id="clone-tts-btn" data-i18n="btn.synthesizeShort">合成</button>
@@ -2773,6 +2830,7 @@
                 };
                 if (params.Language) body.language = params.Language;
                 if (params.Model) body.model = params.Model;
+                if (params.Emotion) body.emotion = params.Emotion;
             } else if (type === 'TextToSpeechSSE') {
                 endpoint = '/api/tts/synthesize-stream';
                 body = {
@@ -2781,6 +2839,7 @@
                 };
                 if (params.Language) body.language = params.Language;
                 if (params.Model) body.model = params.Model;
+                if (params.Emotion) body.emotion = params.Emotion;
             } else if (type === 'VoiceClone') {
                 endpoint = '/api/voice/clone';
                 body = params;
@@ -2868,6 +2927,22 @@
             return data;
         }
 
+        // ==================== Emotion 控制 ====================
+
+        /**
+         * 当 Model 选择变化时，控制 emotion 选择框的显示/隐藏
+         * @param {string} prefix - 'tts' | 'streaming' | 'clone-tts'
+         */
+        function onModelChange(prefix) {
+            const modelEl = document.getElementById(`${prefix}-model`);
+            const emotionGroupEl = document.getElementById(`${prefix}-emotion-group`);
+            const emotionEl = document.getElementById(`${prefix}-emotion`);
+            if (!modelEl || !emotionGroupEl) return;
+            const show = modelEl.value === 'flow_01_ex';
+            emotionGroupEl.style.display = show ? 'block' : 'none';
+            if (!show && emotionEl) emotionEl.value = '';
+        }
+
         // ==================== TTS 合成功能 ====================
 
         /**
@@ -2898,7 +2973,8 @@
                     Text: text,
                     Voice: { VoiceId: requestBody.voiceId },
                     Language: requestBody.language,
-                    ...(requestBody.model ? { Model: requestBody.model } : {})
+                    ...(requestBody.model ? { Model: requestBody.model } : {}),
+                    ...(requestBody.emotion ? { Emotion: requestBody.emotion } : {})
                 });
 
                 if (data.audio) {
@@ -2947,13 +3023,14 @@
             // 获取语言参数（可选）
             const language = document.getElementById('tts-language').value;
             const model = document.getElementById('tts-model').value;
+            const emotion = model === 'flow_01_ex' ? document.getElementById('tts-emotion').value : '';
 
             await performTTS({
                 type: 'tts',
                 textId: 'tts-text',
                 playerId: 'tts-player',
                 messageId: 'tts-message',
-                requestBody: { voiceId, language, model },
+                requestBody: { voiceId, language, model, ...(emotion ? { emotion } : {}) },
                 historyType: 'tts',
                 historyMeta: { voiceId, language }
             });
@@ -2989,6 +3066,7 @@
             // 获取语言参数（可选）
             const language = document.getElementById('streaming-language').value;
             const model = document.getElementById('streaming-model').value;
+            const emotion = model === 'flow_01_ex' ? document.getElementById('streaming-emotion').value : '';
 
             setLoading('streaming', true);
             initStreamingStatus();
@@ -3012,6 +3090,7 @@
 
                 if (language) requestBody.language = language;
                 if (model) requestBody.model = model;
+                if (emotion) requestBody.emotion = emotion;
 
                 const response = await fetch(`${API_BASE_URL}/api/tts/synthesize-stream`, {
                     method: 'POST',
@@ -3434,6 +3513,8 @@
 
             // 获取语言参数
             const language = document.getElementById('clone-tts-language').value;
+            const model = document.getElementById('clone-tts-model').value;
+            const emotion = model === 'flow_01_ex' ? document.getElementById('clone-tts-emotion').value : '';
 
             hidePlayer('clone-tts-player');
 
@@ -3442,7 +3523,7 @@
                 textId: 'clone-tts-text',
                 playerId: 'clone-tts-player',
                 messageId: 'clone-message',
-                requestBody: { voiceId, language },
+                requestBody: { voiceId, language, model, ...(emotion ? { emotion } : {}) },
                 historyType: 'clone-tts',
                 historyMeta: { voiceId, language },
                 successMsg: '使用克隆声音合成成功！'
