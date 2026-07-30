@@ -60,5 +60,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, HOST, () => {
     logger.info({ port: PORT }, '🚀 FlowTTS Server started');
-    logger.info(`📍 http://${HOST}:${PORT}/app/tts.html`);
+    logger.info(`📍 http://${HOST}:${PORT}/app/index.html`);
 });

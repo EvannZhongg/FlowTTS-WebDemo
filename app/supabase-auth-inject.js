@@ -60,6 +60,7 @@
     };
 
     const LOGIN_BTN_POSITION_KEY = 'supabase_login_btn_position';
+    const FIRST_TIME_GUIDE_SESSION_KEY = 'trtc_ai_first_time_guide_shown';
 
     // ==================== 全局状态 ====================
 
@@ -2585,7 +2586,7 @@
                 detail: { user: session.user }
             }));
         } else {
-            // 未登录时显示首次访问引导
+            // 未登录时，仅在本次浏览会话首次进入首页时显示引导。
             showFirstTimeGuide();
         }
 
@@ -2595,14 +2596,31 @@
     // ==================== 首次访问引导 ====================
 
     /**
-     * 显示登录引导遮罩（未登录时每次刷新都显示）
+     * 显示登录引导遮罩。
+     * 仅在首页显示，并且同一浏览器标签页会话中最多显示一次，
+     * 避免用户切换到 TTS、声音克隆、音色库等页面时重复弹出。
      */
     function showFirstTimeGuide() {
         const session = window.SupabaseAuthInject?.getSession();
         if (session) return; // 已登录用户不显示
 
+        const isHomePage = document.body?.dataset?.page === 'home';
+        if (!isHomePage) return;
+
+        if (sessionStorage.getItem(FIRST_TIME_GUIDE_SESSION_KEY) === '1') {
+            return;
+        }
+
+        // 在安排弹窗时立即记录，避免初始化流程重复触发。
+        sessionStorage.setItem(FIRST_TIME_GUIDE_SESSION_KEY, '1');
+
         // 延迟显示（等待页面加载完成）
         setTimeout(() => {
+            // 延迟期间如果用户已登录或页面已有引导，则不再重复创建。
+            if (window.SupabaseAuthInject?.getSession() || document.getElementById('guide-overlay')) {
+                return;
+            }
+
             // 显示遮罩引导
             const overlay = document.createElement('div');
             overlay.id = 'guide-overlay';

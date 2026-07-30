@@ -19,13 +19,18 @@ npm install
 node server.js
 ```
 
-浏览器访问：`http://localhost:9000/app/tts.html`
+浏览器访问：`http://localhost:9000/app/index.html`
 
 ## 项目结构
 
 ```
 ├── app/
-│   ├── tts.html                  # 前端页面
+│   ├── index.html                # Studio 首页
+│   ├── tts.html                  # 文本转语音 / SSE 流式合成
+│   ├── voice-clone.html          # 声音克隆
+│   ├── voices.html               # 音色库
+│   ├── history.html              # 本地历史记录
+│   ├── assets/                   # 共享样式、导航与业务脚本
 │   ├── supabase-auth-inject.js   # 登录注入
 │   └── quota-interceptor.js      # 配额拦截
 └── backend/
