@@ -1,4 +1,26 @@
 {
+  "languageMap": {
+    "zh": {
+      "name": "中文",
+      "count": 36
+    },
+    "en": {
+      "name": "英语",
+      "count": 31
+    },
+    "ja": {
+      "name": "日语",
+      "count": 24
+    },
+    "yue": {
+      "name": "粤语",
+      "count": 8
+    },
+    "th": {
+      "name": "泰语",
+      "count": 2
+    }
+  },
   "voices": [
     {
       "id": "v-female-R2s4N9qJ",
@@ -16,7 +38,8 @@
         "zh",
         "en",
         "ja"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-female-m1KpW7zE",
@@ -33,7 +56,8 @@
       "supportedLanguages": [
         "zh",
         "en"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-male-Bk7vD3xP",
@@ -50,7 +74,8 @@
       "supportedLanguages": [
         "zh",
         "ja"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-female-U8aT2yLf",
@@ -66,7 +91,8 @@
       "scenarios": "角色配音",
       "supportedLanguages": [
         "zh"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-male-s5NqE0rZ",
@@ -84,7 +110,8 @@
         "zh",
         "en",
         "ja"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-male-W1tH9jVc",
@@ -100,7 +127,8 @@
       "scenarios": "有声书",
       "supportedLanguages": [
         "zh"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "female-kefu-xiaomei",
@@ -118,9 +146,7 @@
         "zh",
         "en"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "female-kefu-xiaoxin",
@@ -138,9 +164,7 @@
         "zh",
         "ja"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "female-kefu-xiaoyue",
@@ -160,9 +184,7 @@
         "ja",
         "th"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "male-kefu-xiaoxu",
@@ -180,9 +202,7 @@
         "zh",
         "ja"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-D1a3XyN1",
@@ -196,9 +216,7 @@
       "tone": "Emotional, Deep",
       "style": "Narration, Storytelling",
       "scenarios": "说书，有声书",
-      "categories": [
-        "shuoshu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-R2a7LdY3",
@@ -212,9 +230,7 @@
       "tone": "Natural, Warm",
       "style": "Narration, Conversational",
       "scenarios": "说书，有声书",
-      "categories": [
-        "shuoshu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-W5f2TyL3",
@@ -228,9 +244,7 @@
       "tone": "Gentle, Soothing",
       "style": "Narration, Bedtime Story",
       "scenarios": "说书，有声书",
-      "categories": [
-        "shuoshu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-B2p8XcY2",
@@ -244,9 +258,7 @@
       "tone": "Playful, Sassy",
       "style": "Narration, Character Voice",
       "scenarios": "说书，有声书",
-      "categories": [
-        "shuoshu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-p9Xy7Q1L",
@@ -263,7 +275,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-Z3x9LmQ2",
@@ -282,7 +295,8 @@
         "zh",
         "ja",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-A4b9KqP2",
@@ -300,7 +314,8 @@
         "en",
         "zh",
         "ar"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-r7K2pQ9L",
@@ -318,7 +333,8 @@
         "en",
         "zh",
         "ar"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-Q6p8ZxL3",
@@ -339,7 +355,8 @@
         "ko",
         "ar",
         "ms"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-T3s8BqL9",
@@ -357,7 +374,8 @@
         "en",
         "zh",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-P6q7LzD8",
@@ -374,7 +392,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-M7k2PxL9",
@@ -391,7 +410,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-S5n9QxJ4",
@@ -411,7 +431,8 @@
         "ja",
         "id",
         "ar"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-T8m4WxP7",
@@ -431,7 +452,8 @@
         "ja",
         "ko",
         "vi"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-D6p3KxN8",
@@ -449,7 +471,8 @@
         "en",
         "zh",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-A9b3KfL2",
@@ -467,7 +490,8 @@
         "en",
         "zh",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-A7h2MxQ5",
@@ -484,7 +508,8 @@
       "supportedLanguages": [
         "en",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-G4n7RxM3",
@@ -502,7 +527,8 @@
         "en",
         "zh",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-H3p9LxK7",
@@ -520,7 +546,8 @@
         "en",
         "zh",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-R6n2MxT9",
@@ -539,7 +566,8 @@
         "ja",
         "ko",
         "ms"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-C8k4NxL6",
@@ -561,7 +589,8 @@
         "vi",
         "ar",
         "ms"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-L7m5QxP4",
@@ -581,7 +610,8 @@
         "ko",
         "th",
         "ar"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-N4k8TxR7",
@@ -599,7 +629,8 @@
         "en",
         "zh",
         "ar"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-B7k5WxN4",
@@ -616,7 +647,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-J3k7NxR2",
@@ -634,7 +666,8 @@
         "ja",
         "en",
         "vi"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-W6n8KxL5",
@@ -652,7 +685,8 @@
         "ja",
         "en",
         "ar"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-U4k9TxM3",
@@ -672,7 +706,8 @@
         "ko",
         "id",
         "ar"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-S2k7NxP9",
@@ -688,7 +723,8 @@
       "scenarios": "有声书，配音",
       "supportedLanguages": [
         "ja"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-Y5n2KxR8",
@@ -706,7 +742,8 @@
         "ja",
         "en",
         "ar"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-J3n8DxK2",
@@ -723,7 +760,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-J8m9NxT2",
@@ -740,7 +778,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-R7k3MxW5",
@@ -758,7 +797,8 @@
         "ja",
         "en",
         "ko"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-H6p2LxQ8",
@@ -778,7 +818,8 @@
         "ko",
         "th",
         "id"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-T4n8KxM3",
@@ -795,7 +836,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-M5k7NxP9",
@@ -813,7 +855,8 @@
         "ja",
         "en",
         "ko"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-P3n6LxW4",
@@ -830,7 +873,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-C9m4QxL7",
@@ -847,7 +891,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-E8k2NxV6",
@@ -865,7 +910,8 @@
         "ja",
         "en",
         "vi"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-D5k8MxN2",
@@ -882,7 +928,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-S6n3KxW9",
@@ -900,7 +947,8 @@
         "ja",
         "en",
         "ms"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-L4k9NxT7",
@@ -918,7 +966,8 @@
         "ja",
         "en",
         "ms"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-H5k7NxM3",
@@ -936,7 +985,8 @@
         "ja",
         "en",
         "ko"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-B6k3NxQ9",
@@ -953,7 +1003,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-K9m5NxL4",
@@ -971,7 +1022,8 @@
         "ja",
         "en",
         "ar"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-k3P8sL0Q",
@@ -987,7 +1039,8 @@
       "scenarios": "播报，配音",
       "supportedLanguages": [
         "yue"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-male-L4s7PqZ9",
@@ -1004,7 +1057,8 @@
       "supportedLanguages": [
         "yue",
         "th"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-female-S6n2JxR5",
@@ -1022,9 +1076,7 @@
         "zh",
         "th"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-S6p4LxQ8",
@@ -1043,9 +1095,7 @@
         "ja",
         "ar"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-H6p3LxP8",
@@ -1065,9 +1115,7 @@
         "ja",
         "th"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-S6m3LxP8",
@@ -1086,9 +1134,7 @@
         "ja",
         "ko"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-A7c9QmP2",
@@ -1107,7 +1153,8 @@
         "zh",
         "ko",
         "ar"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-X6h4TvP9",
@@ -1124,7 +1171,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-R3p7LdW8",
@@ -1141,7 +1189,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-K8s2QmJ4",
@@ -1158,7 +1207,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-U5n9DwC7",
@@ -1177,7 +1227,8 @@
         "zh",
         "ja",
         "th"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-J1r4ZvH6",
@@ -1194,7 +1245,8 @@
       "supportedLanguages": [
         "en",
         "zh"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-P6q9LmR2",
@@ -1213,7 +1265,8 @@
         "zh",
         "ja",
         "ko"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-H7m4QpL8",
@@ -1231,7 +1284,8 @@
         "en",
         "zh",
         "ja"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-N4s7VkJ3",
@@ -1249,7 +1303,8 @@
         "en",
         "zh",
         "ja"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-T3c8WdP6",
@@ -1268,7 +1323,8 @@
         "zh",
         "ja",
         "ar"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-female-R9k2LmV7",
@@ -1286,7 +1342,8 @@
         "en",
         "zh",
         "ja"
-      ]
+      ],
+      "languageName": "英语"
     },
     {
       "id": "v-male-M7x2QrJ5",
@@ -1303,7 +1360,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-male-F9c6LhY1",
@@ -1320,7 +1378,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-B5q9NvY6",
@@ -1337,7 +1396,8 @@
       "supportedLanguages": [
         "ja",
         "en"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-D2w6HcL4",
@@ -1355,7 +1415,8 @@
         "ja",
         "en",
         "ko"
-      ]
+      ],
+      "languageName": "日语"
     },
     {
       "id": "v-female-S8p3JwK6",
@@ -1371,7 +1432,8 @@
       "scenarios": "有声书，配音",
       "supportedLanguages": [
         "yue"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-female-N7c3LpV5",
@@ -1387,7 +1449,8 @@
       "scenarios": "播报，配音",
       "supportedLanguages": [
         "yue"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-male-P8r6MdQ3",
@@ -1403,7 +1466,8 @@
       "scenarios": "有声书，配音",
       "supportedLanguages": [
         "yue"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-male-Q2f7RdP6",
@@ -1419,7 +1483,8 @@
       "scenarios": "有声书，配音",
       "supportedLanguages": [
         "yue"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-female-C5t1QxH9",
@@ -1435,7 +1500,8 @@
       "scenarios": "播报，配音",
       "supportedLanguages": [
         "yue"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-male-D7p4XcL2",
@@ -1451,7 +1517,8 @@
       "scenarios": "播报，配音",
       "supportedLanguages": [
         "yue"
-      ]
+      ],
+      "languageName": "粤语"
     },
     {
       "id": "v-female-5835xiao",
@@ -1471,9 +1538,7 @@
         "ja",
         "id"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-A8p3YsE7",
@@ -1491,7 +1556,8 @@
         "zh",
         "en",
         "ko"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-female-A9s6LrS4",
@@ -1509,9 +1575,7 @@
         "zh",
         "en"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-JinhH6p3",
@@ -1530,9 +1594,7 @@
         "vi",
         "id"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-P2r5QwY9",
@@ -1552,7 +1614,8 @@
         "ja",
         "ko",
         "vi"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-female-R9i1WnP4",
@@ -1571,9 +1634,7 @@
         "en",
         "ja"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-W5n8HgB2",
@@ -1594,7 +1655,8 @@
         "ja",
         "th",
         "vi"
-      ]
+      ],
+      "languageName": "泰语"
     },
     {
       "id": "v-female-xiaoS6n2",
@@ -1613,9 +1675,7 @@
         "en",
         "ar"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-xiaoxinl",
@@ -1633,9 +1693,7 @@
         "zh",
         "ja"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-female-xinlxiao",
@@ -1656,9 +1714,7 @@
         "vi",
         "id"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-B5f2CnS3",
@@ -1682,7 +1738,8 @@
         "vi",
         "id",
         "ar"
-      ]
+      ],
+      "languageName": "泰语"
     },
     {
       "id": "v-male-D6m2NvX8",
@@ -1701,7 +1758,8 @@
         "en",
         "ja",
         "ko"
-      ]
+      ],
+      "languageName": "中文"
     },
     {
       "id": "v-male-I1l9QcX4",
@@ -1719,9 +1777,7 @@
         "zh",
         "en"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-L0t0MuZ2",
@@ -1741,9 +1797,7 @@
         "ja",
         "vi"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-PengI1l9",
@@ -1763,9 +1817,7 @@
         "ja",
         "th"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-Pengzhao",
@@ -1784,9 +1836,7 @@
         "ja",
         "ko"
       ],
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-zhaoPeng",
@@ -1800,9 +1850,7 @@
       "tone": "Natural, Friendly",
       "style": "Natural, Instructional",
       "scenarios": "通用，客服",
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-zhaoL0t0",
@@ -1816,9 +1864,7 @@
       "tone": "Natural, Casual",
       "style": "Natural, Instructional",
       "scenarios": "通用，客服",
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-zhaoW1tH",
@@ -1832,9 +1878,7 @@
       "tone": "Natural, Sincere",
       "style": "Natural, Instructional",
       "scenarios": "通用，客服",
-      "categories": [
-        "kefu"
-      ]
+      "languageName": "中文"
     },
     {
       "id": "v-male-T7h4VjQ8",
@@ -1853,7 +1897,8 @@
         "en",
         "ja",
         "ko"
-      ]
+      ],
+      "languageName": "中文"
     }
   ]
 }

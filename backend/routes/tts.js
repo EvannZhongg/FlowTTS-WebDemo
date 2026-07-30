@@ -72,13 +72,15 @@ router.get('/voices', async (req, res) => {
         const includeExtended = req.query.includeExtended === 'true';
 
         // 根据参数选择不同的方法
-        const { preset } = includeExtended
+        const { preset, languageMap, languageMaps } = includeExtended
             ? await voiceLibraryManager.getAllVoices()
             : await voiceLibraryManager.getStandardVoices();
 
         // 返回预设音色（不包含克隆音色，因为这是公开端点）
         res.json({
-            voices: preset
+            voices: preset,
+            languageMap,
+            languageMaps
         });
     } catch (error) {
         logger.error('[TTS] Failed to load voices:', error);

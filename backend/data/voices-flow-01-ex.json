@@ -1,5 +1,103 @@
 {
   "source": "Project-maintained static mapping for flow_01_ex system voices",
+  "languageMap": {
+    "zh": {
+      "name": "中文（普通话）",
+      "count": 58
+    },
+    "yue": {
+      "name": "中文（粤语）",
+      "count": 6
+    },
+    "en": {
+      "name": "英语",
+      "count": 16
+    },
+    "ja": {
+      "name": "日语",
+      "count": 15
+    },
+    "ko": {
+      "name": "韩语",
+      "count": 49
+    },
+    "es": {
+      "name": "西班牙语",
+      "count": 47
+    },
+    "pt": {
+      "name": "葡萄牙语",
+      "count": 73
+    },
+    "fr": {
+      "name": "法语",
+      "count": 6
+    },
+    "id": {
+      "name": "印尼语",
+      "count": 9
+    },
+    "de": {
+      "name": "德语",
+      "count": 3
+    },
+    "ru": {
+      "name": "俄语",
+      "count": 8
+    },
+    "it": {
+      "name": "意大利语",
+      "count": 4
+    },
+    "ar": {
+      "name": "阿拉伯语",
+      "count": 2
+    },
+    "tr": {
+      "name": "土耳其语",
+      "count": 2
+    },
+    "uk": {
+      "name": "乌克兰语",
+      "count": 2
+    },
+    "nl": {
+      "name": "荷兰语",
+      "count": 2
+    },
+    "vi": {
+      "name": "越南语",
+      "count": 1
+    },
+    "th": {
+      "name": "泰语",
+      "count": 4
+    },
+    "pl": {
+      "name": "波兰语",
+      "count": 4
+    },
+    "ro": {
+      "name": "罗马尼亚语",
+      "count": 4
+    },
+    "el": {
+      "name": "希腊语",
+      "count": 3
+    },
+    "cs": {
+      "name": "捷克语",
+      "count": 3
+    },
+    "fi": {
+      "name": "芬兰语",
+      "count": 3
+    },
+    "hi": {
+      "name": "印地语",
+      "count": 3
+    }
+  },
   "voices": [
     {
       "id": "male-qn-qingse",

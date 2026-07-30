@@ -21,6 +21,8 @@ class VoiceLibraryManager {
         this.extendedVoices = [];
         this.standardVoiceIds = new Set();
         this.extendedVoiceIds = new Set();
+        this.standardLanguageMap = {};
+        this.extendedLanguageMap = {};
         this.clonedVoicesCache = new Map();
         this.initialized = false;
     }
@@ -32,6 +34,8 @@ class VoiceLibraryManager {
             const extendedPath = path.join(__dirname, '../data/voices-flow-01-ex.json');
             const standardData = JSON.parse(fs.readFileSync(standardPath, 'utf8'));
             const extendedData = JSON.parse(fs.readFileSync(extendedPath, 'utf8'));
+            this.standardLanguageMap = standardData.languageMap || {};
+            this.extendedLanguageMap = extendedData.languageMap || {};
             this.standardVoices = (standardData.voices || []).map(voice => ({
                 ...voice,
                 model: voice.model || 'flow_02_turbo',
@@ -53,17 +57,40 @@ class VoiceLibraryManager {
 
     async getStandardVoices() {
         this.init();
-        return { preset: [...this.standardVoices], cloned: [] };
+        return {
+            preset: [...this.standardVoices],
+            cloned: [],
+            languageMap: { ...this.standardLanguageMap },
+            languageMaps: { flow_02_turbo: { ...this.standardLanguageMap } }
+        };
     }
 
     async getAllVoices() {
         this.init();
-        return { preset: [...this.standardVoices, ...this.extendedVoices], cloned: [] };
+        const languageMap = {};
+        for (const [code, item] of Object.entries(this.standardLanguageMap)) {
+            languageMap[code] = { name: item.name, count: item.count };
+        }
+        for (const [code, item] of Object.entries(this.extendedLanguageMap)) {
+            languageMap[code] = {
+                name: languageMap[code]?.name || item.name,
+                count: (languageMap[code]?.count || 0) + item.count
+            };
+        }
+        return {
+            preset: [...this.standardVoices, ...this.extendedVoices],
+            cloned: [],
+            languageMap,
+            languageMaps: {
+                flow_02_turbo: { ...this.standardLanguageMap },
+                flow_01_ex: { ...this.extendedLanguageMap }
+            }
+        };
     }
 
     /**
      * 获取音色对应的 TTS 模型
-     * 预设音色不传 Model（腾讯云自动选择），克隆音色从数据库查询
+     * 系统音色根据静态映射返回模型，克隆音色从数据库查询。
      */
     async getModelForVoice(voiceId) {
         this.init();

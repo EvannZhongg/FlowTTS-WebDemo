@@ -131,6 +131,8 @@ body.side-collapsed .side-toggle svg { transform: rotate(180deg); }
 .chip, .use-chip, .seg-item, .sub-tab { border: 1px solid var(--line-strong); background: #fff; color: var(--ink-3); border-radius: 999px; padding: 6px 13px; font-size: 12px; transition: .15s; }
 .chip:hover, .use-chip:hover { color: var(--blue); border-color: var(--blue); background: #f0f6ff; }
 .chip.on, .use-chip.active { color: #fff; border-color: var(--dark); background: var(--dark); }
+.chip.language-more { color: var(--blue); border-style: dashed; border-color: var(--blue-border); background: var(--blue-light); font-weight: 600; }
+.chip.language-more:hover { color: var(--blue-dark); border-color: var(--blue); background: #dce9ff; }
 .model-seg, .format-seg, .sub-tabs { width: max-content; max-width: 100%; padding: 3px; gap: 3px; border-radius: 9px; background: #f0eee8; }
 .seg-item, .sub-tab { position: relative; border: 0; border-radius: 7px; background: transparent; }
 .seg-item.on, .sub-tab.active { color: var(--blue); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.07); font-weight: 650; }
