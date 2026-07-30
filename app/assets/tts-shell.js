@@ -17,9 +17,9 @@
   const link = ([page, href, label]) => `<a class="side-item ${active === page ? 'active' : ''}" data-page="${page}" href="${href}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[page]}</svg><span>${label}</span></a>`;
   document.write(`
     <header class="topbar">
-      <a class="top-brand" href="index.html"><span class="brand-mark">T</span><span>TRTC-AI TTS Studio</span></a>
+      <a class="top-brand" href="index.html"><span class="brand-mark">T</span><span>TTS Studio</span></a>
       <div class="top-actions">
-        <span class="quota-badge" id="quota-badge">剩余 <strong id="quota-remaining">--</strong> / <span id="quota-daily">--</span></span>
+        <span class="quota-badge" id="studio-quota-badge" title="体验额度"><span>体验额度</span><strong id="studio-quota-remaining">--</strong><span>/</span><span id="studio-quota-daily">--</span></span>
         <div class="locale-switch" aria-label="界面语言"><button class="on" type="button">中文</button><button type="button" disabled title="TODO：多语言界面将在后续恢复">EN</button></div>
         <button class="theme-button" id="theme-toggle" type="button" title="切换主题" aria-label="切换主题">◐</button>
       </div>

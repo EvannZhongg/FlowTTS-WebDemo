@@ -7,7 +7,7 @@
  * - 获取可用音色列表（公开接口，无需认证）
  *
  * 认证：需要 JWT token（除 /voices 端点外）
- * 配额：每次合成消费 1 配额
+ * 配额：普通/流式合成 100 点，克隆音色试听 50 点
  *
  * 环境变量：
  * - TX_SECRET_ID：腾讯云 SecretId
@@ -91,7 +91,7 @@ router.get('/voices', async (req, res) => {
 
 /**
  * POST /api/tts/synthesize
- * Normal TTS synthesis (1 quota)
+ * Normal TTS synthesis (100 points; clone audition 50 points)
  *
  * Body:
  * {
@@ -104,7 +104,9 @@ router.get('/voices', async (req, res) => {
  *   "emotionCategory": "happy"
  * }
  */
-router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (req, res) => {
+router.post('/synthesize', authenticate, requireQuota((req) => (
+    req.body?.billingContext === 'clone-audition' ? 'voice-clone-audition' : 'tts-synthesize'
+)), async (req, res) => {
     try {
         const {
             text,
@@ -242,7 +244,7 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
 
 /**
  * POST /api/tts/synthesize-stream
- * SSE streaming TTS synthesis (1 quota)
+ * SSE streaming TTS synthesis (100 points)
  *
  * Body: same as /synthesize
  */

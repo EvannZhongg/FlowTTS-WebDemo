@@ -130,7 +130,7 @@ async function getUserProfile(userId) {
                 .insert({
                     user_id: userId,
                     subscription_tier: 'free',
-                    daily_quota: 100,
+                    daily_quota: 10000,
                     used_quota: 0,
                     last_reset_date: new Date().toISOString().split('T')[0],
                     subscription_start: null,
@@ -231,7 +231,7 @@ async function updateQuota(userId, amount) {
  */
 function getQuotaByTier(tier) {
     const quotas = {
-        free: 100,
+        free: 10000,
         pro: 300,
         max: 1000
     };

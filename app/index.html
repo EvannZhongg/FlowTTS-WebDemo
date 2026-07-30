@@ -1,7 +1,90 @@
 <!DOCTYPE html>
-<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>TTS Studio</title><link rel="stylesheet" href="assets/tts-studio.css"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-auth-inject.js"></script><script src="quota-interceptor.js"></script></head>
-<body data-page="home"><script src="assets/tts-shell.js"></script><main class="app-main"><div class="page-shell">
-<header class="page-heading"><div class="page-kicker">TRTC-AI · FLOWTTS</div><h1>自然、低延迟、可克隆的语音工作台</h1><p>本页参考 Studio 原型搭建产品入口；所有可操作入口只连接项目当前已经存在的后端能力。</p></header>
-<section class="console"><div class="console-body"><div class="field-grid"><article class="panel"><div class="page-kicker">TEXT-TO-SPEECH</div><div class="section-title">文本转语音与 SSE 流式合成</div><p class="muted">预设音色、自定义 Voice ID、语言、模型、情感、语速、音量、音高、格式与采样率。</p><a class="primary-button" href="tts.html">进入体验台</a></article><article class="panel"><div class="page-kicker">VOICE CLONING</div><div class="section-title">上传或录音克隆声音</div><p class="muted">自动转换 16kHz 单声道 WAV，支持克隆列表、使用和删除。</p><a class="primary-button" href="voice-clone.html">开始克隆</a></article><article class="panel"><div class="page-kicker">VOICE LIBRARY</div><div class="section-title">浏览后端真实音色</div><p class="muted">搜索、筛选、预览、复制 Voice ID，并带入合成页。</p><a class="secondary-button" href="voices.html">浏览音色库</a></article></div></div></section>
-<section style="margin-top:24px" class="panel"><div class="section-head"><span class="section-title">当前接口能力</span><span class="muted">不新增后端</span></div><div class="field-grid"><div><strong class="mono">TextToSpeech</strong><p class="muted">非流式文件生成，现有接口已接入。</p></div><div><strong class="mono">TextToSpeechSSE</strong><p class="muted">SSE 增量接收、首包与块数统计，结束后播放。</p></div><div><strong class="mono">VoiceClone</strong><p class="muted">上传或录音克隆，并保存到用户音色列表。</p></div></div><div class="placeholder-banner"><span>◌</span><div><strong>参考原型中的后续能力</strong>AsyncTextToSpeech、TTS WebSocket、真正边收边播、字幕、Opus 和企业定制入口暂为 TODO，不在本轮添加后端。</div></div></section>
-</div></main><script src="assets/tts-studio.js"></script></body></html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TTS Studio</title>
+  <link rel="stylesheet" href="assets/tts-studio.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-auth-inject.js"></script>
+  <script src="quota-interceptor.js"></script>
+</head>
+<body data-page="home">
+  <script src="assets/tts-shell.js"></script>
+  <main class="app-main">
+    <div class="page-shell home-shell">
+      <header class="home-hero">
+        <div class="page-kicker">TRTC-AI · FLOWTTS</div>
+        <h1>自然、低延迟、可克隆的语音工作台</h1>
+        <p>无需代码即可体验文本转语音、SSE 流式合成和声音克隆。选择场景，马上听见效果。</p>
+        <div class="hero-stats">
+          <span><strong>2</strong> 个模型</span><span><strong>101</strong> 个精选音色</span><span><strong>6–180s</strong> 声音克隆</span>
+        </div>
+      </header>
+
+      <section class="console home-console">
+        <div class="console-tabs">
+          <button class="ctab active" type="button" data-home-tab="tts">文本转语音</button>
+          <button class="ctab" type="button" data-home-tab="streaming">流式合成</button>
+          <button class="ctab" type="button" data-home-tab="clone">声音克隆</button>
+        </div>
+        <div class="console-body">
+          <div class="home-demo-panel active" data-home-panel="tts">
+            <div class="use-cases">
+              <span class="muted">场景示例</span>
+              <button class="use-chip" type="button" data-home-example="课堂教育" data-text="同学们，今天我们来认识声音是怎样产生的。请把手轻轻放在喉咙上，读出一个长音，感受声带的振动。">课堂教育</button>
+              <button class="use-chip active" type="button" data-home-example="客服场景" data-text="您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。">客服场景</button>
+              <button class="use-chip" type="button" data-home-example="游戏" data-text="勇者，前方的迷雾森林危机四伏。握紧你的武器，真正的冒险现在才刚刚开始。">游戏</button>
+              <button class="use-chip" type="button" data-home-example="有声书" data-text="夜色渐深，他站在旧城墙下，想起了那封迟到了十年的信。">有声书</button>
+            </div>
+            <div class="home-demo-grid">
+              <div class="textarea-wrap">
+                <textarea id="home-demo-text" maxlength="1000">您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。</textarea>
+                <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span class="mono" id="home-demo-count">37 / 1000</span></div>
+              </div>
+              <div class="home-demo-side">
+                <div class="field"><label for="home-demo-model">模型</label><select class="select mono" id="home-demo-model"><option value="flow_02_turbo">flow_02_turbo · New</option><option value="flow_01_ex">flow_01_ex</option></select></div>
+                <div class="field"><label for="home-demo-language">语言</label><select class="select" id="home-demo-language"><option value="">自动检测</option><option value="zh">中文</option><option value="en">英语</option><option value="ja">日语</option></select></div>
+                <div class="field"><label for="home-demo-voice">推荐音色</label><select class="select" id="home-demo-voice"><option value="female-kefu-xiaomei">客服小美</option><option value="v-female-R2s4N9qJ">温柔姐姐</option><option value="v-male-W1tH9jVc">自然男声</option></select></div>
+              </div>
+            </div>
+            <div class="action-row">
+              <a class="primary-button" id="home-try-tts" href="tts.html">带入体验台 · 消耗 100 点</a>
+              <a class="secondary-button" href="voices.html">先浏览音色</a>
+            </div>
+          </div>
+          <div class="home-demo-panel" data-home-panel="streaming">
+            <div class="home-feature">
+              <span class="feature-icon">↯</span>
+              <div><h2>SSE 流式合成</h2><p>实时查看连接状态、已接收分块、首包时间和总大小；完成后可播放、下载并自动写入历史记录。</p></div>
+            </div>
+            <div class="stream-preview">
+              <span>Connecting</span><i></i><span>Connected</span><i></i><span>Receiving chunks</span><i></i><strong>Ready</strong>
+            </div>
+            <a class="primary-button" href="tts.html?mode=streaming">开始流式体验 · 消耗 100 点</a>
+          </div>
+          <div class="home-demo-panel" data-home-panel="clone">
+            <div class="home-feature">
+              <span class="feature-icon">◎</span>
+              <div><h2>6–180 秒，即刻克隆音色</h2><p>上传清晰人声或直接在线录音。系统会转换为 16kHz 单声道 WAV，克隆完成即可用于语音合成。</p></div>
+            </div>
+            <div class="clone-steps"><span><b>1</b> 上传 / 录音</span><span><b>2</b> 创建音色</span><span><b>3</b> 合成试听</span></div>
+            <a class="primary-button" href="voice-clone.html">开始克隆 · 消耗 50 点</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="home-section">
+        <div class="section-copy"><div class="page-kicker">FEATURE EXPERIENCE</div><h2>从体验到接入，一条完整链路</h2><p>所有成功合成和克隆试听都会保存在本机历史记录中，便于对比音色与复用配置。</p></div>
+        <div class="feature-card-grid">
+          <a class="feature-card featured" href="tts.html"><span>01</span><h3>文本转语音</h3><p>双模型、场景预设、音色筛选与基础参数调节。</p><b>进入体验 →</b></a>
+          <a class="feature-card" href="voice-clone.html"><span>02</span><h3>声音克隆</h3><p>创建、管理并立即应用自己的专属 Voice ID。</p><b>创建音色 →</b></a>
+          <a class="feature-card" href="voices.html"><span>03</span><h3>精品音色库</h3><p>搜索、筛选、试听并复制后端真实可用音色。</p><b>浏览音色 →</b></a>
+          <a class="feature-card" href="history.html"><span>04</span><h3>历史记录</h3><p>播放、下载、复用与管理本次浏览器中的体验结果。</p><b>查看记录 →</b></a>
+        </div>
+      </section>
+    </div>
+  </main>
+  <script src="assets/tts-studio.js"></script>
+</body>
+</html>

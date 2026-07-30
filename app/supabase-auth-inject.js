@@ -43,8 +43,8 @@
 
         // 配额设置
         QUOTA: {
-            DAILY_LIMIT: 100,
-            WARNING_THRESHOLD: 10
+            DAILY_LIMIT: 10000,
+            WARNING_THRESHOLD: 500
         },
 
         // 版本信息

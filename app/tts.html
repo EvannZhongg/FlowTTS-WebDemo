@@ -15,8 +15,8 @@
     <div class="page-shell">
       <header class="page-heading">
         <div class="page-kicker">TEXT-TO-SPEECH</div>
-        <h1>文本转语音</h1>
-        <p>输入文本并选择音色，通过现有后端调用普通合成或 SSE 流式合成。高级参数仅开放当前后端已支持的能力。</p>
+        <h1>输入文本，合成自然语音</h1>
+        <p>支持非流式与流式（SSE）两种模式、双模型与多语言精选音色。成功结果会自动计入历史记录。</p>
       </header>
 
       <section class="console">
@@ -27,35 +27,34 @@
         <div class="console-body">
           <div class="use-cases">
             <span class="muted">示例</span>
-            <button class="use-chip" type="button" data-example="今天天气晴朗，最高气温二十五度，出门记得戴太阳镜。">天气播报</button>
-            <button class="use-chip" type="button" data-example="您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。">智能客服</button>
-            <button class="use-chip" type="button" data-example="各位观众朋友们，欢迎来到本期节目，我们将带您探索科技与生活。">视频旁白</button>
-            <button class="use-chip" type="button" data-example="夜色渐深，他站在旧城墙下，想起了那封迟到了十年的信。">有声阅读</button>
+            <button class="use-chip" type="button" data-example="同学们，今天我们来认识声音是怎样产生的。请把手轻轻放在喉咙上，读出一个长音，感受声带的振动。" data-voice="v-female-Z3x9LmQ2">课堂教育</button>
+            <button class="use-chip" type="button" data-example="您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。" data-voice="female-kefu-xiaomei">客服场景</button>
+            <button class="use-chip" type="button" data-example="勇者，前方的迷雾森林危机四伏。握紧你的武器，真正的冒险现在才刚刚开始。" data-voice="v-male-Bk7vD3xP">游戏</button>
+            <button class="use-chip" type="button" data-example="夜色渐深，他站在旧城墙下，想起了那封迟到了十年的信。" data-voice="v-male-D1a3XyN1">有声书</button>
           </div>
 
           <div class="inline-head">
             <div class="model-seg" id="studio-model">
               <button class="seg-item mono on" type="button" data-model="flow_02_turbo">flow_02_turbo<span class="new-badge">New</span></button>
               <button class="seg-item mono" type="button" data-model="flow_01_ex">flow_01_ex</button>
-              <button class="seg-item mono" type="button" data-model="">自动</button>
             </div>
             <div class="field" style="min-width:150px"><label for="studio-language">语言</label><select class="select" id="studio-language"></select></div>
           </div>
 
           <div class="textarea-wrap">
-            <textarea id="studio-text" maxlength="20000" placeholder="输入要合成的文本，或选择下方音色自动填入试听文案"></textarea>
-            <div class="text-toolbar"><span>情感、停顿和语气由模型与参数共同控制</span><span><span class="mono" id="studio-char-count">0 / 2000</span> · <button class="link-btn" id="studio-clear" type="button">清空</button></span></div>
+            <textarea id="studio-text" maxlength="1000">您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。</textarea>
+            <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span><span class="mono" id="studio-char-count">0 / 1000</span> · <button class="link-btn" id="studio-clear" type="button">清空</button></span></div>
           </div>
 
           <div class="voice-tools">
-            <div class="section-title">音色 <span class="muted" id="studio-voice-count"></span></div>
+            <div><div class="section-title">音色选择</div><div class="muted" id="studio-model-summary"></div></div>
             <input class="search" id="studio-voice-search" placeholder="搜索音色 / Voice ID">
           </div>
           <div class="chips" id="studio-voice-cats">
             <button class="chip on" data-category="all" type="button">全部</button>
-            <button class="chip" data-category="zh" type="button">中文</button>
             <button class="chip" data-category="kefu" type="button">客服</button>
             <button class="chip" data-category="shuoshu" type="button">说书</button>
+            <button class="chip" data-category="zh" type="button">中文</button>
             <button class="chip" data-category="en" type="button">英语</button>
             <button class="chip" data-category="ja" type="button">日语</button>
           </div>
@@ -83,12 +82,13 @@
             </div>
           </details>
 
-          <div class="action-row"><button class="primary-button" id="studio-submit" type="button"><span id="studio-submit-label">合成语音</span></button><button class="secondary-button" id="studio-reset" type="button">重置</button></div>
+          <div class="gen-meta"><span id="studio-cost">本次合成将消耗 100 点配额</span><span>⌘ / Ctrl + Enter 快速合成</span></div>
+          <div class="action-row"><button class="primary-button" id="studio-submit" type="button"><span id="studio-submit-label">合成语音</span></button><button class="secondary-button" id="studio-reset" type="button">重置全部</button></div>
           <div class="loading" id="studio-loading"><span class="spinner"></span><span>正在请求语音服务...</span></div>
           <div class="message" id="studio-message"></div>
 
           <div class="divider"></div>
-          <div class="section-head"><span class="section-title">合成结果</span><button class="secondary-button" id="studio-download" type="button">下载音频</button></div>
+          <div class="section-head"><span class="section-title">合成结果 <span class="status-pill" id="studio-result-status">待合成</span></span><button class="secondary-button" id="studio-download" type="button" disabled>下载音频</button></div>
           <div class="stream-panel hidden" id="stream-status">
             <div class="stream-row"><span>Connection</span><b class="good" id="stream-connection">未连接</b></div>
             <div class="stream-row"><span>Chunks received</span><b id="stream-chunks">0</b></div>
