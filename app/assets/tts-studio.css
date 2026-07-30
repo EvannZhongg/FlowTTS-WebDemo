@@ -316,7 +316,7 @@ body.dark .sub-tab.active { background: #34322e; }
 @media (max-width: 760px) {
   .topbar { padding: 0 14px; }
   .top-brand span:last-child { display: none; }
-  .locale-switch { display: none; }
+  .locale-switch button { padding: 4px 8px; }
   .quota-badge { max-width: 155px; overflow: hidden; white-space: nowrap; }
   .page-shell { width: min(100% - 24px, 1100px); padding-top: 28px; }
   .console-body, .panel { padding: 14px; }

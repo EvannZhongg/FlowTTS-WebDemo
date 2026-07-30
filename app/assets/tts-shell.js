@@ -1,5 +1,7 @@
 (() => {
   const active = document.body.dataset.page || 'tts';
+  const i18n = window.TTSI18n;
+  const locale = i18n?.getLocale?.() || 'zh-CN';
   const icons = {
     home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9 21v-7h6v7"/>',
     tts: '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>',
@@ -20,7 +22,7 @@
       <a class="top-brand" href="index.html"><span class="brand-mark">T</span><span>TTS Studio</span></a>
       <div class="top-actions">
         <span class="quota-badge" id="studio-quota-badge" title="体验额度"><span>体验额度</span><strong id="studio-quota-remaining">--</strong><span>/</span><span id="studio-quota-daily">--</span></span>
-        <div class="locale-switch" aria-label="界面语言"><button class="on" type="button">中文</button><button type="button" disabled title="TODO：多语言界面将在后续恢复">EN</button></div>
+        <div class="locale-switch" aria-label="界面语言"><button class="${locale === 'zh-CN' ? 'on' : ''}" data-locale="zh-CN" aria-pressed="${locale === 'zh-CN'}" type="button">中文</button><button class="${locale === 'en' ? 'on' : ''}" data-locale="en" aria-pressed="${locale === 'en'}" type="button">EN</button></div>
         <button class="theme-button" id="theme-toggle" type="button" title="切换主题" aria-label="切换主题">◐</button>
       </div>
     </header>

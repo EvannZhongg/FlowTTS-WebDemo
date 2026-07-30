@@ -5,13 +5,16 @@
   const PAGE = document.body.dataset.page || 'tts';
   const $ = (id) => document.getElementById(id);
   const qsa = (selector, root = document) => Array.from(root.querySelectorAll(selector));
+  const i18n = window.TTSI18n;
+  const t = (text, variables) => i18n?.t(text, variables) || text;
+  const formatDateTime = (value) => i18n?.formatDateTime(value) || new Date(value).toLocaleString();
 
-  const LANGUAGE_OPTIONS_TURBO = [
+  const LANGUAGE_OPTIONS_TURBO_SOURCE = [
     ['', '自动检测'], ['zh', '中文'], ['en', '英语'], ['ja', '日语'], ['ko', '韩语'],
     ['yue', '粤语'], ['ms', '马来语'], ['th', '泰语'], ['vi', '越南语'], ['id', '印尼语'], ['ar', '阿拉伯语']
   ];
-  const LANGUAGE_OPTIONS_EX = [
-    ...LANGUAGE_OPTIONS_TURBO,
+  const LANGUAGE_OPTIONS_EX_SOURCE = [
+    ...LANGUAGE_OPTIONS_TURBO_SOURCE,
     ['es', '西班牙语'], ['fr', '法语'], ['pt', '葡萄牙语'], ['de', '德语'], ['ru', '俄语'],
     ['it', '意大利语'], ['tr', '土耳其语'], ['nl', '荷兰语'], ['uk', '乌克兰语'], ['pl', '波兰语'],
     ['ro', '罗马尼亚语'], ['el', '希腊语'], ['cs', '捷克语'], ['fi', '芬兰语'], ['hi', '印地语'],
@@ -19,11 +22,18 @@
     ['sv', '瑞典语'], ['hr', '克罗地亚语'], ['tl', '菲律宾语'], ['hu', '匈牙利语'], ['no', '挪威语'],
     ['sl', '斯洛文尼亚语'], ['ca', '加泰罗尼亚语'], ['nn', '新挪威语'], ['ta', '泰米尔语'], ['af', '南非荷兰语']
   ];
-  const EMOTIONS = [
+  const EMOTIONS_SOURCE = [
     ['', '无（默认）'], ['happy', 'happy — 高兴'], ['sad', 'sad — 悲伤'], ['angry', 'angry — 愤怒'],
     ['fearful', 'fearful — 恐惧'], ['disgusted', 'disgusted — 厌恶'], ['surprised', 'surprised — 惊讶'],
     ['calm', 'calm — 平静'], ['fluent', 'fluent — 流畅'], ['whisper', 'whisper — 低语']
   ];
+
+  const translateOptions = (options) => options.map(([value, label]) => [value, label.includes(' — ')
+    ? `${label.split(' — ')[0]} — ${t(label.split(' — ').slice(1).join(' — '))}`
+    : t(label)]);
+  const languageOptionsTurbo = () => translateOptions(LANGUAGE_OPTIONS_TURBO_SOURCE);
+  const languageOptionsEx = () => translateOptions(LANGUAGE_OPTIONS_EX_SOURCE);
+  const emotionOptions = () => translateOptions(EMOTIONS_SOURCE);
 
   const state = {
     voices: [],
@@ -76,7 +86,7 @@
 
   function authHeaders(json = false) {
     const session = getSession();
-    if (!session?.access_token) throw new Error('未登录或会话已过期，请先登录');
+    if (!session?.access_token) throw new Error(t('未登录或会话已过期，请先登录'));
     return {
       ...(json ? { 'Content-Type': 'application/json' } : {}),
       Authorization: `Bearer ${session.access_token}`
@@ -89,7 +99,7 @@
       const raw = await response.text();
       let message = raw;
       try { message = JSON.parse(raw).message || raw; } catch (_) {}
-      throw new Error(message || `请求失败（${response.status}）`);
+      throw new Error(message || t(`请求失败（${response.status}）`));
     }
     if (expect === 'response') return response;
     return response.json();
@@ -202,16 +212,16 @@
       if (feedbackElement.classList.contains('copy-voice')) {
         window.clearTimeout(feedbackElement._copyFeedbackTimer);
         feedbackElement.classList.add('copied');
-        feedbackElement.setAttribute('aria-label', 'Voice ID 已复制');
+        feedbackElement.setAttribute('aria-label', t('Voice ID 已复制'));
         feedbackElement._copyFeedbackTimer = window.setTimeout(() => {
           feedbackElement.classList.remove('copied');
-          feedbackElement.setAttribute('aria-label', '复制 Voice ID');
+          feedbackElement.setAttribute('aria-label', t('复制 Voice ID'));
         }, 1400);
         return;
       }
 
       const original = feedbackElement.textContent;
-      feedbackElement.textContent = '已复制';
+      feedbackElement.textContent = t('已复制');
       setTimeout(() => { feedbackElement.textContent = original; }, 1000);
     }
   }
@@ -228,7 +238,7 @@
   }
 
   function availableLanguageOptions(model) {
-    return model === 'flow_01_ex' ? LANGUAGE_OPTIONS_EX : LANGUAGE_OPTIONS_TURBO;
+    return model === 'flow_01_ex' ? languageOptionsEx() : languageOptionsTurbo();
   }
 
   function voiceMatches(voice, query, category) {
@@ -258,9 +268,9 @@
       if (activeItem) visibleItems.push(activeItem);
     }
     return [
-      `<button class="chip ${normalizedActive === 'all' ? 'on' : ''}" data-category="all" type="button">全部</button>`,
-      ...visibleItems.map(([code, count]) => `<button class="chip ${normalizedActive === code ? 'on' : ''}" data-category="${escapeHtml(code)}" type="button">${escapeHtml(labels[code]?.name || code)} <b>${count}</b></button>`),
-      hiddenCount > 0 ? `<button class="chip language-more" data-language-toggle type="button">${expanded ? '收起' : `+${hiddenCount} 更多语言`} <span aria-hidden="true">${expanded ? '⌃' : '⌄'}</span></button>` : ''
+      `<button class="chip ${normalizedActive === 'all' ? 'on' : ''}" data-category="all" type="button">${t('全部')}</button>`,
+      ...visibleItems.map(([code, count]) => `<button class="chip ${normalizedActive === code ? 'on' : ''}" data-category="${escapeHtml(code)}" type="button">${escapeHtml(t(labels[code]?.name || code))} <b>${count}</b></button>`),
+      hiddenCount > 0 ? `<button class="chip language-more" data-language-toggle type="button">${expanded ? t('收起') : `+${hiddenCount} ${t('更多语言')}`} <span aria-hidden="true">${expanded ? '⌃' : '⌄'}</span></button>` : ''
     ].join('');
   }
 
@@ -296,8 +306,8 @@
       <div class="voice-top">
         <span class="voice-orb" style="${orbStyle(voice.id)}"></span>
         <span class="voice-actions">
-          ${voice.previewUrl ? `<button class="icon-btn preview-voice" type="button" title="试听" data-preview-url="${escapeHtml(voice.previewUrl)}">▶</button>` : ''}
-          <button class="icon-btn copy-voice" type="button" title="复制 Voice ID" aria-label="复制 Voice ID">
+          ${voice.previewUrl ? `<button class="icon-btn preview-voice" type="button" title="${t('试听')}" data-preview-url="${escapeHtml(voice.previewUrl)}">▶</button>` : ''}
+          <button class="icon-btn copy-voice" type="button" title="${t('复制 Voice ID')}" aria-label="${t('复制 Voice ID')}">
             <svg class="copy-icon" viewBox="0 0 24 24" aria-hidden="true">
               <rect x="8" y="8" width="11" height="11" rx="2"></rect>
               <path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"></path>
@@ -305,14 +315,14 @@
             <svg class="copy-check" viewBox="0 0 24 24" aria-hidden="true">
               <path d="m5 12 4 4L19 6"></path>
             </svg>
-            <span class="copy-feedback" role="status">已复制</span>
+            <span class="copy-feedback" role="status">${t('已复制')}</span>
           </button>
         </span>
       </div>
-      <div class="voice-name">${escapeHtml(voice.name || voice.nameEn || '未命名音色')}</div>
+      <div class="voice-name">${escapeHtml(voice.name || voice.nameEn || t('未命名音色'))}</div>
       <div class="voice-badges"><span class="voice-badge">${escapeHtml(voice.language || 'auto')}</span>${isExtended ? '<span class="voice-badge ex">ex</span>' : ''}</div>
       <div class="voice-meta">${escapeHtml(langs)}<br>${escapeHtml(voice.id)}</div>
-      ${library ? `<div class="voice-desc">${escapeHtml(voice.description || voice.scenarios || '预设音色')}</div>` : ''}
+      ${library ? `<div class="voice-desc">${escapeHtml(voice.description || voice.scenarios || t('预设音色'))}</div>` : ''}
     </article>`;
   }
 
@@ -366,6 +376,33 @@
     window.addEventListener('quotaUpdated', (event) => updateQuota(event.detail));
     const initialQuota = window.SupabaseAuthInject?.getQuota?.();
     if (initialQuota) updateQuota(initialQuota);
+    window.addEventListener('localeChanged', () => {
+      if (PAGE === 'tts') {
+        const selectedLanguage = $('studio-language')?.value || '';
+        const selectedEmotion = $('studio-emotion')?.value || '';
+        setSelectOptions($('studio-language'), availableLanguageOptions(currentStudioModel()));
+        setSelectOptions($('studio-emotion'), emotionOptions());
+        if ($('studio-language')) $('studio-language').value = selectedLanguage;
+        if ($('studio-emotion')) $('studio-emotion').value = selectedEmotion;
+        renderStudioLanguageFilters();
+        renderStudioVoices();
+        setMode(state.mode);
+      }
+      if (PAGE === 'clone') {
+        const selectedLanguage = $('clone-language')?.value || '';
+        const selectedEmotion = $('clone-emotion')?.value || '';
+        setSelectOptions($('clone-language'), languageOptionsEx());
+        setSelectOptions($('clone-emotion'), emotionOptions());
+        if ($('clone-language')) $('clone-language').value = selectedLanguage;
+        if ($('clone-emotion')) $('clone-emotion').value = selectedEmotion;
+        loadClonedVoices();
+      }
+      if (PAGE === 'voices') {
+        $('library-filters').innerHTML = languageFilterHtml(state.libraryModel, state.languageFiltersExpanded.library, state.libraryCategory);
+        renderLibrary();
+      }
+      if (PAGE === 'history') renderHistoryPage();
+    });
   }
 
   function initHomePage() {
@@ -383,6 +420,7 @@
       qsa('[data-home-example]').forEach((item) => item.classList.remove('active'));
       button.classList.add('active');
       text.value = button.dataset.text || '';
+      text.dataset.i18nUserEdited = '0';
       const voiceByScene = {
         '课堂教育': 'v-female-Z3x9LmQ2',
         '客服场景': 'female-kefu-xiaomei',
@@ -417,9 +455,11 @@
       const voiceModel = effectiveVoiceModel(voice);
       return voiceMatches(voice, query, category) && (!model || voiceModel === model);
     });
-    container.innerHTML = list.slice(0, 36).map((voice) => voiceCardHtml(voice, voice.id === state.selectedVoice)).join('') || '<div class="voice-empty">没有匹配的音色</div>';
+    container.innerHTML = list.slice(0, 36).map((voice) => voiceCardHtml(voice, voice.id === state.selectedVoice)).join('') || `<div class="voice-empty">${t('没有匹配的音色')}</div>`;
     const summary = $('studio-model-summary');
-    if (summary) summary.textContent = `当前模型 ${model || '自动'} · ${list.length} 个可用音色`;
+    if (summary) summary.textContent = i18n?.getLocale?.() === 'en'
+      ? `Current model: ${model || t('自动')} · ${list.length} available voices`
+      : `当前模型 ${model || '自动'} · ${list.length} 个可用音色`;
   }
 
   function renderStudioLanguageFilters() {
@@ -453,11 +493,11 @@
   function setMode(mode) {
     state.mode = mode;
     qsa('.ctab').forEach((tab) => tab.classList.toggle('active', tab.dataset.mode === mode));
-    $('studio-submit-label').textContent = mode === 'streaming' ? '流式合成' : '合成语音';
+    $('studio-submit-label').textContent = t(mode === 'streaming' ? '流式合成' : '合成语音');
     $('stream-status')?.classList.toggle('hidden', mode !== 'streaming');
     const advanced = $('studio-advanced');
     if (advanced) advanced.classList.toggle('hidden', mode === 'streaming');
-    $('studio-cost').textContent = `本次${mode === 'streaming' ? '流式' : ''}合成将消耗 100 点配额`;
+    $('studio-cost').textContent = t(mode === 'streaming' ? '本次流式合成将消耗 100 点配额' : '本次合成将消耗 100 点配额');
     updateCharCount();
   }
 
@@ -506,7 +546,7 @@
     $('metric-chars').textContent = String($('studio-text').value.length);
     $('studio-download').disabled = false;
     const status = $('studio-result-status');
-    if (status) { status.textContent = '已完成'; status.className = 'status-pill done'; }
+    if (status) { status.textContent = t('已完成'); status.className = 'status-pill done'; }
   }
 
   async function synthesizeNormal(request) {
@@ -516,7 +556,7 @@
     }, 'response');
     const data = await response.json();
     readQuotaFromResponse(response, data);
-    if (!data.audio) throw new Error('服务端未返回音频数据');
+    if (!data.audio) throw new Error(t('服务端未返回音频数据'));
     const raw = base64ToArrayBuffer(data.audio);
     let blob;
     if (request.format === 'wav') blob = new Blob([raw], { type: 'audio/wav' });
@@ -543,7 +583,7 @@
     let totalSize = 0;
     let firstChunk = null;
     let chunkCount = 0;
-    $('stream-connection').textContent = '已连接';
+    $('stream-connection').textContent = t('已连接');
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -571,44 +611,44 @@
           const blob = pcmToWav(raw, 24000);
           const elapsed = Date.now() - started;
           showStudioResult(blob, elapsed, raw.byteLength, firstChunk);
-          $('stream-connection').textContent = '已完成';
+          $('stream-connection').textContent = t('已完成');
           await saveHistory('streaming', { ...request, processingTime: elapsed, size: raw.byteLength }, blob);
           return;
         }
       }
     }
-    throw new Error('流式响应异常结束');
+    throw new Error(t('流式响应异常结束'));
   }
 
   async function runStudioSynthesis() {
     clearMessage('studio-message');
     const request = getStudioRequest();
-    if (!request.text) return showMessage('studio-message', 'error', '请输入要合成的文本');
-    if (request.text.length > 1000) return showMessage('studio-message', 'error', '文本最多支持 1,000 个字符');
-    if (!request.voiceId) return showMessage('studio-message', 'error', '请选择音色或填写 Voice ID');
+    if (!request.text) return showMessage('studio-message', 'error', t('请输入要合成的文本'));
+    if (request.text.length > 1000) return showMessage('studio-message', 'error', t('文本最多支持 1,000 个字符'));
+    if (!request.voiceId) return showMessage('studio-message', 'error', t('请选择音色或填写 Voice ID'));
     setLoading('studio', true);
     const status = $('studio-result-status');
-    if (status) { status.textContent = state.mode === 'streaming' ? '连接中' : '合成中'; status.className = 'status-pill loading'; }
+    if (status) { status.textContent = t(state.mode === 'streaming' ? '连接中' : '合成中'); status.className = 'status-pill loading'; }
     if (state.mode === 'streaming') {
-      $('stream-connection').textContent = '连接中';
+      $('stream-connection').textContent = t('连接中');
       $('stream-chunks').textContent = '0'; $('stream-first').textContent = '-'; $('stream-size').textContent = '0 KB';
     }
     try {
       if (state.mode === 'streaming') await synthesizeStream(request);
       else await synthesizeNormal(request);
-      showMessage('studio-message', 'success', state.mode === 'streaming' ? '流式合成完成' : '语音合成完成');
+      showMessage('studio-message', 'success', t(state.mode === 'streaming' ? '流式合成完成' : '语音合成完成'));
     } catch (error) {
-      showMessage('studio-message', 'error', `请求失败：${error.message}`);
-      if (state.mode === 'streaming') $('stream-connection').textContent = '失败';
-      if (status) { status.textContent = '失败'; status.className = 'status-pill failed'; }
+      showMessage('studio-message', 'error', t(`请求失败：${error.message}`));
+      if (state.mode === 'streaming') $('stream-connection').textContent = t('失败');
+      if (status) { status.textContent = t('失败'); status.className = 'status-pill failed'; }
     } finally {
       setLoading('studio', false);
     }
   }
 
   function initTtsPage() {
-    setSelectOptions($('studio-language'), LANGUAGE_OPTIONS_TURBO);
-    setSelectOptions($('studio-emotion'), EMOTIONS);
+    setSelectOptions($('studio-language'), languageOptionsTurbo());
+    setSelectOptions($('studio-emotion'), emotionOptions());
     qsa('.ctab').forEach((tab) => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
     qsa('#studio-model .seg-item').forEach((button) => button.addEventListener('click', () => {
       qsa('#studio-model .seg-item').forEach((item) => item.classList.remove('on'));
@@ -631,7 +671,7 @@
     $('studio-text').addEventListener('input', () => { $('studio-text').dataset.userEdited = '1'; updateCharCount(); });
     $('studio-clear').addEventListener('click', () => { $('studio-text').value = ''; $('studio-text').dataset.userEdited = '1'; updateCharCount(); });
     $('studio-reset').addEventListener('click', () => {
-      $('studio-text').value = '您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。';
+      $('studio-text').value = t('您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。');
       $('studio-text').dataset.userEdited = '1';
       $('studio-custom-voice').value = '';
       $('studio-speed').value = '1'; $('studio-volume').value = '1'; $('studio-pitch').value = '0';
@@ -642,7 +682,7 @@
       $('studio-player').classList.remove('active');
       $('result-empty')?.classList.remove('hidden');
       $('studio-download').disabled = true;
-      $('studio-result-status').textContent = '待合成'; $('studio-result-status').className = 'status-pill';
+      $('studio-result-status').textContent = t('待合成'); $('studio-result-status').className = 'status-pill';
       state.selectedVoice = state.voices[0]?.id || '';
       renderStudioLanguageFilters();
       renderStudioVoices();
@@ -669,7 +709,7 @@
         $('studio-language').value = params.get('language');
       }
       chooseStudioVoice(state.selectedVoice, false);
-    }).catch((error) => showMessage('studio-message', 'error', `音色加载失败：${error.message}`));
+    }).catch((error) => showMessage('studio-message', 'error', t(`音色加载失败：${error.message}`)));
     updateCharCount(); updateModelControls(); setMode(new URLSearchParams(location.search).get('mode') === 'streaming' ? 'streaming' : 'tts');
   }
 
@@ -706,7 +746,7 @@
     const hint = $('clone-name-hint');
     const valid = /^[A-Za-z0-9_]{1,36}$/.test(input.value.trim());
     hint.classList.toggle('error', input.value.trim() && !valid);
-    hint.textContent = valid || !input.value.trim() ? '仅限数字、英文字母和下划线，最多 36 位' : '名称格式不正确，请仅使用数字、字母和下划线';
+    hint.textContent = t(valid || !input.value.trim() ? '仅限数字、英文字母和下划线，最多 36 位' : '名称格式不正确，请仅使用数字、字母和下划线');
     return valid;
   }
 
@@ -719,7 +759,7 @@
   function renderSelectedFile(file, clearRecording = true) {
     const info = $('clone-file-info');
     if (!file) {
-      info.textContent = '支持 WAV、MP3、M4A 等浏览器可解码的音频格式';
+      info.textContent = t('支持 WAV、MP3、M4A 等浏览器可解码的音频格式');
       $('clone-dropzone').classList.remove('has-file');
       if (clearRecording) {
         state.recordedBlob = null;
@@ -731,7 +771,9 @@
       }
       return;
     }
-    info.textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB · 将转换为 16kHz 单声道 WAV`;
+    info.textContent = i18n?.getLocale?.() === 'en'
+      ? `${file.name} · ${(file.size / 1024).toFixed(1)} KB · Will be converted to 16 kHz mono WAV`
+      : `${file.name} · ${(file.size / 1024).toFixed(1)} KB · 将转换为 16kHz 单声道 WAV`;
     $('clone-dropzone').classList.add('has-file');
     if (clearRecording) {
       resetRecording();
@@ -763,7 +805,7 @@
       audio.classList.add('hidden');
     }
     $('record-time').textContent = '0.0s';
-    $('record-status').textContent = '点击开始录音';
+    $('record-status').textContent = t('点击开始录音');
     $('record-progress').style.width = '0%';
     $('record-button').classList.remove('recording');
     $('record-reset').disabled = true;
@@ -792,29 +834,29 @@
         state.mediaStream?.getTracks().forEach((track) => track.stop());
         state.mediaStream = null;
         clearInterval(state.recordTimer); state.recordTimer = null;
-        $('record-button').classList.remove('recording'); $('record-status').textContent = '录音完成';
+        $('record-button').classList.remove('recording'); $('record-status').textContent = t('录音完成');
         $('record-reset').disabled = false;
       };
-      state.recordingStartedAt = Date.now(); state.recorder.start(); $('record-button').classList.add('recording'); $('record-status').textContent = '录音中，再次点击停止';
+      state.recordingStartedAt = Date.now(); state.recorder.start(); $('record-button').classList.add('recording'); $('record-status').textContent = t('录音中，再次点击停止');
       state.recordTimer = setInterval(() => {
         const seconds = (Date.now() - state.recordingStartedAt) / 1000;
         $('record-time').textContent = `${seconds.toFixed(1)}s`; $('record-progress').style.width = `${Math.min(seconds / 180 * 100, 100)}%`;
         if (seconds >= 180) state.recorder.stop();
       }, 100);
-    } catch (error) { showMessage('clone-message', 'error', `无法开始录音：${error.message}`); }
+    } catch (error) { showMessage('clone-message', 'error', t(`无法开始录音：${error.message}`)); }
   }
 
   async function createClone() {
     clearMessage('clone-message');
     const name = $('clone-name').value.trim();
-    if (!name || !validateCloneName()) return showMessage('clone-message', 'error', '请输入合法的音色名称');
+    if (!name || !validateCloneName()) return showMessage('clone-message', 'error', t('请输入合法的音色名称'));
     const source = state.recordedBlob || $('clone-file').files[0];
-    if (!source) return showMessage('clone-message', 'error', '请上传音频或先完成录音');
+    if (!source) return showMessage('clone-message', 'error', t('请上传音频或先完成录音'));
     setLoading('clone', true);
     try {
-      showMessage('clone-message', 'info', '正在转换并检查音频...');
+      showMessage('clone-message', 'info', t('正在转换并检查音频...'));
       const processed = await processAudioForCloning(source);
-      if (processed.duration < 6 || processed.duration > 180) throw new Error(`音频时长为 ${processed.duration.toFixed(1)} 秒，请使用 6–180 秒音频`);
+      if (processed.duration < 6 || processed.duration > 180) throw new Error(t(`音频时长为 ${processed.duration.toFixed(1)} 秒，请使用 6–180 秒音频`));
       const response = await apiFetch('/api/voice/clone', {
         method: 'POST', headers: authHeaders(true), body: JSON.stringify({
           voiceName: name, audioData: await blobToBase64(processed.blob), audioDuration: processed.duration,
@@ -823,32 +865,32 @@
       }, 'response');
       const data = await response.json(); readQuotaFromResponse(response, data);
       state.clonedVoiceId = data.voiceId || ''; $('clone-use-voice-id').value = state.clonedVoiceId;
-      showMessage('clone-message', 'success', `克隆成功，Voice ID：${state.clonedVoiceId}`);
+      showMessage('clone-message', 'success', t(`克隆成功，Voice ID：${state.clonedVoiceId}`));
       await saveHistory('clone-create', { voiceId: state.clonedVoiceId, voiceName: name, processingTime: 0, size: processed.blob.size }, null);
       await loadClonedVoices();
-    } catch (error) { showMessage('clone-message', 'error', `克隆失败：${error.message}`); }
+    } catch (error) { showMessage('clone-message', 'error', t(`克隆失败：${error.message}`)); }
     finally { setLoading('clone', false); }
   }
 
   async function loadClonedVoices() {
     const list = $('cloned-voice-list');
     if (!list) return;
-    if (!getSession()?.access_token) { list.innerHTML = '<div class="empty-state">登录后可查看已保存音色</div>'; return; }
+    if (!getSession()?.access_token) { list.innerHTML = `<div class="empty-state">${t('登录后可查看已保存音色')}</div>`; return; }
     try {
       const data = await apiFetch('/api/voice/list', { headers: authHeaders() });
       state.clonedVoices = data.voices || [];
-      if ($('clone-count')) $('clone-count').textContent = `${state.clonedVoices.length} 个`;
+      if ($('clone-count')) $('clone-count').textContent = i18n?.getLocale?.() === 'en' ? `${state.clonedVoices.length}` : `${state.clonedVoices.length} 个`;
       list.innerHTML = state.clonedVoices.length ? state.clonedVoices.map((voice) => `<div class="list-row">
-        <div class="list-main"><div class="list-name">${escapeHtml(voice.voice_name || '未命名')} <span class="status-pill done">可用</span></div><div class="list-id">${escapeHtml(voice.voice_id)}</div><div class="list-meta">${voice.created_at ? new Date(voice.created_at).toLocaleString() : ''}${voice.audio_duration ? ` · ${Number(voice.audio_duration).toFixed(1)}s` : ''}</div></div>
-        <div class="row-actions"><button class="small-button use-clone" data-voice-id="${escapeHtml(voice.voice_id)}">使用</button><button class="small-button copy-clone" data-voice-id="${escapeHtml(voice.voice_id)}">复制</button><button class="small-button danger delete-clone" data-voice-id="${escapeHtml(voice.voice_id)}">删除</button></div>
-      </div>`).join('') : '<div class="empty-state">暂无克隆音色</div>';
-    } catch (error) { list.innerHTML = `<div class="empty-state">加载失败：${escapeHtml(error.message)}</div>`; }
+        <div class="list-main"><div class="list-name">${escapeHtml(voice.voice_name || t('未命名'))} <span class="status-pill done">${t('可用')}</span></div><div class="list-id">${escapeHtml(voice.voice_id)}</div><div class="list-meta">${voice.created_at ? formatDateTime(voice.created_at) : ''}${voice.audio_duration ? ` · ${Number(voice.audio_duration).toFixed(1)}s` : ''}</div></div>
+        <div class="row-actions"><button class="small-button use-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('使用')}</button><button class="small-button copy-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('复制')}</button><button class="small-button danger delete-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('删除')}</button></div>
+      </div>`).join('') : `<div class="empty-state">${t('暂无克隆音色')}</div>`;
+    } catch (error) { list.innerHTML = `<div class="empty-state">${escapeHtml(t(`加载失败：${error.message}`))}</div>`; }
   }
 
   async function deleteClone(voiceId) {
-    if (!confirm('确认删除这个克隆音色吗？')) return;
+    if (!confirm(t('确认删除这个克隆音色吗？'))) return;
     try { await apiFetch(`/api/voice/${encodeURIComponent(voiceId)}`, { method: 'DELETE', headers: authHeaders() }); await loadClonedVoices(); }
-    catch (error) { showMessage('clone-message', 'error', `删除失败：${error.message}`); }
+    catch (error) { showMessage('clone-message', 'error', t(`删除失败：${error.message}`)); }
   }
 
   async function synthesizeClone() {
@@ -859,7 +901,7 @@
       emotion: $('clone-synth-model').value === 'flow_01_ex' ? $('clone-emotion').value : '',
       format: 'pcm', sampleRate: 24000, speed: 1, volume: 1, pitch: 0, billingContext: 'clone-audition'
     };
-    if (!request.text || !request.voiceId) return showMessage('clone-synth-message', 'error', '请填写文本并选择 Voice ID');
+    if (!request.text || !request.voiceId) return showMessage('clone-synth-message', 'error', t('请填写文本并选择 Voice ID'));
     setLoading('clone-synth', true);
     try {
       const started = Date.now();
@@ -869,13 +911,13 @@
       state.cloneAudioBlob = blob; $('clone-audio').src = makeObjectUrl(blob); $('clone-player').classList.add('active');
       $('clone-time').textContent = `${elapsed}ms`; $('clone-size').textContent = `${(raw.byteLength / 1024).toFixed(1)} KB`;
       await saveHistory('clone-tts', { ...request, processingTime: elapsed, size: raw.byteLength }, blob);
-      showMessage('clone-synth-message', 'success', '克隆音色合成完成');
-    } catch (error) { showMessage('clone-synth-message', 'error', `合成失败：${error.message}`); }
+      showMessage('clone-synth-message', 'success', t('克隆音色合成完成'));
+    } catch (error) { showMessage('clone-synth-message', 'error', t(`合成失败：${error.message}`)); }
     finally { setLoading('clone-synth', false); }
   }
 
   function initClonePage() {
-    setSelectOptions($('clone-language'), LANGUAGE_OPTIONS_EX); setSelectOptions($('clone-emotion'), EMOTIONS);
+    setSelectOptions($('clone-language'), languageOptionsEx()); setSelectOptions($('clone-emotion'), emotionOptions());
     qsa('.sub-tab').forEach((button) => button.addEventListener('click', () => setCloneSourceTab(button.dataset.cloneTab)));
     $('clone-name').addEventListener('input', validateCloneName);
     $('clone-file').addEventListener('change', () => renderSelectedFile($('clone-file').files[0]));
@@ -903,8 +945,8 @@
     const query = $('library-search').value; const category = state.libraryCategory;
     const list = state.voices.filter((voice) => voiceMatches(voice, query, category)
       && (state.libraryModel === 'all' || effectiveVoiceModel(voice) === state.libraryModel));
-    $('library-count').textContent = `${list.length} 个音色`;
-    grid.innerHTML = list.map((voice) => voiceCardHtml(voice, false, true)).join('') || '<div class="empty-state">没有匹配的音色</div>';
+    $('library-count').textContent = i18n?.getLocale?.() === 'en' ? `${list.length} voices` : `${list.length} 个音色`;
+    grid.innerHTML = list.map((voice) => voiceCardHtml(voice, false, true)).join('') || `<div class="empty-state">${t('没有匹配的音色')}</div>`;
   }
 
   function initVoicesPage() {
@@ -927,7 +969,7 @@
     loadVoices(true).then(() => {
       $('library-filters').innerHTML = languageFilterHtml('all', false, 'all');
       renderLibrary();
-    }).catch((error) => { $('library-grid').innerHTML = `<div class="empty-state">音色加载失败：${escapeHtml(error.message)}</div>`; });
+    }).catch((error) => { $('library-grid').innerHTML = `<div class="empty-state">${escapeHtml(t(`音色加载失败：${error.message}`))}</div>`; });
   }
 
   function openHistoryDb() {
@@ -968,11 +1010,11 @@
     const list = $('history-list'); if (!list) return;
     const all = await getHistoryItems();
     const items = state.historyFilter === 'all' ? all : all.filter((item) => state.historyFilter === 'cloning' ? item.type.startsWith('clone') : item.type === state.historyFilter);
-    if (!items.length) { list.innerHTML = '<div class="empty-state">暂无历史记录。完成文本转语音、流式合成、克隆音色或克隆试听后会自动保存在这里。</div>'; return; }
+    if (!items.length) { list.innerHTML = `<div class="empty-state">${t('暂无历史记录。完成文本转语音、流式合成、克隆音色或克隆试听后会自动保存在这里。')}</div>`; return; }
     list.innerHTML = items.map((item) => {
       const url = item.audio ? makeObjectUrl(item.audio) : ''; const label = item.type === 'tts' ? 'Text-to-Speech' : item.type === 'streaming' ? 'Streaming' : item.type === 'clone-create' ? 'Cloned Voice' : 'Cloning';
       const title = item.type === 'clone-create' ? item.voiceName || item.voiceId : item.text || '';
-      return `<div class="history-row"><div class="history-main"><div class="history-title">${label} · ${escapeHtml(title)}</div><div class="history-meta">${escapeHtml(item.voiceId || item.voice || '')} · ${item.type === 'clone-create' ? 'Cloning' : label} · ${new Date(item.createdAt).toLocaleString()}</div></div>${url ? `<audio src="${url}" controls></audio>` : ''}<div class="row-actions">${item.type !== 'clone-create' ? `<button class="small-button history-reuse" data-id="${item.id}">复用</button>` : ''}${item.audio ? `<button class="small-button history-download" data-id="${item.id}">下载</button>` : ''}<button class="small-button danger history-delete" data-id="${item.id}">删除</button></div></div>`;
+      return `<div class="history-row"><div class="history-main"><div class="history-title">${label} · ${escapeHtml(title)}</div><div class="history-meta">${escapeHtml(item.voiceId || item.voice || '')} · ${item.type === 'clone-create' ? 'Cloning' : label} · ${formatDateTime(item.createdAt)}</div></div>${url ? `<audio src="${url}" controls></audio>` : ''}<div class="row-actions">${item.type !== 'clone-create' ? `<button class="small-button history-reuse" data-id="${item.id}">${t('复用')}</button>` : ''}${item.audio ? `<button class="small-button history-download" data-id="${item.id}">${t('下载')}</button>` : ''}<button class="small-button danger history-delete" data-id="${item.id}">${t('删除')}</button></div></div>`;
     }).join('');
   }
 
@@ -989,7 +1031,7 @@
   }
 
   async function clearHistory() {
-    if (!confirm('确认清空全部历史记录吗？')) return;
+    if (!confirm(t('确认清空全部历史记录吗？'))) return;
     const tx = state.historyDb.transaction('history', 'readwrite'); tx.objectStore('history').clear(); tx.oncomplete = renderHistoryPage;
   }
 
@@ -1001,7 +1043,7 @@
   }
 
   async function initHistoryPage() {
-    try { await openHistoryDb(); } catch (error) { $('history-list').innerHTML = `<div class="empty-state">IndexedDB 初始化失败：${escapeHtml(error.message)}</div>`; return; }
+    try { await openHistoryDb(); } catch (error) { $('history-list').innerHTML = `<div class="empty-state">${escapeHtml(t(`IndexedDB 初始化失败：${error.message}`))}</div>`; return; }
     qsa('.history-filter').forEach((button) => button.addEventListener('click', () => {
       state.historyFilter = button.dataset.filter; qsa('.history-filter').forEach((item) => item.classList.remove('on')); button.classList.add('on'); renderHistoryPage();
     }));

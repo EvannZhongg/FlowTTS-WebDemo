@@ -57,6 +57,8 @@
 
     const LOGIN_BTN_POSITION_KEY = 'supabase_login_btn_position';
     const FIRST_TIME_GUIDE_SESSION_KEY = 'trtc_ai_first_time_guide_shown';
+    const i18n = window.TTSI18n;
+    const t = (text, variables) => i18n?.t(text, variables) || text;
 
     // ==================== 全局状态 ====================
 
@@ -1446,6 +1448,7 @@
         });
 
         setLoginStep(1);
+        i18n?.apply?.(document);
         log('UI 已注入');
     }
 
@@ -1678,13 +1681,13 @@
         }
 
         countdownTimer = setInterval(() => {
-            btn.textContent = `${remaining} 秒后可重发`;
+            btn.textContent = i18n?.getLocale?.() === 'en' ? `Resend in ${remaining}s` : `${remaining} 秒后可重发`;
             remaining--;
 
             if (remaining < 0) {
                 clearInterval(countdownTimer);
                 btn.disabled = false;
-                btn.textContent = '重新发送';
+                btn.textContent = t('重新发送');
             }
         }, 1000);
     }
@@ -1707,7 +1710,7 @@
         const resendBtn = document.getElementById('supabase-resend-otp');
         if (resendBtn) {
             resendBtn.disabled = true;
-            resendBtn.textContent = '60 秒后可重发';
+            resendBtn.textContent = i18n?.getLocale?.() === 'en' ? 'Resend in 60s' : '60 秒后可重发';
         }
 
         verificationEmail = null;
@@ -1744,7 +1747,7 @@
         const resendBtn = document.getElementById('supabase-resend-otp');
         if (resendBtn) {
             resendBtn.disabled = true;
-            resendBtn.textContent = '60 秒后可重发';
+            resendBtn.textContent = i18n?.getLocale?.() === 'en' ? 'Resend in 60s' : '60 秒后可重发';
         }
     }
 
@@ -1781,7 +1784,7 @@
      * @returns {string} 格式化后的日期
      */
     function formatDate(dateStr) {
-        if (!dateStr) return '无';
+        if (!dateStr) return t('无');
         try {
             const date = new Date(dateStr);
             const now = new Date();
@@ -1789,22 +1792,22 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
             if (diffDays < 0) {
-                return '已过期';
+                return t('已过期');
             } else if (diffDays === 0) {
-                return '今天到期';
+                return t('今天到期');
             } else if (diffDays === 1) {
-                return '明天到期';
+                return t('明天到期');
             } else if (diffDays <= 7) {
-                return `${diffDays}天后到期`;
+                return i18n?.getLocale?.() === 'en' ? `Expires in ${diffDays} days` : `${diffDays}天后到期`;
             } else {
-                return date.toLocaleDateString('zh-CN', {
+                return date.toLocaleDateString(i18n?.getLocale?.() || 'zh-CN', {
                     year: 'numeric',
                     month: '2-digit',
                     day: '2-digit'
                 });
             }
         } catch (error) {
-            return '无效日期';
+            return t('无效日期');
         }
     }
 
@@ -1868,7 +1871,7 @@
         // 更新剩余
         const remainingEl = document.getElementById('quota-remaining');
         if (remainingEl) {
-            remainingEl.textContent = `剩余 ${remaining}`;
+            remainingEl.textContent = i18n?.getLocale?.() === 'en' ? `${remaining} remaining` : `剩余 ${remaining}`;
         }
 
         // 更新订阅等级徽章
@@ -1883,11 +1886,11 @@
         if (upgradeBtn) {
             if (subscription_tier === 'free') {
                 upgradeBtn.style.display = 'inline-flex';
-                upgradeBtn.textContent = '升级';
+                upgradeBtn.textContent = t('升级');
             } else if (subscription_tier === 'pro') {
                 // 专业版用户可以升级到企业版
                 upgradeBtn.style.display = 'inline-flex';
-                upgradeBtn.textContent = '升级到企业版';
+                upgradeBtn.textContent = t('升级到企业版');
             } else if (subscription_tier === 'max') {
                 // 企业版用户显示续费或隐藏
                 const endDate = subscription_end ? new Date(subscription_end) : null;
@@ -1896,10 +1899,10 @@
 
                 if (daysLeft !== null && daysLeft <= 7) {
                     upgradeBtn.style.display = 'inline-flex';
-                    upgradeBtn.textContent = daysLeft <= 0 ? '重新订阅' : '申请续费';
+                    upgradeBtn.textContent = t(daysLeft <= 0 ? '重新订阅' : '申请续费');
                 } else {
                     upgradeBtn.style.display = 'inline-flex';
-                    upgradeBtn.textContent = '当前为企业版';
+                    upgradeBtn.textContent = t('当前为企业版');
                     upgradeBtn.disabled = true;
                 }
             }
@@ -1940,11 +1943,11 @@
      */
     function getTierDisplayName(tier) {
         const names = {
-            'free': '免费版',
-            'pro': '专业版',
-            'max': '企业版'
+            'free': t('免费版'),
+            'pro': t('专业版'),
+            'max': t('企业版')
         };
-        return names[tier] || '免费版';
+        return names[tier] || t('免费版');
     }
 
     /**
@@ -2107,7 +2110,7 @@
      */
     function getLoginButtonLabel(user, quota) {
         if (!user) {
-            return '登录';
+            return t('登录');
         }
 
         if (quota && quota.daily > 0) {
@@ -2115,7 +2118,7 @@
             return `${used}/${daily}`;
         }
 
-        return '账户';
+        return t('账户');
     }
 
     function updateLoginStatus(user) {
@@ -2136,8 +2139,8 @@
                 <span class="supabase-login-icon" aria-hidden="true">👤</span>
                 <span class="quota-chip">${labelHtml}</span>
             `;
-            btn.title = `已登录: ${user.email}`;
-            btn.setAttribute('aria-label', '查看账户状态');
+            btn.title = i18n?.getLocale?.() === 'en' ? `Signed in: ${user.email}` : `已登录: ${user.email}`;
+            btn.setAttribute('aria-label', t('查看账户状态'));
             if (loginForm) loginForm.style.display = 'none';
             if (otpForm) otpForm.style.display = 'none';
             if (logoutForm) logoutForm.style.display = 'flex';
@@ -2147,7 +2150,7 @@
             const companyEl = document.getElementById('user-company');
             const company = user.user_metadata?.company;
             if (company && companyEl) {
-                companyEl.textContent = `公司：${company}`;
+                companyEl.textContent = i18n?.getLocale?.() === 'en' ? `Company: ${company}` : `公司：${company}`;
                 companyEl.style.display = 'block';
             } else if (companyEl) {
                 companyEl.style.display = 'none';
@@ -2164,7 +2167,7 @@
                 // 默认显示免费版，直到获取到实际配额数据
                 const tierBadge = document.getElementById('user-tier');
                 if (tierBadge) {
-                    tierBadge.textContent = '免费版';
+                    tierBadge.textContent = t('免费版');
                     tierBadge.className = 'supabase-tier-badge free';
                 }
             }
@@ -2192,10 +2195,10 @@
             btn.classList.remove('compact');
             btn.innerHTML = `
                 <span class="supabase-login-icon" aria-hidden="true">👤</span>
-                <span class="btn-label" style="margin-left: 8px;">登录</span>
+                <span class="btn-label" style="margin-left: 8px;">${t('登录')}</span>
             `;
-            btn.title = '邮箱登录';
-            btn.setAttribute('aria-label', '打开登录窗口');
+            btn.title = t('邮箱登录');
+            btn.setAttribute('aria-label', t('打开登录窗口'));
             if (loginForm) loginForm.style.display = 'block';
             if (otpForm) otpForm.style.display = 'none';
             if (logoutForm) logoutForm.style.display = 'none';
@@ -2477,7 +2480,7 @@
             if (btn) {
                 if (!isLoggedIn) {
                     btn.disabled = true;
-                    btn.title = '请先登录以使用此功能';
+                    btn.title = t('请先登录以使用此功能');
                     btn.style.cursor = 'not-allowed';
                     btn.style.opacity = '0.6';
                 } else {
@@ -2489,6 +2492,12 @@
             }
         });
     }
+
+    window.addEventListener('localeChanged', () => {
+        i18n?.apply?.(document);
+        updateLoginStatus(authState.user);
+        if (authState.quota) updateQuotaDisplay(authState.quota);
+    });
 
     // ==================== 启动 ====================
 
