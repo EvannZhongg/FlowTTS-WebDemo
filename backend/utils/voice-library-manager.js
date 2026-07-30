@@ -17,8 +17,10 @@ const FALLBACK_VOICES = [
 
 class VoiceLibraryManager {
     constructor() {
-        this.voices = [];
-        this.voiceIds = new Set();
+        this.standardVoices = [];
+        this.extendedVoices = [];
+        this.standardVoiceIds = new Set();
+        this.extendedVoiceIds = new Set();
         this.clonedVoicesCache = new Map();
         this.initialized = false;
     }
@@ -26,24 +28,37 @@ class VoiceLibraryManager {
     init() {
         if (this.initialized) return;
         try {
-            const filePath = path.join(__dirname, '../data/voices.json');
-            const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-            this.voices = data.voices || [];
-            this.voiceIds = new Set(this.voices.map(v => v.id));
-            logger.info(`[VoiceLibraryManager] Loaded ${this.voices.length} voices`);
+            const standardPath = path.join(__dirname, '../data/voices.json');
+            const extendedPath = path.join(__dirname, '../data/voices-flow-01-ex.json');
+            const standardData = JSON.parse(fs.readFileSync(standardPath, 'utf8'));
+            const extendedData = JSON.parse(fs.readFileSync(extendedPath, 'utf8'));
+            this.standardVoices = (standardData.voices || []).map(voice => ({
+                ...voice,
+                model: voice.model || 'flow_02_turbo',
+                provider: voice.provider || 'tencent'
+            }));
+            this.extendedVoices = (extendedData.voices || []).map(voice => ({
+                ...voice,
+                model: 'flow_01_ex',
+                provider: voice.provider || 'minimax'
+            }));
+            this.standardVoiceIds = new Set(this.standardVoices.map(v => v.id));
+            this.extendedVoiceIds = new Set(this.extendedVoices.map(v => v.id));
+            logger.info(`[VoiceLibraryManager] Loaded ${this.standardVoices.length} standard + ${this.extendedVoices.length} extended voices`);
         } catch (error) {
-            logger.error('[VoiceLibraryManager] Failed to load voices.json:', error.message);
+            logger.error('[VoiceLibraryManager] Failed to load voice libraries:', error.message);
         }
         this.initialized = true;
     }
 
     async getStandardVoices() {
         this.init();
-        return { preset: [...this.voices], cloned: [] };
+        return { preset: [...this.standardVoices], cloned: [] };
     }
 
     async getAllVoices() {
-        return this.getStandardVoices();
+        this.init();
+        return { preset: [...this.standardVoices, ...this.extendedVoices], cloned: [] };
     }
 
     /**
@@ -53,7 +68,8 @@ class VoiceLibraryManager {
     async getModelForVoice(voiceId) {
         this.init();
 
-        if (this.voiceIds.has(voiceId)) return '';
+        if (this.extendedVoiceIds.has(voiceId)) return 'flow_01_ex';
+        if (this.standardVoiceIds.has(voiceId)) return 'flow_02_turbo';
 
         // 检查缓存
         const now = Date.now();

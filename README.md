@@ -7,6 +7,7 @@
 - 文本转语音（支持 pcm/wav/mp3，可调语速/音量/音高）
 - 流式合成（SSE 实时推流）
 - 声音克隆（上传或录制音频，生成专属音色）
+- 双模型音色库（101 个 `flow_02_turbo` 精选音色 + 327 个 `flow_01_ex` 系统音色）
 - 多语言支持（中文、英语、日语、韩语等）
 - Supabase JWT 登录 + 体验配额管理（默认 10,000 点；普通/流式合成 100 点，克隆与克隆试听 50 点）
 
@@ -39,7 +40,7 @@ node server.js
     ├── routes/voice-clone.js     # 声音克隆
     ├── middleware/{auth,quota}   # JWT 认证 & 配额中间件
     ├── utils/                    # 腾讯云 API、Supabase、音色库
-    └── data/voices.json          # 预设音色列表
+    └── data/                     # turbo 与 flow_01_ex 静态音色映射
 ```
 
 ## 环境变量

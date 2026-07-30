@@ -141,11 +141,10 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
         // Get Tencent Cloud credentials from environment
         const { secretId, secretKey } = getTencentCredentials();
 
-        // model 优先级：前端显式指定 > voice-library-manager 自动判断
+        // 已知系统音色必须使用音色库声明的模型，克隆音色可由前端显式指定。
         const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const model = (requestedModel && VALID_MODELS.includes(requestedModel))
-            ? requestedModel
-            : await voiceLibraryManager.getModelForVoice(voiceId);
+        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId);
+        const model = voiceModel || ((requestedModel && VALID_MODELS.includes(requestedModel)) ? requestedModel : '');
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';
@@ -273,11 +272,10 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        // model 优先级：前端显式指定 > voice-library-manager 自动判断
+        // 已知系统音色必须使用音色库声明的模型，克隆音色可由前端显式指定。
         const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const model = (requestedModel && VALID_MODELS.includes(requestedModel))
-            ? requestedModel
-            : await voiceLibraryManager.getModelForVoice(voiceId);
+        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId);
+        const model = voiceModel || ((requestedModel && VALID_MODELS.includes(requestedModel)) ? requestedModel : '');
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';
