@@ -9,18 +9,23 @@
 <body data-page="clone">
   <script src="assets/tts-shell.js"></script>
   <main class="app-main"><div class="page-shell">
-    <header class="page-heading"><div class="page-kicker">VOICE CLONING</div><h1>即刻克隆音色</h1><p>6–180 秒参考音频即可复刻音色，可附参考文本提升相似度。生成后即可用于合成。</p></header>
+    <header class="page-heading"><div class="page-kicker">VOICE CLONING</div><h1>即刻克隆音色</h1><p>上传或录制 6–180 秒清晰人声即可复刻音色，生成后可立即用于语音合成。</p></header>
     <div class="clone-grid">
       <section class="panel">
         <div class="section-head"><span class="section-title">创建克隆音色</span><span class="todo-pill">限时体验</span></div>
         <div class="field"><label for="clone-name">音色名称 <span class="api-tag">VoiceName</span></label><input class="input mono" id="clone-name" maxlength="36" value="my_custom_voice"><span class="field-hint" id="clone-name-hint">仅限数字、英文字母和下划线，最多 36 位</span></div>
-        <div class="field placeholder-control"><label for="clone-prompt">参考文本（前端占位） <span class="api-tag">PromptText</span></label><input class="input" id="clone-prompt" disabled placeholder="当前后端未接收 PromptText"><span class="field-hint">保留参考原型样式，不提交到后端。</span></div>
         <div class="sub-tabs"><button class="sub-tab active" data-clone-tab="upload" type="button">上传音频</button><button class="sub-tab" data-clone-tab="record" type="button">在线录音</button></div>
+        <div class="clone-source-panels">
         <div class="sub-tab-content active" id="clone-upload-tab">
           <div class="dropzone" id="clone-dropzone"><strong>点击或拖拽上传音频</strong><span id="clone-file-info">支持 WAV、MP3、M4A 等浏览器可解码的音频格式</span><input type="file" id="clone-file" accept="audio/*"></div>
         </div>
         <div class="sub-tab-content" id="clone-record-tab">
-          <div class="record-box"><button class="record-button" id="record-button" type="button">●</button><div class="record-time" id="record-time">0.0s</div><div class="muted" id="record-status">点击开始录音</div><div class="record-progress"><i id="record-progress"></i></div><audio class="hidden" id="recording-audio" controls style="width:100%;margin-top:14px"></audio></div>
+          <div class="record-box">
+            <div class="record-main"><button class="record-button" id="record-button" type="button" aria-label="开始或停止录音">●</button><div><div class="record-time" id="record-time">0.0s</div><div class="muted" id="record-status">点击开始录音</div></div></div>
+            <div class="record-progress"><i id="record-progress"></i></div>
+            <div class="record-result"><audio class="hidden" id="recording-audio" controls></audio><button class="small-button" id="record-reset" type="button" disabled>重新录音</button></div>
+          </div>
+        </div>
         </div>
         <div class="field"><label for="clone-model">模型</label><select class="select mono" id="clone-model"><option value="">自动</option><option value="flow_02_turbo">flow_02_turbo</option><option value="flow_01_ex">flow_01_ex</option></select></div>
         <div class="consent-note">提交即表示您确认该声音属于本人或已获得合法授权，并知悉可随时请求删除。</div>
@@ -40,7 +45,7 @@
         <button class="primary-button" id="clone-synth-btn" type="button">合成并试听</button>
         <div class="loading" id="clone-synth-loading"><span class="spinner"></span><span>正在合成...</span></div><div class="message" id="clone-synth-message"></div>
         <div class="audio-player result-card" id="clone-player"><audio id="clone-audio" controls></audio><div class="metrics"><div class="metric"><b id="clone-time">-</b><span>处理耗时</span></div><div class="metric"><b id="clone-size">-</b><span>文件大小</span></div></div><button class="secondary-button" id="clone-download" type="button">下载 WAV</button></div>
-        <div class="placeholder-banner"><span>◌</span><div><strong>暂未接入的参考能力</strong>训练进度、PromptText、克隆数量上限和云端任务状态当前没有后端数据，不做伪实现。</div></div>
+        <div class="placeholder-banner"><span>◌</span><div><strong>暂未接入的参考能力</strong>训练进度、克隆数量上限和云端任务状态当前没有后端数据，不做伪实现。</div></div>
       </section>
     </div>
   </div></main>

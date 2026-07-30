@@ -238,19 +238,24 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 
 .clone-grid { display: grid; grid-template-columns: minmax(0, 1.12fr) minmax(300px, .88fr); gap: 18px; align-items: start; }
 .panel { display: flex; flex-direction: column; gap: 16px; padding: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 42px -32px rgba(40,30,10,.35); }
-.sub-tab-content { display: none; }
-.sub-tab-content.active { display: block; }
-.dropzone { min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; border: 1.5px dashed var(--blue-border); border-radius: 12px; background: #f5f8ff; color: var(--ink-3); }
+.clone-source-panels { position: relative; height: 190px; }
+.clone-source-panels .sub-tab-content { position: absolute; inset: 0; visibility: hidden; opacity: 0; pointer-events: none; transition: opacity .15s; }
+.clone-source-panels .sub-tab-content.active { visibility: visible; opacity: 1; pointer-events: auto; }
+.dropzone { height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; border: 1.5px dashed var(--blue-border); border-radius: 12px; background: #f5f8ff; color: var(--ink-3); }
 .dropzone.dragging, .dropzone.has-file { border-color: var(--blue); background: var(--blue-light); }
 .dropzone input { display: none; }
 .consent-note { padding: 11px 12px; color: var(--ink-3); background: var(--bg-muted); border-radius: 9px; font-size: 11px; }
-.record-box { padding: 24px; text-align: center; border: 1px solid var(--line); border-radius: 12px; background: #fbfaf7; }
+.record-box { height: 190px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; padding: 18px 20px; border: 1px solid var(--line); border-radius: 12px; background: #fbfaf7; }
+.record-main { display: flex; align-items: center; justify-content: center; gap: 16px; text-align: left; }
 .record-button { width: 68px; height: 68px; border: 0; border-radius: 999px; color: #fff; background: var(--blue); font-size: 25px; }
 .record-button.recording { background: var(--red); animation: pulse 1.2s infinite; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 10px rgba(213,73,65,.12); } }
-.record-time { margin: 10px 0 7px; font: 20px var(--mono); }
+.record-time { margin: 0 0 3px; font: 20px var(--mono); }
 .record-progress { height: 6px; overflow: hidden; background: #e7e4dc; border-radius: 99px; }
 .record-progress i { display: block; width: 0; height: 100%; background: var(--blue); }
+.record-result { min-height: 34px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.record-result audio { width: min(300px, calc(100% - 96px)); height: 34px; }
+.record-result .small-button:disabled { cursor: not-allowed; opacity: .45; }
 .voice-list { display: flex; flex-direction: column; gap: 8px; }
 .list-row, .history-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: #fbfaf7; }
 .list-main, .history-main { min-width: 0; flex: 1; }

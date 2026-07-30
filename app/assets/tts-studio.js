@@ -734,13 +734,40 @@
     info.textContent = `${file.name} · ${(file.size / 1024).toFixed(1)} KB · 将转换为 16kHz 单声道 WAV`;
     $('clone-dropzone').classList.add('has-file');
     if (clearRecording) {
-      state.recordedBlob = null;
-      if (state.recordedUrl) {
-        URL.revokeObjectURL(state.recordedUrl);
-        state.recordedUrl = '';
-      }
-      $('recording-audio')?.classList.add('hidden');
+      resetRecording();
     }
+  }
+
+  function resetRecording() {
+    if (state.recorder?.state === 'recording') {
+      state.recorder.onstop = null;
+      state.recorder.stop();
+    }
+    clearInterval(state.recordTimer);
+    state.recordTimer = null;
+    state.mediaStream?.getTracks().forEach((track) => track.stop());
+    state.mediaStream = null;
+    state.recorder = null;
+    state.recordedChunks = [];
+    state.recordedBlob = null;
+    if (state.recordedUrl) {
+      URL.revokeObjectURL(state.recordedUrl);
+      state.objectUrls.delete(state.recordedUrl);
+      state.recordedUrl = '';
+    }
+    const audio = $('recording-audio');
+    if (audio) {
+      audio.pause();
+      audio.removeAttribute('src');
+      audio.load();
+      audio.classList.add('hidden');
+    }
+    $('record-time').textContent = '0.0s';
+    $('record-status').textContent = '点击开始录音';
+    $('record-progress').style.width = '0%';
+    $('record-button').classList.remove('recording');
+    $('record-reset').disabled = true;
+    clearMessage('clone-message');
   }
 
   async function toggleRecording() {
@@ -748,6 +775,8 @@
       state.recorder.stop(); return;
     }
     try {
+      if (state.recordedBlob) resetRecording();
+      $('record-reset').disabled = true;
       state.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
       const supported = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : '';
       state.recorder = new MediaRecorder(state.mediaStream, supported ? { mimeType: supported } : undefined);
@@ -761,7 +790,10 @@
         state.recordedUrl = makeObjectUrl(state.recordedBlob);
         $('recording-audio').src = state.recordedUrl; $('recording-audio').classList.remove('hidden');
         state.mediaStream?.getTracks().forEach((track) => track.stop());
-        clearInterval(state.recordTimer); $('record-button').classList.remove('recording'); $('record-status').textContent = '录音完成';
+        state.mediaStream = null;
+        clearInterval(state.recordTimer); state.recordTimer = null;
+        $('record-button').classList.remove('recording'); $('record-status').textContent = '录音完成';
+        $('record-reset').disabled = false;
       };
       state.recordingStartedAt = Date.now(); state.recorder.start(); $('record-button').classList.add('recording'); $('record-status').textContent = '录音中，再次点击停止';
       state.recordTimer = setInterval(() => {
@@ -852,7 +884,9 @@
     ['dragenter', 'dragover'].forEach((type) => drop.addEventListener(type, (event) => { event.preventDefault(); drop.classList.add('dragging'); }));
     ['dragleave', 'drop'].forEach((type) => drop.addEventListener(type, (event) => { event.preventDefault(); drop.classList.remove('dragging'); }));
     drop.addEventListener('drop', (event) => { if (event.dataTransfer.files[0]) { $('clone-file').files = event.dataTransfer.files; renderSelectedFile(event.dataTransfer.files[0]); } });
-    $('record-button').addEventListener('click', toggleRecording); $('clone-btn').addEventListener('click', createClone);
+    $('record-button').addEventListener('click', toggleRecording);
+    $('record-reset').addEventListener('click', resetRecording);
+    $('clone-btn').addEventListener('click', createClone);
     $('clone-synth-model').addEventListener('change', () => { $('clone-emotion-field').classList.toggle('hidden', $('clone-synth-model').value !== 'flow_01_ex'); });
     $('clone-synth-btn').addEventListener('click', synthesizeClone); $('clone-download').addEventListener('click', () => downloadBlob(state.cloneAudioBlob, 'clone-tts'));
     $('cloned-voice-list').addEventListener('click', (event) => {
