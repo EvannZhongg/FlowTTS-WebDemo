@@ -13,7 +13,7 @@
  *
  * @features
  * - 浮动登录按钮，独立于现有 UI
- * - Magic Link 无密码登录
+ * - 任意邮箱验证码无密码登录/注册
  * - 登录状态持久化（localStorage）
  * - 自动刷新 Session
  * - 完全不侵入现有代码
@@ -52,11 +52,7 @@
 
         // 调试模式
         DEBUG: window.location.hostname === 'localhost' ||
-               window.location.hostname === '127.0.0.1',
-        
-        // Google OAuth Client ID (Required for One Tap)
-        // TODO: Replace with your actual Client ID from Google Cloud Console
-        GOOGLE_CLIENT_ID: '747933587228-0h677sv7suersloc2clu5grkg5bkf198.apps.googleusercontent.com' 
+               window.location.hostname === '127.0.0.1'
     };
 
     const LOGIN_BTN_POSITION_KEY = 'supabase_login_btn_position';
@@ -90,6 +86,11 @@
         } else {
             console.log('%c[Supabase Auth]%s', style, msg);
         }
+    }
+
+    function isEmailOtpUser(user) {
+        const provider = user?.app_metadata?.provider || user?.identities?.[0]?.provider || '';
+        return provider === 'email';
     }
 
     // ==================== Supabase 初始化 ====================
@@ -1179,61 +1180,6 @@
                 }
             }
             
-            /* Google OAuth UI */
-            .supabase-divider {
-                display: flex;
-                align-items: center;
-                text-align: center;
-                margin: 20px 0;
-                color: var(--supabase-text-muted);
-                font-size: 13px;
-            }
-            .supabase-divider::before,
-            .supabase-divider::after {
-                content: '';
-                flex: 1;
-                border-bottom: 1px solid var(--supabase-border);
-            }
-            .supabase-divider span {
-                padding: 0 10px;
-            }
-            .supabase-google-btn {
-                width: 100%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 10px;
-                background: #ffffff;
-                color: #3c4043;
-                border: 1px solid #dadce0;
-                border-radius: 12px;
-                padding: 10px 16px;
-                font-size: 15px;
-                font-weight: 500;
-                cursor: pointer;
-                transition: all 0.2s ease;
-                margin-top: 0; 
-                position: relative;
-            }
-            body.dark .supabase-google-btn {
-                background: #1e293b;
-                color: #e2e8f0;
-                border-color: #475569;
-            }
-            .supabase-google-btn:hover {
-                background: #f8fafb;
-                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-                border-color: #d2e3fc;
-                transform: translateY(-1px);
-            }
-            body.dark .supabase-google-btn:hover {
-                 background: #334155;
-                 border-color: #64748b;
-            }
-            .supabase-google-btn svg {
-                width: 20px;
-                height: 20px;
-            }
         `;
         document.head.appendChild(style);
 
@@ -1246,7 +1192,7 @@
             <div class="banner-content">
                 <span class="banner-icon">ℹ️</span>
                 <span class="banner-text">
-                    您当前未登录，请点击右下角 <strong>👤 登录</strong> 按钮，立即获取 100 次免费配额
+                    您当前未登录，请点击右下角 <strong>👤 登录</strong> 按钮，立即获取 10,000 点体验配额
                 </span>
                 <button class="banner-close" id="banner-close" aria-label="关闭提示">✕</button>
             </div>
@@ -1342,19 +1288,7 @@
                             <input type="text" id="supabase-company" placeholder="方便我们更好地为你服务" autocomplete="organization" />
                         </div>
                         <button class="supabase-btn primary" id="supabase-send-otp">发送验证码</button>
-                        
-                        <!-- Google OAuth -->
-                        <div class="supabase-divider"><span>或者</span></div>
-                        <button class="supabase-google-btn" id="supabase-google-login">
-                            <svg viewBox="0 0 24 24" width="20" height="20">
-                                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                            </svg>
-                            <span>Google 账号登录</span>
-                        </button>
-
+                        <p class="supabase-helper">首次使用的邮箱将在验证码验证通过后自动注册，无需设置密码。</p>
                         <div class="supabase-status" id="supabase-status"></div>
                     </div>
                     <div id="otp-form" class="supabase-form-step" style="display:none;">
@@ -1475,7 +1409,6 @@
 
         // 绑定事件
         document.getElementById('supabase-send-otp').addEventListener('click', sendOtp);
-        document.getElementById('supabase-google-login').addEventListener('click', signInWithGoogle); // Google Login Binding
         document.getElementById('supabase-verify-otp').addEventListener('click', verifyOtp);
         document.getElementById('supabase-resend-otp').addEventListener('click', sendOtp);
         document.getElementById('supabase-cancel-otp').addEventListener('click', cancelVerification);
@@ -1513,103 +1446,7 @@
         });
 
         setLoginStep(1);
-        
-        // Initialize Google One Tap if Client ID is configured
-        if (APP_CONFIG.GOOGLE_CLIENT_ID) {
-            initGoogleOneTap();
-        }
-        
         log('UI 已注入');
-    }
-
-    // ==================== Google One Tap ====================
-
-    // Nonce for Google One Tap ↔ Supabase signInWithIdToken pairing
-    let _googleOneTapNonce = null;
-
-    // Generate a random nonce string
-    function generateNonce() {
-        const array = new Uint8Array(32);
-        crypto.getRandomValues(array);
-        return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // SHA-256 hash (Google One Tap expects hashed nonce)
-    async function sha256(message) {
-        const msgBuffer = new TextEncoder().encode(message);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        return Array.from(new Uint8Array(hashBuffer), b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function initGoogleOneTap() {
-        if (!authState.supabase) return;
-
-        // Check if user is already logged in
-        authState.supabase.auth.getSession().then(async ({ data: { session } }) => {
-            if (session) return; // User already logged in
-
-            // Generate nonce pair: raw for Supabase, hashed for Google
-            _googleOneTapNonce = generateNonce();
-            const hashedNonce = await sha256(_googleOneTapNonce);
-
-            // Load Google Script
-            const script = document.createElement('script');
-            script.src = 'https://accounts.google.com/gsi/client';
-            script.async = true;
-            script.defer = true;
-            script.onload = () => {
-                try {
-                    // Initialize One Tap with hashed nonce
-                    window.google.accounts.id.initialize({
-                        client_id: APP_CONFIG.GOOGLE_CLIENT_ID,
-                        callback: handleGoogleCredentialResponse,
-                        nonce: hashedNonce,
-                        cancel_on_tap_outside: false,
-                        context: 'signin',
-                        ux_mode: 'popup',
-                        use_fedcm_for_prompt: false // Revert to false to fix localhost "unknown_reason" skip
-                    });
-
-                    // Prompt
-                    window.google.accounts.id.prompt((notification) => {
-                        if (notification.isNotDisplayed()) {
-                            console.warn('[Supabase Auth] Google One Tap not displayed. Reason:', notification.getNotDisplayedReason());
-                            log('Google One Tap hidden: ' + notification.getNotDisplayedReason(), 'warn');
-                        } else if (notification.isSkippedMoment()) {
-                            console.warn('[Supabase Auth] Google One Tap authentication skipped. Reason:', notification.getSkippedReason());
-                            log('Google One Tap skipped: ' + notification.getSkippedReason(), 'warn');
-                        }
-                    });
-                } catch (e) {
-                    log('Google One Tap initialization failed: ' + e.message, 'error');
-                }
-            };
-            document.head.appendChild(script);
-        });
-    }
-
-    async function handleGoogleCredentialResponse(response) {
-        log('Google One Tap credential received');
-        
-        try {
-            // Pass the raw nonce to Supabase for verification against the hashed nonce in id_token
-            const { data, error } = await authState.supabase.auth.signInWithIdToken({
-                provider: 'google',
-                token: response.credential,
-                nonce: _googleOneTapNonce,
-            });
-
-            if (error) throw error;
-
-            log('Google One Tap login successful');
-            showStatus('登录成功！正在跳转...', 'success');
-            
-            // Auto-refresh state will handle the UI update via onAuthStateChange
-            
-        } catch (error) {
-            log('Google One Tap login error: ' + error.message, 'error');
-            showStatus('Google 登录失败: ' + error.message, 'error');
-        }
     }
 
     function toggleModal(force) {
@@ -1676,52 +1513,6 @@
 
     let verificationEmail = null;  // 记录正在验证的邮箱
     let countdownTimer = null;     // 倒计时定时器
-
-    // Google OAuth 登录
-    async function signInWithGoogle() {
-        const btn = document.getElementById('supabase-google-login');
-        if (!btn) return;
-        
-        const originalContent = btn.innerHTML;
-        
-        try {
-            btn.disabled = true;
-            btn.innerHTML = `
-                <span style="display:inline-block; animation:spin 1s linear infinite; margin-right:8px">⏳</span> 
-                正在跳转...
-            `;
-            // 添加简单的旋转动画样式
-            if (!document.getElementById('spin-style')) {
-                const s = document.createElement('style');
-                s.id = 'spin-style';
-                s.textContent = '@keyframes spin { 100% { transform: rotate(360deg); } }';
-                document.head.appendChild(s);
-            }
-            
-            // 获取当前完整 URL 用于回调（保留 query 参数，如 cli-auth 的 state/callback_port）
-            const redirectTo = window.location.origin + window.location.pathname + window.location.search;
-            
-            const { data, error } = await authState.supabase.auth.signInWithOAuth({
-                provider: 'google',
-                options: {
-                    redirectTo: redirectTo,
-                    queryParams: {
-                        access_type: 'offline',
-                        prompt: 'consent',
-                    },
-                }
-            });
-
-            if (error) throw error;
-            
-            // OAuth 会重定向页面
-            
-        } catch (error) {
-            showStatus('Google 登录失败: ' + error.message, 'error');
-            btn.disabled = false;
-            btn.innerHTML = originalContent;
-        }
-    }
 
     // 发送验证码
     async function sendOtp() {
@@ -2522,6 +2313,16 @@
         authState.supabase.auth.onAuthStateChange(async (event, session) => {
             log(`状态变化: ${event}`);
 
+            if (session?.user && !isEmailOtpUser(session.user)) {
+                log('检测到非邮箱验证码账号，已拒绝该会话', 'warn');
+                authState.session = null;
+                authState.user = null;
+                updateLoginStatus(null);
+                await authState.supabase.auth.signOut({ scope: 'local' });
+                showStatus('当前仅支持邮箱验证码登录，请使用邮箱重新登录。', 'error');
+                return;
+            }
+
             authState.session = session;
             authState.user = session?.user || null;
 
@@ -2573,7 +2374,13 @@
 
         // 检查当前登录状态
         const { data: { session } } = await authState.supabase.auth.getSession();
-        if (session?.user) {
+        if (session?.user && !isEmailOtpUser(session.user)) {
+            await authState.supabase.auth.signOut({ scope: 'local' });
+            authState.session = null;
+            authState.user = null;
+            updateLoginStatus(null);
+            showFirstTimeGuide();
+        } else if (session?.user) {
             authState.session = session;
             authState.user = session.user;
             updateLoginStatus(session.user);
@@ -2628,7 +2435,7 @@
                 <div class="guide-content">
                     <h3>👋 欢迎使用 TRTC AI</h3>
                     <p>点击右下角 <strong>👤 登录</strong> 按钮</p>
-                    <p>立即获取 <strong>100 次免费配额</strong></p>
+                    <p>使用任意邮箱验证码登录或注册，立即获取 <strong>10,000 点体验配额</strong></p>
                     <button onclick="window.closeGuide()">知道了</button>
                 </div>
             `;

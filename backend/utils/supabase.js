@@ -98,9 +98,15 @@ async function verifyJWT(authHeader) {
             throw new Error('User not found');
         }
 
+        const provider = user.app_metadata?.provider || user.identities?.[0]?.provider || '';
+        if (provider !== 'email') {
+            throw new Error('Only email verification code accounts are supported');
+        }
+
         return {
             id: user.id,
-            email: user.email
+            email: user.email,
+            provider
         };
     } catch (error) {
         throw new Error(`JWT verification error: ${error.message}`);
