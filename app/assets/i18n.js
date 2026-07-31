@@ -192,7 +192,7 @@
     '精品音色，开箱即用': 'Curated voices, ready to use',
     '可用音色随模型能力变化。搜索、筛选、试听并复制 Voice ID，点击卡片即可带入文本转语音。': 'Available voices vary by model. Search, filter, preview, and copy a Voice ID, or click a card to open it in Text-to-Speech.',
     '全部可用音色': 'All available voices',
-    '全部模型 · 428': 'All models · 428',
+    '全部模型': 'All models',
     '正在加载音色...': 'Loading voices...',
     'flow_02_turbo 提供 101 个精选音色；flow_01_ex 额外提供 327 个系统音色，合计 428 个。': 'flow_02_turbo provides 101 curated voices, while flow_01_ex adds 327 system voices, for a total of 428.',
 
