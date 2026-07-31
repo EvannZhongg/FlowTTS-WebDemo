@@ -19,10 +19,45 @@ const TTS_HOST = 'trtc.ai.tencentcloudapi.com';
 const TTS_VERSION = '2019-07-22';
 const TTS_REGION = process.env.TRTC_REGION || 'ap-beijing';
 const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '';
+const CLONED_VOICE_LIMIT = 20;
+
+async function requireCloneCapacity(req, res, next) {
+    try {
+        const { count, error } = await supabaseDb
+            .from('cloned_voices')
+            .select('voice_id', { count: 'exact', head: true })
+            .eq('user_id', req.user.id)
+            .eq('is_active', true);
+
+        if (error) throw error;
+
+        const current = Number(count || 0);
+        if (current >= CLONED_VOICE_LIMIT) {
+            return res.status(409).json({
+                code: 'clone_capacity_exceeded',
+                message: `Cloned voice capacity reached (${current}/${CLONED_VOICE_LIMIT})`,
+                capacity: { current, limit: CLONED_VOICE_LIMIT, remaining: 0 }
+            });
+        }
+
+        req.cloneCapacity = {
+            current,
+            limit: CLONED_VOICE_LIMIT,
+            remaining: CLONED_VOICE_LIMIT - current
+        };
+        next();
+    } catch (error) {
+        logger.error({ userId: req.user?.id, error: error.message }, '[Voice Clone] Capacity check failed');
+        return res.status(500).json({
+            code: 'capacity_check_failed',
+            message: 'Failed to check cloned voice capacity: ' + error.message
+        });
+    }
+}
 
 /**
  * POST /api/voice/clone
- * Clone voice from audio sample (10 quota)
+ * Clone voice from audio sample (50 quota, max 20 active voices per user)
  *
  * Body:
  * {
@@ -32,7 +67,7 @@ const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '';
  *   "description": "Description"       // optional, 描述信息
  * }
  */
-router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res) => {
+router.post('/clone', authenticate, requireCloneCapacity, requireQuota('voice-clone'), async (req, res) => {
     try {
         const {
             audioData,
@@ -124,7 +159,12 @@ router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res
             voiceId: response.VoiceId,
             requestId: response.RequestId,
             quota: req.quotaInfo, // { daily, used, remaining }
-            clonedVoice: clonedVoice || null
+            clonedVoice: clonedVoice || null,
+            capacity: {
+                current: req.cloneCapacity.current + 1,
+                limit: CLONED_VOICE_LIMIT,
+                remaining: Math.max(CLONED_VOICE_LIMIT - req.cloneCapacity.current - 1, 0)
+            }
         });
     } catch (error) {
         logger.error({
@@ -167,7 +207,12 @@ router.get('/list', authenticate, async (req, res) => {
 
         res.json({
             code: 'success',
-            voices: data
+            voices: data,
+            capacity: {
+                current: data.length,
+                limit: CLONED_VOICE_LIMIT,
+                remaining: Math.max(CLONED_VOICE_LIMIT - data.length, 0)
+            }
         });
     } catch (error) {
         logger.error({ error: error.message }, '[Voice Clone] List failed');

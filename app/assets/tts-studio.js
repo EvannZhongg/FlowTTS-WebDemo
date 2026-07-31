@@ -47,6 +47,7 @@
     cloneAudioBlob: null,
     clonedVoiceId: '',
     clonedVoices: [],
+    cloneCapacity: { current: 0, limit: 20, remaining: 20 },
     recorder: null,
     mediaStream: null,
     recordedChunks: [],
@@ -857,6 +858,9 @@
 
   async function createClone() {
     clearMessage('clone-message');
+    if (state.cloneCapacity.current >= state.cloneCapacity.limit) {
+      return showMessage('clone-message', 'error', t(`已达到克隆音色容量上限（${state.cloneCapacity.current} / ${state.cloneCapacity.limit}），请先删除一个音色后再试`));
+    }
     const name = $('clone-name').value.trim();
     if (!name || !validateCloneName()) return showMessage('clone-message', 'error', t('请输入合法的音色名称'));
     const source = state.recordedBlob || $('clone-file').files[0];
@@ -873,6 +877,7 @@
         })
       }, 'response');
       const data = await response.json(); readQuotaFromResponse(response, data);
+      if (data.capacity) state.cloneCapacity = data.capacity;
       state.clonedVoiceId = data.voiceId || ''; $('clone-use-voice-id').value = state.clonedVoiceId;
       showMessage('clone-message', 'success', t(`克隆成功，Voice ID：${state.clonedVoiceId}`));
       await saveHistory('clone-create', { voiceId: state.clonedVoiceId, voiceName: name, processingTime: 0, size: processed.blob.size }, null);
@@ -884,11 +889,28 @@
   async function loadClonedVoices() {
     const list = $('cloned-voice-list');
     if (!list) return;
-    if (!getSession()?.access_token) { list.innerHTML = `<div class="empty-state">${t('登录后可查看已保存音色')}</div>`; return; }
+    if (!getSession()?.access_token) {
+      state.cloneCapacity = { current: 0, limit: 20, remaining: 20 };
+      if ($('clone-count')) $('clone-count').textContent = '-- / 20';
+      list.innerHTML = `<div class="empty-state">${t('登录后可查看已保存音色')}</div>`;
+      return;
+    }
     try {
       const data = await apiFetch('/api/voice/list', { headers: authHeaders() });
       state.clonedVoices = data.voices || [];
-      if ($('clone-count')) $('clone-count').textContent = i18n?.getLocale?.() === 'en' ? `${state.clonedVoices.length}` : `${state.clonedVoices.length} 个`;
+      state.cloneCapacity = data.capacity || {
+        current: state.clonedVoices.length,
+        limit: 20,
+        remaining: Math.max(20 - state.clonedVoices.length, 0)
+      };
+      if ($('clone-count')) $('clone-count').textContent = `${state.cloneCapacity.current} / ${state.cloneCapacity.limit}`;
+      const cloneButton = $('clone-btn');
+      if (cloneButton) {
+        const full = state.cloneCapacity.current >= state.cloneCapacity.limit;
+        cloneButton.disabled = full;
+        cloneButton.title = full ? t('已达到 20 个克隆音色上限，请先删除一个音色') : '';
+        cloneButton.textContent = full ? t('容量已满') : t('开始克隆');
+      }
       list.innerHTML = state.clonedVoices.length ? state.clonedVoices.map((voice) => `<div class="list-row">
         <div class="list-main"><div class="list-name">${escapeHtml(voice.voice_name || t('未命名'))} <span class="status-pill done">${t('可用')}</span></div><div class="list-id">${escapeHtml(voice.voice_id)}</div><div class="list-meta">${voice.created_at ? formatDateTime(voice.created_at) : ''}${voice.audio_duration ? ` · ${Number(voice.audio_duration).toFixed(1)}s` : ''}</div></div>
         <div class="row-actions"><button class="small-button use-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('使用')}</button><button class="small-button copy-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('复制')}</button><button class="small-button danger delete-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('删除')}</button></div>

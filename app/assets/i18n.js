@@ -163,6 +163,8 @@
     '本次克隆将消耗 50 点配额': 'This clone will cost 50 quota points',
     '音频要求：6–180 秒': 'Audio requirement: 6–180 seconds',
     '开始克隆': 'Start cloning',
+    '容量已满': 'Capacity full',
+    '已达到 20 个克隆音色上限，请先删除一个音色': 'The 20 cloned voice limit has been reached. Delete a voice first.',
     '正在转换音频并提交克隆...': 'Converting audio and submitting the clone...',
     '已保存的音色': 'Saved voices',
     '-- 个': '--',
@@ -366,6 +368,7 @@
     if ((match = source.match(/^克隆失败：(.+)$/))) return `Cloning failed: ${match[1]}`;
     if ((match = source.match(/^无法开始录音：(.+)$/))) return `Could not start recording: ${match[1]}`;
     if ((match = source.match(/^克隆成功，Voice ID：(.+)$/))) return `Clone created. Voice ID: ${match[1]}`;
+    if ((match = source.match(/^已达到克隆音色容量上限（(\d+) \/ (\d+)），请先删除一个音色后再试$/))) return `Cloned voice capacity reached (${match[1]} / ${match[2]}). Delete a voice and try again.`;
     if ((match = source.match(/^音频时长为 (.+) 秒，请使用 6–180 秒音频$/))) return `Audio duration is ${match[1]} seconds. Please use audio between 6 and 180 seconds.`;
     if ((match = source.match(/^(.+) · 将转换为 16kHz 单声道 WAV$/))) return `${match[1]} · Will be converted to 16 kHz mono WAV`;
     return source;
