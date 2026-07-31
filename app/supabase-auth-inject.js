@@ -55,8 +55,6 @@
                window.location.hostname === '127.0.0.1'
     };
 
-    const LOGIN_BTN_POSITION_KEY = 'supabase_login_btn_position';
-    const FIRST_TIME_GUIDE_SESSION_KEY = 'trtc_ai_first_time_guide_shown';
     const i18n = window.TTSI18n;
     const t = (text, variables) => i18n?.t(text, variables) || text;
 
@@ -114,119 +112,6 @@
         }
     }
 
-    function clamp(value, min, max) {
-        return Math.min(Math.max(value, min), max);
-    }
-
-    // 恢复上次拖拽位置
-    function applySavedButtonPosition(btn) {
-        const saved = localStorage.getItem(LOGIN_BTN_POSITION_KEY);
-        if (!saved) return;
-
-        try {
-            const { left, top } = JSON.parse(saved);
-            if (Number.isFinite(left) && Number.isFinite(top)) {
-                const margin = 8;
-                const maxLeft = Math.max(margin, window.innerWidth - btn.offsetWidth - margin);
-                const maxTop = Math.max(margin, window.innerHeight - btn.offsetHeight - margin);
-                const boundedLeft = clamp(left, margin, maxLeft);
-                const boundedTop = clamp(top, margin, maxTop);
-
-                btn.style.left = `${boundedLeft}px`;
-                btn.style.top = `${boundedTop}px`;
-                btn.style.right = 'auto';
-                btn.style.bottom = 'auto';
-            }
-        } catch (e) {
-            // 忽略无效数据
-        }
-    }
-
-    // 允许拖拽浮动按钮
-    function enableLoginButtonDrag(btn) {
-        let dragging = false;
-        let moved = false;
-        let startX = 0;
-        let startY = 0;
-        let startLeft = 0;
-        let startTop = 0;
-        const margin = 8;
-        const touchMoveOpts = { passive: false };
-
-        function onPointerDown(event) {
-            const point = event.touches ? event.touches[0] : event;
-            if (!point) return;
-            dragging = true;
-            moved = false;
-            const rect = btn.getBoundingClientRect();
-            startLeft = rect.left;
-            startTop = rect.top;
-            startX = point.clientX;
-            startY = point.clientY;
-
-            btn.dataset.dragging = 'true';
-            btn.style.left = `${rect.left}px`;
-            btn.style.top = `${rect.top}px`;
-            btn.style.right = 'auto';
-            btn.style.bottom = 'auto';
-
-            document.addEventListener('mousemove', onPointerMove);
-            document.addEventListener('touchmove', onPointerMove, touchMoveOpts);
-            document.addEventListener('mouseup', onPointerUp);
-            document.addEventListener('touchend', onPointerUp);
-        }
-
-        function onPointerMove(event) {
-            if (!dragging) return;
-            const point = event.touches ? event.touches[0] : event;
-            if (!point) return;
-            event.preventDefault();
-
-            const deltaX = point.clientX - startX;
-            const deltaY = point.clientY - startY;
-            if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
-                moved = true;
-            }
-
-            const maxLeft = Math.max(margin, window.innerWidth - btn.offsetWidth - margin);
-            const maxTop = Math.max(margin, window.innerHeight - btn.offsetHeight - margin);
-            const nextLeft = clamp(startLeft + deltaX, margin, maxLeft);
-            const nextTop = clamp(startTop + deltaY, margin, maxTop);
-
-            btn.style.left = `${nextLeft}px`;
-            btn.style.top = `${nextTop}px`;
-        }
-
-        function onPointerUp() {
-            if (!dragging) return;
-            dragging = false;
-
-            document.removeEventListener('mousemove', onPointerMove);
-            document.removeEventListener('touchmove', onPointerMove, touchMoveOpts);
-            document.removeEventListener('mouseup', onPointerUp);
-            document.removeEventListener('touchend', onPointerUp);
-
-            const rect = btn.getBoundingClientRect();
-            localStorage.setItem(LOGIN_BTN_POSITION_KEY, JSON.stringify({
-                left: rect.left,
-                top: rect.top
-            }));
-
-            if (moved) {
-                btn.dataset.dragBlocked = '1';
-                // 确保拖拽后不会误触发点击
-                setTimeout(() => {
-                    delete btn.dataset.dragBlocked;
-                }, 0);
-            }
-
-            delete btn.dataset.dragging;
-        }
-
-        btn.addEventListener('mousedown', onPointerDown);
-        btn.addEventListener('touchstart', onPointerDown);
-    }
-
     // ==================== UI 注入 ====================
     
     function injectLoginUI() {
@@ -251,120 +136,6 @@
             }
             body.supabase-modal-open {
                 overflow: hidden;
-            }
-            #supabase-login-btn {
-                position: fixed;
-                bottom: 24px;
-                right: 24px;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                padding: 0 12px;
-                height: 42px;
-                min-width: 96px;  /* 确保按钮有最小宽度 */
-                border-radius: 12px;
-                background: var(--supabase-surface);
-                color: var(--supabase-text);
-                border: 1px solid var(--supabase-border);
-                font-size: 14px;
-                font-weight: 600;
-                letter-spacing: 0.1px;
-                box-shadow: 0 12px 20px rgba(15, 23, 42, 0.12);
-                cursor: grab;
-                user-select: none;
-                z-index: 9999;
-                transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease, border-color 0.18s ease;
-                backdrop-filter: blur(6px);
-            }
-            #supabase-login-btn:active {
-                cursor: grabbing;
-            }
-            #supabase-login-btn.compact {
-                gap: 6px;
-                padding: 0 10px;
-                min-width: 88px;
-                height: 40px;
-                border-radius: 11px;
-            }
-            #supabase-login-btn .quota-chip {
-                display: inline-flex;
-                align-items: center;
-                gap: 4px;
-                padding: 5px 9px;
-                border-radius: 999px;
-                background: rgba(45, 164, 78, 0.14);
-                color: #1b7d34;
-                font-size: 12px;
-                font-weight: 700;
-                line-height: 1;
-                letter-spacing: 0.2px;
-            }
-            #supabase-login-btn.logged-in {
-                background: rgba(45, 164, 78, 0.12);
-                border-color: rgba(45, 164, 78, 0.35);
-                color: #1b7d34;
-                box-shadow: 0 12px 20px rgba(45, 164, 78, 0.15);
-            }
-            #supabase-login-btn:hover {
-                transform: translateY(-2px);
-                background: rgba(15, 23, 42, 0.04);
-                border-color: rgba(15, 23, 42, 0.18);
-                box-shadow: 0 16px 24px rgba(15, 23, 42, 0.16);
-            }
-            body.dark #supabase-login-btn {
-                background: rgba(30, 41, 59, 0.85);
-                color: #e2e8f0;
-                border-color: rgba(148, 163, 184, 0.18);
-                box-shadow: 0 12px 22px rgba(0, 0, 0, 0.35);
-            }
-            body.dark #supabase-login-btn:hover {
-                background: rgba(51, 65, 85, 0.9);
-                border-color: rgba(148, 163, 184, 0.28);
-            }
-            /* 呼吸动画（未登录时） */
-            @keyframes breathe {
-                0%, 100% {
-                    box-shadow: 0 12px 20px rgba(15, 23, 42, 0.12), 0 0 0 0 rgba(31, 111, 235, 0.4);
-                }
-                50% {
-                    box-shadow: 0 12px 20px rgba(15, 23, 42, 0.12), 0 0 0 10px rgba(31, 111, 235, 0);
-                }
-            }
-            #supabase-login-btn:not(.logged-in) {
-                animation: breathe 2s ease-in-out infinite;
-            }
-            #supabase-login-btn .supabase-login-icon {
-                width: 28px;
-                height: 28px;
-                border-radius: 50%;
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
-                background: linear-gradient(135deg, #dff8ed 0%, #9be6c4 100%);
-                color: #166534;
-                font-size: 16px;
-                line-height: 1;
-                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2), 0 6px 14px rgba(34, 197, 94, 0.16);
-            }
-            #supabase-login-btn .btn-label {
-                font-size: 14px;
-                font-weight: 600;
-                white-space: nowrap;
-            }
-            body.dark #supabase-login-btn.logged-in {
-                background: rgba(34, 197, 94, 0.18);
-                border-color: rgba(34, 197, 94, 0.4);
-                color: #bbf7d0;
-            }
-            body.dark #supabase-login-btn .supabase-login-icon {
-                background: linear-gradient(135deg, #0c3b2d 0%, #19935f 100%);
-                color: #bbf7d0;
-                box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 6px 14px rgba(34, 197, 94, 0.22);
-            }
-            body.dark #supabase-login-btn .quota-chip {
-                background: rgba(34, 197, 94, 0.16);
-                color: #bbf7d0;
             }
             #supabase-login-modal {
                 position: fixed;
@@ -980,179 +751,7 @@
             .shake {
                 animation: shake 0.4s;
             }
-            /* 未登录横幅提示 */
-            .auth-banner {
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-                border-bottom: 1px solid #90caf9;
-                padding: 12px 24px;
-                z-index: 9998;
-                animation: slideDown 0.3s ease;
-                box-shadow: 0 2px 8px rgba(31, 111, 235, 0.1);
-            }
-            body.dark .auth-banner {
-                background: linear-gradient(135deg, rgba(31, 111, 235, 0.15) 0%, rgba(31, 111, 235, 0.25) 100%);
-                border-bottom-color: rgba(31, 111, 235, 0.3);
-            }
-            .banner-content {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                max-width: 1120px;
-                margin: 0 auto;
-            }
-            .banner-icon {
-                font-size: 20px;
-                flex-shrink: 0;
-            }
-            .banner-text {
-                flex: 1;
-                font-size: 14px;
-                color: #1565c0;
-                line-height: 1.5;
-            }
-            body.dark .banner-text {
-                color: #93c5fd;
-            }
-            .banner-text strong {
-                font-weight: 700;
-                color: #0d47a1;
-            }
-            body.dark .banner-text strong {
-                color: #bfdbfe;
-            }
-            .banner-close {
-                background: transparent;
-                border: none;
-                color: #1565c0;
-                cursor: pointer;
-                font-size: 18px;
-                padding: 4px 8px;
-                border-radius: 4px;
-                transition: background 0.2s ease;
-                flex-shrink: 0;
-            }
-            .banner-close:hover {
-                background: rgba(31, 111, 235, 0.15);
-            }
-            body.dark .banner-close {
-                color: #93c5fd;
-            }
-            body.dark .banner-close:hover {
-                background: rgba(31, 111, 235, 0.3);
-            }
-            @keyframes slideDown {
-                from {
-                    transform: translateY(-100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-            /* 首次访问引导遮罩 */
-            #guide-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(15, 23, 42, 0.75);
-                backdrop-filter: blur(3px);
-                z-index: 10002;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                animation: fadeIn 0.3s ease;
-            }
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-            }
-            .guide-content {
-                position: relative;
-                background: var(--supabase-surface);
-                border-radius: 18px;
-                padding: 32px;
-                max-width: 420px;
-                text-align: center;
-                box-shadow: 0 30px 60px rgba(15, 23, 42, 0.3);
-                animation: scaleIn 0.3s ease;
-            }
-            @keyframes scaleIn {
-                from {
-                    transform: scale(0.9);
-                    opacity: 0;
-                }
-                to {
-                    transform: scale(1);
-                    opacity: 1;
-                }
-            }
-            .guide-content h3 {
-                margin: 0 0 16px;
-                font-size: 24px;
-                font-weight: 700;
-                color: var(--supabase-text);
-            }
-            .guide-content p {
-                margin: 0 0 12px;
-                font-size: 15px;
-                color: var(--supabase-text-muted);
-                line-height: 1.6;
-            }
-            .guide-content p:last-of-type {
-                margin-bottom: 24px;
-            }
-            .guide-content button {
-                width: 100%;
-                padding: 12px 24px;
-                background: var(--supabase-primary);
-                border: none;
-                border-radius: 12px;
-                color: #ffffff;
-                font-size: 15px;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s ease;
-            }
-            .guide-content button:hover {
-                background: var(--supabase-primary-dark);
-                transform: translateY(-1px);
-            }
-            #supabase-login-btn.guide-highlight {
-                z-index: 10003;
-                box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.4), 0 12px 24px rgba(31, 111, 235, 0.3);
-                animation: pulse 1.5s ease-in-out infinite;
-            }
-            @keyframes pulse {
-                0%, 100% {
-                    transform: scale(1);
-                    box-shadow: 0 0 0 4px rgba(31, 111, 235, 0.4), 0 12px 24px rgba(31, 111, 235, 0.3);
-                }
-                50% {
-                    transform: scale(1.05);
-                    box-shadow: 0 0 0 8px rgba(31, 111, 235, 0.2), 0 16px 32px rgba(31, 111, 235, 0.4);
-                }
-            }
             @media (max-width: 640px) {
-                #supabase-login-btn {
-                    height: 52px;
-                    padding: 0 10px;
-                    gap: 8px;
-                    min-width: 120px;
-                }
-                #supabase-login-btn .supabase-login-icon {
-                    width: 26px;
-                    height: 26px;
-                }
-                #supabase-login-btn .quota-chip {
-                    display: inline-flex;
-                    font-size: 12px;
-                    padding: 5px 8px;
-                    gap: 6px;
-                }
                 .supabase-modal-content {
                     padding: 24px 20px 28px;
                 }
@@ -1184,72 +783,6 @@
             
         `;
         document.head.appendChild(style);
-
-        // 未登录横幅提示
-        const banner = document.createElement('div');
-        banner.className = 'auth-banner';
-        banner.id = 'auth-banner';
-        banner.style.display = 'none'; // 默认隐藏，由 updateLoginStatus 控制
-        banner.innerHTML = `
-            <div class="banner-content">
-                <span class="banner-icon">ℹ️</span>
-                <span class="banner-text">
-                    您当前未登录，请点击右下角 <strong>👤 登录</strong> 按钮，立即获取 10,000 点体验配额
-                </span>
-                <button class="banner-close" id="banner-close" aria-label="关闭提示">✕</button>
-            </div>
-        `;
-        document.body.insertBefore(banner, document.body.firstChild);
-
-        // 横幅关闭事件
-        document.getElementById('banner-close').addEventListener('click', () => {
-            banner.style.display = 'none';
-            // 记录用户已关闭横幅（可选：设置过期时间，例如1天后再显示）
-            sessionStorage.setItem('auth_banner_closed', Date.now());
-        });
-
-        // 登录按钮
-        const btn = document.createElement('div');
-        btn.id = 'supabase-login-btn';
-        btn.innerHTML = `
-            <span class="supabase-login-icon" aria-hidden="true">👤</span>
-            <span class="btn-label">登录</span>
-        `;
-        btn.title = '邮箱登录';
-        btn.setAttribute('role', 'button');
-        btn.setAttribute('tabindex', '0');
-        btn.setAttribute('aria-label', '打开登录窗口');
-        btn.setAttribute('aria-haspopup', 'dialog');
-        btn.setAttribute('aria-expanded', 'false');
-        btn.setAttribute('aria-controls', 'supabase-login-modal');
-        btn.addEventListener('click', (event) => {
-            if (btn.dataset.dragBlocked === '1') {
-                event.preventDefault();
-                return;
-            }
-            const modalEl = document.getElementById('supabase-login-modal');
-            if (modalEl?.classList.contains('show')) {
-                toggleModal(false);
-            } else {
-                toggleModal(true);
-            }
-        });
-        btn.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                const modalEl = document.getElementById('supabase-login-modal');
-                if (modalEl?.classList.contains('show')) {
-                    toggleModal(false);
-                } else {
-                    toggleModal(true);
-                }
-            }
-        });
-        document.body.appendChild(btn);
-
-        // 恢复位置并开启拖拽
-        applySavedButtonPosition(btn);
-        enableLoginButtonDrag(btn);
 
         // 登录弹窗
         const modal = document.createElement('div');
@@ -1321,13 +854,13 @@
                         <div class="supabase-quota-section" id="quota-section">
                             <div class="quota-header">
                                 <span class="quota-title">今日配额</span>
-                                <span class="quota-count" id="quota-count">0 / 100</span>
+                                <span class="quota-count" id="quota-count">0 / 10000</span>
                             </div>
                             <div class="quota-progress">
                                 <div class="quota-bar" id="quota-bar" style="width: 0%"></div>
                             </div>
                             <div class="quota-footer">
-                                <span class="quota-remaining" id="quota-remaining">剩余 100</span>
+                                <span class="quota-remaining" id="quota-remaining">剩余 10000</span>
                                 <button class="supabase-upgrade-btn" id="upgrade-btn">升级</button>
                             </div>
                             <div class="subscription-timing" id="subscription-timing" style="margin-top: 10px; font-size: 12px; color: var(--supabase-text-muted); display: none;">
@@ -1402,6 +935,9 @@
         `;
         document.body.appendChild(upgradeModal);
 
+        const accountButton = document.getElementById('studio-account-button');
+        accountButton?.addEventListener('click', () => toggleModal(true));
+
         // 点击背景关闭
         modal.addEventListener('click', (e) => {
             if (e.target === modal) toggleModal(false);
@@ -1457,7 +993,7 @@
         if (!modal) return;
 
         const shouldShow = typeof force === 'boolean' ? force : !modal.classList.contains('show');
-        const loginBtn = document.getElementById('supabase-login-btn');
+        const loginBtn = document.getElementById('studio-account-button');
 
         if (shouldShow) {
             modal.classList.add('show');
@@ -1825,17 +1361,6 @@
         // 更新 UI 显示
         updateQuotaDisplay(quotaData);
 
-        // 更新登录按钮文字（显示配额）
-        const btn = document.getElementById('supabase-login-btn');
-        if (btn && authState.user) {
-            const labelHtml = getLoginButtonLabel(authState.user, quotaData);
-            btn.classList.add('compact');
-            btn.innerHTML = `
-                <span class="supabase-login-icon" aria-hidden="true">👤</span>
-                <span class="quota-chip">${labelHtml}</span>
-            `;
-        }
-
         // 触发自定义事件，通知页面配额已更新
         window.dispatchEvent(new CustomEvent('quotaUpdated', {
             detail: quotaData
@@ -2102,45 +1627,22 @@
 
     // ==================== 状态管理 ====================
 
-    /**
-     * 获取登录按钮的标签文本（包含配额）
-     * @param {Object} user - 用户信息
-     * @param {Object} quota - 配额信息
-     * @returns {string} 格式化的按钮标签
-     */
-    function getLoginButtonLabel(user, quota) {
-        if (!user) {
-            return t('登录');
-        }
-
-        if (quota && quota.daily > 0) {
-            const { used, daily } = quota;
-            return `${used}/${daily}`;
-        }
-
-        return t('账户');
-    }
-
     function updateLoginStatus(user) {
-        const btn = document.getElementById('supabase-login-btn');
+        const btn = document.getElementById('studio-account-button');
+        const avatar = document.getElementById('studio-account-avatar');
+        const accountLabel = document.getElementById('studio-account-label');
         const loginForm = document.getElementById('email-form');
         const otpForm = document.getElementById('otp-form');
         const logoutForm = document.getElementById('logout-form');
-        const banner = document.getElementById('auth-banner');
 
         if (user) {
-            // 已登录：隐藏横幅
-            if (banner) {
-                banner.style.display = 'none';
+            btn?.classList.add('logged-in');
+            if (avatar) avatar.textContent = (user.email?.[0] || 'U').toUpperCase();
+            if (accountLabel) accountLabel.textContent = user.email || t('账户');
+            if (btn) {
+                btn.title = i18n?.getLocale?.() === 'en' ? `Signed in: ${user.email}` : `已登录: ${user.email}`;
+                btn.setAttribute('aria-label', t('查看账户状态'));
             }
-            btn.classList.add('logged-in', 'compact');
-            const labelHtml = getLoginButtonLabel(user, authState.quota);
-            btn.innerHTML = `
-                <span class="supabase-login-icon" aria-hidden="true">👤</span>
-                <span class="quota-chip">${labelHtml}</span>
-            `;
-            btn.title = i18n?.getLocale?.() === 'en' ? `Signed in: ${user.email}` : `已登录: ${user.email}`;
-            btn.setAttribute('aria-label', t('查看账户状态'));
             if (loginForm) loginForm.style.display = 'none';
             if (otpForm) otpForm.style.display = 'none';
             if (logoutForm) logoutForm.style.display = 'flex';
@@ -2181,24 +1683,13 @@
                 detail: { isLoggedIn: true, user }
             }));
         } else {
-            // 未登录：显示横幅（检查用户是否手动关闭过）
-            if (banner) {
-                const bannerClosed = sessionStorage.getItem('auth_banner_closed');
-                const now = Date.now();
-                // 如果用户关闭横幅后超过1小时（3600000ms），重新显示
-                if (!bannerClosed || (now - parseInt(bannerClosed)) > 3600000) {
-                    banner.style.display = 'block';
-                }
+            btn?.classList.remove('logged-in');
+            if (avatar) avatar.textContent = '👤';
+            if (accountLabel) accountLabel.textContent = `${t('登录')} / ${t('注册')}`;
+            if (btn) {
+                btn.title = t('邮箱登录');
+                btn.setAttribute('aria-label', t('打开登录窗口'));
             }
-
-            btn.classList.remove('logged-in');
-            btn.classList.remove('compact');
-            btn.innerHTML = `
-                <span class="supabase-login-icon" aria-hidden="true">👤</span>
-                <span class="btn-label" style="margin-left: 8px;">${t('登录')}</span>
-            `;
-            btn.title = t('邮箱登录');
-            btn.setAttribute('aria-label', t('打开登录窗口'));
             if (loginForm) loginForm.style.display = 'block';
             if (otpForm) otpForm.style.display = 'none';
             if (logoutForm) logoutForm.style.display = 'none';
@@ -2382,7 +1873,6 @@
             authState.session = null;
             authState.user = null;
             updateLoginStatus(null);
-            showFirstTimeGuide();
         } else if (session?.user) {
             authState.session = session;
             authState.user = session.user;
@@ -2395,78 +1885,9 @@
             window.dispatchEvent(new CustomEvent('authReady', {
                 detail: { user: session.user }
             }));
-        } else {
-            // 未登录时，仅在本次浏览会话首次进入首页时显示引导。
-            showFirstTimeGuide();
         }
 
         log('初始化完成');
-    }
-
-    // ==================== 首次访问引导 ====================
-
-    /**
-     * 显示登录引导遮罩。
-     * 仅在首页显示，并且同一浏览器标签页会话中最多显示一次，
-     * 避免用户切换到 TTS、声音克隆、音色库等页面时重复弹出。
-     */
-    function showFirstTimeGuide() {
-        const session = window.SupabaseAuthInject?.getSession();
-        if (session) return; // 已登录用户不显示
-
-        const isHomePage = document.body?.dataset?.page === 'home';
-        if (!isHomePage) return;
-
-        if (sessionStorage.getItem(FIRST_TIME_GUIDE_SESSION_KEY) === '1') {
-            return;
-        }
-
-        // 在安排弹窗时立即记录，避免初始化流程重复触发。
-        sessionStorage.setItem(FIRST_TIME_GUIDE_SESSION_KEY, '1');
-
-        // 延迟显示（等待页面加载完成）
-        setTimeout(() => {
-            // 延迟期间如果用户已登录或页面已有引导，则不再重复创建。
-            if (window.SupabaseAuthInject?.getSession() || document.getElementById('guide-overlay')) {
-                return;
-            }
-
-            // 显示遮罩引导
-            const overlay = document.createElement('div');
-            overlay.id = 'guide-overlay';
-            overlay.innerHTML = `
-                <div class="guide-content">
-                    <h3>👋 欢迎使用 TRTC AI</h3>
-                    <p>点击右下角 <strong>👤 登录</strong> 按钮</p>
-                    <p>使用任意邮箱验证码登录或注册，立即获取 <strong>10,000 点体验配额</strong></p>
-                    <button onclick="window.closeGuide()">知道了</button>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-
-            // 高亮登录按钮
-            const loginBtn = document.getElementById('supabase-login-btn');
-            if (loginBtn) {
-                loginBtn.classList.add('guide-highlight');
-            }
-        }, 1000); // 延迟1秒显示
-    }
-
-    /**
-     * 关闭登录引导
-     */
-    function closeGuide() {
-        const overlay = document.getElementById('guide-overlay');
-        if (overlay) {
-            overlay.remove();
-        }
-
-        const loginBtn = document.getElementById('supabase-login-btn');
-        if (loginBtn) {
-            loginBtn.classList.remove('guide-highlight');
-        }
-
-        log('登录引导已关闭');
     }
 
     /**
@@ -2521,8 +1942,5 @@
         cancelVerification: cancelVerification,
         updateFunctionButtonsState: updateFunctionButtonsState // 功能按钮状态管理
     };
-
-    // 暴露首次访问引导关闭函数
-    window.closeGuide = closeGuide;
 
 })();

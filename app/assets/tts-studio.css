@@ -51,13 +51,20 @@ a { color: inherit; text-decoration: none; }
 .top-brand { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.2px; }
 .brand-mark { width: 26px; height: 26px; display: grid; place-items: center; color: #fff; border-radius: 8px; background: var(--blue); box-shadow: 0 6px 18px rgba(0,82,217,.2); }
 .top-actions { display: flex; align-items: center; gap: 10px; }
-.quota-badge { display: none; align-items: center; gap: 5px; padding: 6px 12px; color: var(--blue); background: var(--blue-light); border: 1px solid transparent; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.quota-badge { display: none; align-items: center; gap: 7px; min-height: 38px; padding: 4px 14px 4px 5px; color: var(--ink); background: #efeff9; border: 1px solid transparent; border-radius: 999px; font: 700 15px/1 var(--mono); }
+.quota-lightning { width: 30px; height: 30px; display: grid; place-items: center; color: #fff; background: linear-gradient(145deg, #7657e9, #8d4de3); border-radius: 50%; font: 800 21px/1 var(--sans); box-shadow: 0 4px 10px rgba(109,76,219,.25); }
 .quota-badge.warning { color: var(--amber); background: var(--amber-light); }
 .quota-badge.danger { color: var(--red); background: var(--red-light); }
 .locale-switch { display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px; background: #f0eee8; }
 .locale-switch button { border: 0; background: transparent; color: var(--ink-3); padding: 5px 11px; border-radius: 999px; font-size: 12px; }
 .locale-switch button.on { color: var(--blue); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 .theme-button { width: 34px; height: 34px; display: grid; place-items: center; padding: 0; color: var(--ink-3); background: var(--card); border: 1px solid var(--line); border-radius: 999px; }
+.account-button { min-height: 40px; display: inline-flex; align-items: center; gap: 8px; padding: 3px 12px 3px 4px; color: var(--ink-2); background: var(--card); border: 1px solid var(--line-strong); border-radius: 999px; font-size: 12px; font-weight: 650; transition: .15s; }
+.account-button:hover { color: var(--blue); border-color: var(--blue-border); background: var(--blue-light); }
+.account-avatar { width: 32px; height: 32px; display: grid; place-items: center; color: #fff; background: var(--blue); border-radius: 50%; font-size: 14px; font-weight: 650; }
+.account-button.logged-in { width: 40px; min-width: 40px; padding: 3px; border-color: var(--blue-border); }
+.account-button.logged-in .account-label { display: none; }
+.account-button.logged-in .account-avatar { width: 32px; height: 32px; font-size: 19px; }
 
 .sidebar { position: fixed; z-index: 70; left: 0; top: 60px; bottom: 0; width: 224px; padding: 14px 12px; overflow: hidden; background: var(--card); border-right: 1px solid var(--line); transition: width .2s var(--ease); }
 .side-head { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 10px 12px; }
@@ -305,6 +312,8 @@ body.dark .advanced { background: var(--card); color: var(--ink); }
 body.dark .locale-switch button.on,
 body.dark .seg-item.on,
 body.dark .sub-tab.active { background: #34322e; }
+body.dark .quota-badge { color: var(--ink); background: #29283a; }
+body.dark .account-button { color: var(--ink-2); background: var(--card); }
 
 @media (max-width: 1024px) {
   .sidebar { display: none; }
@@ -317,7 +326,10 @@ body.dark .sub-tab.active { background: #34322e; }
   .topbar { padding: 0 14px; }
   .top-brand span:last-child { display: none; }
   .locale-switch button { padding: 4px 8px; }
-  .quota-badge { max-width: 155px; overflow: hidden; white-space: nowrap; }
+  .quota-badge { min-height: 36px; padding-right: 10px; }
+  .quota-lightning { width: 28px; height: 28px; }
+  .account-button { width: 38px; min-width: 38px; padding: 2px; }
+  .account-button .account-label { display: none; }
   .page-shell { width: min(100% - 24px, 1100px); padding-top: 28px; }
   .console-body, .panel { padding: 14px; }
   .field-grid, .field-grid.two, .sliders, .metrics { grid-template-columns: 1fr; }

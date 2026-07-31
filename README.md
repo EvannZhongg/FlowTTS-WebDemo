@@ -39,6 +39,7 @@ node server.js
     ├── server.js                 # Express 入口（端口 9000）
     ├── routes/tts.js             # TTS 合成 & 流式合成
     ├── routes/voice-clone.js     # 声音克隆
+    ├── routes/user.js            # 当前用户与配额
     ├── middleware/{auth,quota}   # JWT 认证 & 配额中间件
     ├── utils/                    # 腾讯云 API、Supabase、音色库
     └── data/                     # turbo 与 flow_01_ex 静态音色映射

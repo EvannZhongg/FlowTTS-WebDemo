@@ -21,9 +21,13 @@
     <header class="topbar">
       <a class="top-brand" href="index.html"><span class="brand-mark">T</span><span>TTS Studio</span></a>
       <div class="top-actions">
-        <span class="quota-badge" id="studio-quota-badge" title="体验额度"><span>体验额度</span><strong id="studio-quota-remaining">--</strong><span>/</span><span id="studio-quota-daily">--</span></span>
+        <span class="quota-badge" id="studio-quota-badge" title="剩余体验配额"><span class="quota-lightning" aria-hidden="true">ϟ</span><strong id="studio-quota-remaining">--</strong></span>
         <div class="locale-switch" aria-label="界面语言"><button class="${locale === 'zh-CN' ? 'on' : ''}" data-locale="zh-CN" aria-pressed="${locale === 'zh-CN'}" type="button">中文</button><button class="${locale === 'en' ? 'on' : ''}" data-locale="en" aria-pressed="${locale === 'en'}" type="button">EN</button></div>
         <button class="theme-button" id="theme-toggle" type="button" title="切换主题" aria-label="切换主题">◐</button>
+        <button class="account-button" id="studio-account-button" type="button" aria-label="登录或注册" aria-haspopup="dialog" aria-controls="supabase-login-modal">
+          <span class="account-avatar" id="studio-account-avatar" aria-hidden="true">👤</span>
+          <span class="account-label" id="studio-account-label">登录 / 注册</span>
+        </button>
       </div>
     </header>
     <aside class="sidebar">

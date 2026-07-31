@@ -296,12 +296,9 @@
     '✅ 优先新功能体验': '✅ Early access to new features',
     '选择企业版': 'Choose Enterprise',
     '关闭升级窗口': 'Close upgrade dialog',
-    '您当前未登录，请点击右下角 登录 按钮，立即获取 10,000 点体验配额': 'You are not signed in. Use the Sign in button at the bottom right to receive 10,000 trial quota points.',
-    '您当前未登录，请点击右下角': 'You are not signed in. Click',
-    '按钮，立即获取 10,000 点体验配额': 'at the bottom right to receive 10,000 trial quota points.',
-    '👤 登录': '👤 Sign in',
-    '关闭提示': 'Close notice',
     '登录': 'Sign in',
+    '注册': 'Register',
+    '登录 / 注册': 'Sign in / Register',
     '邮箱登录': 'Email sign-in',
     '打开登录窗口': 'Open sign-in dialog',
     '查看账户状态': 'View account status',
@@ -319,10 +316,6 @@
     '今天到期': 'Expires today',
     '明天到期': 'Expires tomorrow',
     '无效日期': 'Invalid date',
-    '👋 欢迎使用 TRTC AI': '👋 Welcome to TRTC AI',
-    '点击右下角 登录 按钮': 'Click the Sign in button at the bottom right',
-    '使用任意邮箱验证码登录或注册，立即获取 10,000 点体验配额': 'Sign in or register with any email verification code to receive 10,000 trial quota points.',
-    '知道了': 'Got it',
     '请先登录以使用此功能': 'Please sign in to use this feature'
   };
 

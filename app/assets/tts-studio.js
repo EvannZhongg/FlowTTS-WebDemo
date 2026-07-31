@@ -112,11 +112,20 @@
     const remaining = Number(quota.remaining ?? Math.max(daily - used, 0));
     const badge = $('studio-quota-badge');
     if (!badge) return;
-    $('studio-quota-remaining').textContent = String(remaining);
-    $('studio-quota-daily').textContent = String(daily);
+    $('studio-quota-remaining').textContent = formatCompactQuota(remaining);
+    badge.title = `剩余 ${remaining.toLocaleString()} / ${daily.toLocaleString()} 点体验配额`;
     badge.style.display = 'inline-flex';
     badge.classList.toggle('warning', remaining >= 500 && remaining < 1500);
     badge.classList.toggle('danger', remaining < 500);
+  }
+
+  function formatCompactQuota(value) {
+    const number = Number(value || 0);
+    if (number >= 1000) {
+      const compact = number / 1000;
+      return `${compact >= 10 ? compact.toFixed(0) : compact.toFixed(1)}K`;
+    }
+    return String(number);
   }
 
   function readQuotaFromResponse(response, data) {
