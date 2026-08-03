@@ -15,6 +15,7 @@ const { supabaseDb, validateUserId } = require('./supabase');
 
 const HISTORY_BUCKET = process.env.SUPABASE_HISTORY_BUCKET || 'tts-history-audio';
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
+const DOWNLOAD_URL_TTL_SECONDS = 60;
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
 const VALID_TYPES = new Set(['tts', 'streaming', 'clone-create', 'clone-tts']);
 const VALID_FORMATS = new Set(['pcm', 'wav', 'mp3', 'opus']);
@@ -259,16 +260,30 @@ async function findHistoryItem(userId, recordId) {
     return metadata.userId === userId ? metadata : null;
 }
 
-async function downloadHistoryAudio(userId, recordId) {
+function historyDownloadFilename(metadata) {
+    const format = String(metadata.format || 'wav').replace(/[^a-z0-9]/gi, '') || 'wav';
+    const type = String(metadata.type || 'history').replace(/[^a-z0-9-]/gi, '-') || 'history';
+    const createdAt = new Date(metadata.createdAt);
+    const timestamp = Number.isNaN(createdAt.getTime())
+        ? Date.now()
+        : createdAt.toISOString().replace(/[:.]/g, '-');
+    return `${type}-${timestamp}.${format}`;
+}
+
+async function createHistoryDownloadUrl(userId, recordId) {
     validateUserId(userId);
     const metadata = await findHistoryItem(userId, recordId);
     if (!metadata?.audioPath) return null;
-    const { data, error } = await supabaseDb.storage.from(HISTORY_BUCKET).download(metadata.audioPath);
-    if (error) throw new Error(`Failed to download history audio: ${error.message}`);
+    const filename = historyDownloadFilename(metadata);
+    const { data, error } = await supabaseDb.storage
+        .from(HISTORY_BUCKET)
+        .createSignedUrl(metadata.audioPath, DOWNLOAD_URL_TTL_SECONDS, { download: filename });
+    if (error) throw new Error(`Failed to sign history audio download: ${error.message}`);
     return {
         metadata,
-        buffer: Buffer.from(await data.arrayBuffer()),
-        contentType: metadata.audioMimeType || FORMAT_MIME_TYPES[metadata.format] || 'application/octet-stream'
+        url: data.signedUrl,
+        filename,
+        expiresIn: DOWNLOAD_URL_TTL_SECONDS
     };
 }
 
@@ -300,7 +315,7 @@ module.exports = {
     ensureHistoryBucket,
     createHistoryItem,
     listHistoryItems,
-    downloadHistoryAudio,
+    createHistoryDownloadUrl,
     deleteHistoryItem,
     clearHistoryItems
 };

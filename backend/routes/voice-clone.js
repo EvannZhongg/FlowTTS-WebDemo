@@ -21,6 +21,25 @@ const TTS_REGION = process.env.TRTC_REGION || 'ap-beijing';
 const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '';
 const MIN_CLONE_AUDIO_SECONDS = 6;
 const MAX_CLONE_AUDIO_SECONDS = 30;
+const VALID_CLONE_MODELS = ['flow_02_turbo', 'flow_01_ex'];
+
+async function insertClonedVoice(record) {
+    const insert = (row) => supabaseDb
+        .from('cloned_voices')
+        .insert(row)
+        .select()
+        .single();
+
+    let result = await insert(record);
+    if (result.error?.code === '23514' && result.error.message?.includes('cloned_voices_model_check')) {
+        logger.warn({
+            voiceId: record.voice_id,
+            requestedModel: record.model
+        }, '[Voice Clone] Legacy cloned_voices model constraint detected; retrying with model=null');
+        result = await insert({ ...record, model: null });
+    }
+    return result;
+}
 
 function validateCloneAudio(req, res, next) {
     const { audioData, audioDuration } = req.body || {};
@@ -76,8 +95,7 @@ router.post('/clone', authenticate, validateCloneAudio, requireQuota('voice-clon
         }
 
         // Call Tencent VoiceClone API
-        const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const resolvedModel = (model && VALID_MODELS.includes(model)) ? model : null;
+        const resolvedModel = (model && VALID_CLONE_MODELS.includes(model)) ? model : null;
         logger.info({ userId: req.user.id, model, resolvedModel }, '🎙️ Voice Clone model');
         const params = {
             SdkAppId: parseInt(SDK_APP_ID),
@@ -107,18 +125,14 @@ router.post('/clone', authenticate, validateCloneAudio, requireQuota('voice-clon
         );
 
         // 保存克隆记录到数据库
-        const { data: clonedVoice, error: dbError } = await supabaseDb
-            .from('cloned_voices')
-            .insert({
-                user_id: req.user.id,
-                voice_id: response.VoiceId,
-                voice_name: voiceName || null,
-                model: resolvedModel,
-                description: description || null,
-                audio_duration: validatedAudioDuration
-            })
-            .select()
-            .single();
+        const { data: clonedVoice, error: dbError } = await insertClonedVoice({
+            user_id: req.user.id,
+            voice_id: response.VoiceId,
+            voice_name: voiceName || null,
+            model: resolvedModel,
+            description: description || null,
+            audio_duration: validatedAudioDuration
+        });
 
         if (dbError) {
             logger.error({

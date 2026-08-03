@@ -1392,24 +1392,16 @@
     if (!item?.downloadUrl) return;
     button.disabled = true;
     try {
-      const response = await apiFetch(`/api/history/${encodeURIComponent(id)}/download`, {
+      const data = await apiFetch(`/api/history/${encodeURIComponent(id)}/download`, {
         headers: authHeaders()
-      }, 'response');
-      const blob = await response.blob();
-      const disposition = response.headers.get('Content-Disposition') || '';
-      const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
-      const plainName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
-      const filename = encodedName
-        ? decodeURIComponent(encodedName)
-        : plainName || `${item.type || 'history'}-${new Date(item.createdAt).toISOString().replace(/[:.]/g, '-')}.${item.format || 'wav'}`;
-      const url = URL.createObjectURL(blob);
+      });
+      if (!data.url) throw new Error(t('服务端未返回下载地址'));
       const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = filename;
+      anchor.href = data.url;
+      anchor.download = data.filename || '';
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (error) {
       alert(t(`下载失败：${error.message}`));
     } finally {

@@ -121,6 +121,7 @@
     '已复制': 'Copied',
     '未登录或会话已过期，请先登录': 'Not signed in or session expired. Please sign in first.',
     '服务端未返回音频数据': 'The server did not return audio data.',
+    '服务端未返回下载地址': 'The server did not return a download URL.',
     '流式响应异常结束': 'The streaming response ended unexpectedly.',
     '请输入要合成的文本': 'Enter text to synthesize.',
     '文本最多支持 1,000 个字符': 'Text is limited to 1,000 characters.',
