@@ -8,6 +8,8 @@
   const i18n = window.TTSI18n;
   const t = (text, variables) => i18n?.t(text, variables) || text;
   const formatDateTime = (value) => i18n?.formatDateTime(value) || new Date(value).toLocaleString();
+  const HISTORY_CACHE_PREFIX = 'tts-history-cache-v1:';
+  const HISTORY_CACHE_MAX_AGE = 50 * 60 * 1000;
 
   const LANGUAGE_OPTIONS_TURBO_SOURCE = [
     ['', '自动检测'], ['zh', '中文'], ['en', '英语'], ['ja', '日语'], ['ko', '韩语'],
@@ -59,6 +61,12 @@
     recordTimer: null,
     historyFilter: 'all',
     historyItems: [],
+    historyUserId: '',
+    historyLoaded: false,
+    historyLoading: null,
+    historyAudio: new Audio(),
+    historyAudioItemId: '',
+    historyAudioStatus: 'idle',
     libraryCategory: 'all',
     libraryModel: 'all',
     languageFiltersExpanded: { studio: false, library: false },
@@ -85,6 +93,50 @@
 
   function getSession() {
     return window.SupabaseAuthInject?.getSession?.() || null;
+  }
+
+  function historyCacheKey(userId) {
+    return `${HISTORY_CACHE_PREFIX}${userId}`;
+  }
+
+  function readHistoryCache(userId) {
+    if (!userId) return null;
+    try {
+      const raw = sessionStorage.getItem(historyCacheKey(userId));
+      if (!raw) return null;
+      const cached = JSON.parse(raw);
+      if (!Array.isArray(cached.items) || Date.now() - Number(cached.cachedAt || 0) > HISTORY_CACHE_MAX_AGE) {
+        sessionStorage.removeItem(historyCacheKey(userId));
+        return null;
+      }
+      return cached.items;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeHistoryCache(userId, items) {
+    if (!userId) return;
+    try {
+      sessionStorage.setItem(historyCacheKey(userId), JSON.stringify({
+        cachedAt: Date.now(),
+        items
+      }));
+    } catch (_) {}
+  }
+
+  function updateHistoryCache(userId, updater) {
+    const cachedItems = readHistoryCache(userId);
+    if (!cachedItems) return;
+    writeHistoryCache(userId, updater(cachedItems));
+  }
+
+  function resetHistoryState() {
+    stopHistoryAudio();
+    state.historyItems = [];
+    state.historyUserId = '';
+    state.historyLoaded = false;
+    state.historyLoading = null;
   }
 
   function authHeaders(json = false) {
@@ -405,10 +457,19 @@
     });
     window.addEventListener('quotaUpdated', (event) => updateQuota(event.detail));
     window.addEventListener('authReady', () => {
-      if (PAGE === 'history') renderHistoryPage();
+      if (PAGE === 'history') loadHistoryPage();
     });
-    window.addEventListener('authStateChanged', () => {
-      if (PAGE === 'history') renderHistoryPage();
+    window.addEventListener('authStateChanged', (event) => {
+      if (PAGE !== 'history') return;
+      if (event.detail?.isLoggedIn) loadHistoryPage();
+      else {
+        const previousUserId = state.historyUserId;
+        resetHistoryState();
+        if (previousUserId) {
+          try { sessionStorage.removeItem(historyCacheKey(previousUserId)); } catch (_) {}
+        }
+        renderHistoryPage();
+      }
     });
     const initialQuota = window.SupabaseAuthInject?.getQuota?.();
     if (initialQuota) updateQuota(initialQuota);
@@ -1102,7 +1163,7 @@
     if (!getSession()?.access_token) return;
     const format = meta.format || audioExtension(audio);
     try {
-      await apiFetch('/api/history', {
+      const data = await apiFetch('/api/history', {
         method: 'POST',
         headers: authHeaders(true),
         body: JSON.stringify({
@@ -1122,38 +1183,177 @@
             : null
         })
       });
+      const userId = getSession()?.user?.id;
+      if (userId && data.item) {
+        updateHistoryCache(userId, (items) => [data.item, ...items.filter((item) => item.id !== data.item.id)]);
+      }
     } catch (error) {
       console.warn('[History] Failed to save cloud history:', error);
     }
   }
 
-  async function getHistoryItems() {
+  async function getHistoryItems(userId) {
     const data = await apiFetch('/api/history', { headers: authHeaders() });
+    if (getSession()?.user?.id !== userId) return [];
     state.historyItems = data.items || [];
+    state.historyUserId = userId;
+    state.historyLoaded = true;
+    writeHistoryCache(userId, state.historyItems);
     return state.historyItems;
   }
 
-  async function renderHistoryPage() {
+  function renderHistoryPage() {
     const list = $('history-list'); if (!list) return;
-    if (!getSession()?.access_token) {
+    const session = getSession();
+    const clearButton = $('history-clear');
+    if (!session?.access_token) {
       list.innerHTML = `<div class="empty-state">${t('登录后可查看账号历史记录')}</div>`;
+      if (clearButton) clearButton.disabled = true;
       return;
     }
-    let all;
-    try {
+    if (!state.historyLoaded || state.historyUserId !== session.user?.id) {
       list.innerHTML = `<div class="empty-state">${t('正在读取云端历史...')}</div>`;
-      all = await getHistoryItems();
-    } catch (error) {
-      list.innerHTML = `<div class="empty-state">${escapeHtml(t(`历史记录加载失败：${error.message}`))}</div>`;
+      if (clearButton) clearButton.disabled = true;
       return;
     }
+    const all = state.historyItems;
+    if (clearButton) clearButton.disabled = !all.length;
     const items = state.historyFilter === 'all' ? all : all.filter((item) => state.historyFilter === 'cloning' ? item.type.startsWith('clone') : item.type === state.historyFilter);
     if (!items.length) { list.innerHTML = `<div class="empty-state">${t('暂无历史记录。完成文本转语音、流式合成、克隆音色或克隆试听后会自动保存在这里。')}</div>`; return; }
     list.innerHTML = items.map((item) => {
       const url = item.audioUrl || ''; const label = item.type === 'tts' ? 'Text-to-Speech' : item.type === 'streaming' ? 'Streaming' : item.type === 'clone-create' ? 'Cloned Voice' : 'Cloning';
       const title = item.type === 'clone-create' ? item.voiceName || item.voiceId : item.text || '';
-      return `<div class="history-row"><div class="history-main"><div class="history-title">${label} · ${escapeHtml(title)}</div><div class="history-meta">${escapeHtml(item.voiceId || '')} · ${item.type === 'clone-create' ? 'Cloning' : label} · ${formatDateTime(item.createdAt)}</div></div>${url ? `<audio src="${escapeHtml(url)}" controls></audio>` : ''}<div class="row-actions">${item.type !== 'clone-create' ? `<button class="small-button history-reuse" data-id="${item.id}">${t('复用')}</button>` : ''}${item.downloadUrl ? `<button class="small-button history-download" data-id="${item.id}">${t('下载')}</button>` : ''}<button class="small-button danger history-delete" data-id="${item.id}">${t('删除')}</button></div></div>`;
+      return `<div class="history-row"><div class="history-main"><div class="history-title">${escapeHtml(title)}</div><div class="history-meta">${escapeHtml(item.voiceId || '')} · ${item.type === 'clone-create' ? 'Cloning' : label} · ${formatDateTime(item.createdAt)}</div></div>${url ? `<button class="history-audio-button" type="button" data-id="${item.id}" data-audio-url="${escapeHtml(url)}" data-state="idle" title="${t('播放音频')}" aria-label="${t('播放音频')}"><svg class="history-audio-play" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 7 8 5-8 5z"/></svg><svg class="history-audio-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7v10M15 7v10"/></svg><span class="history-audio-loading" aria-hidden="true"></span></button>` : ''}<div class="row-actions">${item.type !== 'clone-create' ? `<button class="small-button history-reuse" data-id="${item.id}">${t('复用')}</button>` : ''}${item.downloadUrl ? `<button class="small-button history-download" data-id="${item.id}">${t('下载')}</button>` : ''}<button class="small-button danger history-delete" data-id="${item.id}">${t('删除')}</button></div></div>`;
     }).join('');
+    updateHistoryAudioButtons();
+  }
+
+  function updateHistoryAudioButtons() {
+    qsa('.history-audio-button').forEach((button) => {
+      const isActive = button.dataset.id === state.historyAudioItemId;
+      const status = isActive ? state.historyAudioStatus : 'idle';
+      const label = status === 'playing' ? t('暂停音频') : status === 'loading' ? t('正在加载音频') : t('播放音频');
+      button.dataset.state = status;
+      button.title = label;
+      button.setAttribute('aria-label', label);
+      button.setAttribute('aria-busy', String(status === 'loading'));
+    });
+  }
+
+  function setHistoryAudioStatus(status) {
+    state.historyAudioStatus = status;
+    updateHistoryAudioButtons();
+  }
+
+  function stopHistoryAudio(itemId = '') {
+    if (itemId && state.historyAudioItemId !== itemId) return;
+    const audio = state.historyAudio;
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+    state.historyAudioItemId = '';
+    state.historyAudioStatus = 'idle';
+    updateHistoryAudioButtons();
+  }
+
+  function toggleHistoryAudio(button) {
+    const itemId = button.dataset.id;
+    const url = button.dataset.audioUrl;
+    if (!itemId || !url) return;
+
+    if (state.historyAudioItemId === itemId) {
+      if (state.historyAudioStatus === 'loading') return;
+      if (state.historyAudioStatus === 'playing') {
+        state.historyAudio.pause();
+        return;
+      }
+      setHistoryAudioStatus('loading');
+      state.historyAudio.play().catch(() => setHistoryAudioStatus('idle'));
+      return;
+    }
+
+    state.historyAudio.pause();
+    state.historyAudioItemId = itemId;
+    setHistoryAudioStatus('loading');
+    state.historyAudio.src = url;
+    state.historyAudio.play().catch(() => {
+      if (state.historyAudioItemId === itemId) setHistoryAudioStatus('idle');
+    });
+  }
+
+  function bindHistoryAudio() {
+    const audio = state.historyAudio;
+    audio.addEventListener('loadstart', () => {
+      if (state.historyAudioItemId) setHistoryAudioStatus('loading');
+    });
+    audio.addEventListener('waiting', () => {
+      if (state.historyAudioItemId) setHistoryAudioStatus('loading');
+    });
+    audio.addEventListener('playing', () => setHistoryAudioStatus('playing'));
+    audio.addEventListener('pause', () => {
+      if (state.historyAudioItemId && !audio.ended && state.historyAudioStatus !== 'loading') setHistoryAudioStatus('paused');
+    });
+    audio.addEventListener('ended', () => {
+      audio.currentTime = 0;
+      setHistoryAudioStatus('idle');
+    });
+    audio.addEventListener('error', () => {
+      if (state.historyAudioItemId) setHistoryAudioStatus('idle');
+    });
+  }
+
+  async function loadHistoryPage({ force = false } = {}) {
+    const list = $('history-list'); if (!list) return;
+    const session = getSession();
+    const userId = session?.user?.id;
+    if (!session?.access_token || !userId) {
+      resetHistoryState();
+      renderHistoryPage();
+      return;
+    }
+
+    if (state.historyUserId !== userId) {
+      state.historyItems = [];
+      state.historyUserId = userId;
+      state.historyLoaded = false;
+      state.historyLoading = null;
+    }
+
+    if (!force && state.historyLoaded) {
+      renderHistoryPage();
+      return;
+    }
+
+    if (!force) {
+      const cachedItems = readHistoryCache(userId);
+      if (cachedItems) {
+        state.historyItems = cachedItems;
+        state.historyLoaded = true;
+        renderHistoryPage();
+        return;
+      }
+    }
+
+    if (state.historyLoading) {
+      await state.historyLoading;
+      renderHistoryPage();
+      return;
+    }
+
+    renderHistoryPage();
+    const request = getHistoryItems(userId);
+    state.historyLoading = request;
+    try {
+      await request;
+      renderHistoryPage();
+    } catch (error) {
+      if (getSession()?.user?.id === userId) {
+        list.innerHTML = `<div class="empty-state">${escapeHtml(t(`历史记录加载失败：${error.message}`))}</div>`;
+        if ($('history-clear')) $('history-clear').disabled = true;
+      }
+    } finally {
+      if (state.historyLoading === request) state.historyLoading = null;
+    }
   }
 
   function getHistoryItem(id) {
@@ -1166,7 +1366,10 @@
         method: 'DELETE',
         headers: authHeaders()
       });
-      await renderHistoryPage();
+      stopHistoryAudio(id);
+      state.historyItems = state.historyItems.filter((item) => item.id !== id);
+      writeHistoryCache(state.historyUserId, state.historyItems);
+      renderHistoryPage();
     } catch (error) {
       alert(t(`删除失败：${error.message}`));
     }
@@ -1176,7 +1379,11 @@
     if (!confirm(t('确认清空全部历史记录吗？'))) return;
     try {
       await apiFetch('/api/history', { method: 'DELETE', headers: authHeaders() });
-      await renderHistoryPage();
+      stopHistoryAudio();
+      state.historyItems = [];
+      state.historyLoaded = true;
+      writeHistoryCache(state.historyUserId, state.historyItems);
+      renderHistoryPage();
     } catch (error) {
       alert(t(`清空失败：${error.message}`));
     }
@@ -1190,12 +1397,17 @@
   }
 
   async function initHistoryPage() {
+    bindHistoryAudio();
     qsa('.history-filter').forEach((button) => button.addEventListener('click', () => {
       state.historyFilter = button.dataset.filter; qsa('.history-filter').forEach((item) => item.classList.remove('on')); button.classList.add('on'); renderHistoryPage();
     }));
     $('history-clear').addEventListener('click', clearHistory);
     $('history-list').addEventListener('click', async (event) => {
       const button = event.target.closest('button'); if (!button) return; const id = button.dataset.id;
+      if (button.classList.contains('history-audio-button')) {
+        toggleHistoryAudio(button);
+        return;
+      }
       if (button.classList.contains('history-reuse')) reuseHistory(id);
       if (button.classList.contains('history-delete')) deleteHistory(id);
       if (button.classList.contains('history-download')) {
@@ -1209,7 +1421,7 @@
         anchor.remove();
       }
     });
-    renderHistoryPage();
+    loadHistoryPage();
   }
 
   function applyUrlState() {

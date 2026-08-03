@@ -302,9 +302,21 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .pagination-note { margin-top: 16px; color: var(--ink-4); text-align: center; font-size: 12px; }
 
 .history-filters { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
-.history-filters .secondary-button { min-height: 32px; margin-left: auto; padding-block: 5px; font-size: 12px; }
+.history-clear-button { min-height: 28px; display: inline-flex; align-items: center; justify-content: center; gap: 5px; padding: 4px 7px; color: var(--red); background: transparent; border: 0; border-radius: 7px; font-size: 13px; line-height: 1.2; transition: color .15s, background .15s, opacity .15s; }
+.history-clear-button:hover:not(:disabled) { background: var(--red-light); }
+.history-clear-button:focus-visible { outline: 2px solid rgba(213,73,65,.35); outline-offset: 2px; }
+.history-clear-button:disabled { cursor: default; opacity: .38; }
 .history-list { display: flex; flex-direction: column; gap: 9px; }
-.history-row audio { width: min(260px, 100%); height: 32px; }
+.history-audio-button { position: relative; width: 32px; height: 32px; display: grid; place-items: center; flex: none; padding: 0; color: var(--blue); background: var(--card); border: 1px solid var(--line-strong); border-radius: 50%; transition: color .15s, border-color .15s, background .15s, transform .15s; }
+.history-audio-button:hover { border-color: var(--blue-border); background: var(--blue-light); }
+.history-audio-button:active { transform: scale(.94); }
+.history-audio-button:focus-visible { outline: 2px solid var(--blue-border); outline-offset: 2px; }
+.history-audio-button svg { width: 16px; height: 16px; fill: currentColor; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.history-audio-pause, .history-audio-loading { display: none; }
+.history-audio-button[data-state="playing"] .history-audio-play { display: none; }
+.history-audio-button[data-state="playing"] .history-audio-pause { display: block; fill: none; }
+.history-audio-button[data-state="loading"] .history-audio-play { display: none; }
+.history-audio-button[data-state="loading"] .history-audio-loading { width: 15px; height: 15px; display: block; border: 2px solid var(--blue-light); border-top-color: currentColor; border-radius: 50%; animation: spin .75s linear infinite; }
 .history-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); font-weight: 600; }
 .history-meta { color: var(--ink-4); font-size: 11px; }
 .empty-state { padding: 46px 16px; color: var(--ink-4); text-align: center; border: 1px dashed var(--line-strong); border-radius: 12px; background: #fbfaf7; }
@@ -338,6 +350,8 @@ body.dark .seg-item.on,
 body.dark .sub-tab.active { background: #34322e; }
 body.dark .quota-badge { color: var(--ink); background: #29283a; }
 body.dark .account-button { color: var(--ink-2); background: var(--card); }
+body.dark .history-clear-button:hover:not(:disabled) { background: rgba(213,73,65,.13); }
+body.dark .history-audio-button { background: var(--card); }
 
 @media (max-width: 1024px) {
   .sidebar { display: none; }
