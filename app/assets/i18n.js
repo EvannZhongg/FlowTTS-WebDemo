@@ -106,6 +106,7 @@
     '已连接': 'Connected',
     '完成一次合成后，可在这里播放和下载真实音频。': 'After a synthesis completes, you can play and download the audio here.',
     '首包时间': 'Time to first chunk',
+    '仅流式模式': 'Streaming only',
     '处理耗时': 'Processing time',
     '文件大小': 'File size',
     '文本字符': 'Text characters',
@@ -144,8 +145,8 @@
     '低语': 'Whisper',
 
     '声音克隆 · TTS Studio': 'Voice Cloning · TTS Studio',
-    '即刻克隆音色': 'Clone a voice in moments',
-    '上传或录制 6–180 秒清晰人声即可复刻音色，生成后可立即用于语音合成。': 'Upload or record 6–180 seconds of clear speech to reproduce a voice and use it for synthesis immediately.',
+    '声音克隆': 'Voice cloning',
+    '6-180秒参考音频即可复刻音色。限时免费，生成后即可用于合成': 'Clone a voice from 6–180 seconds of reference audio. Ready to use immediately.',
     '创建克隆音色': 'Create a cloned voice',
     '限时体验': 'Limited-time trial',
     '音色名称': 'Voice name',

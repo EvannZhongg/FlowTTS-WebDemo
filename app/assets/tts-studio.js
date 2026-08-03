@@ -590,7 +590,7 @@
     $('studio-audio').src = makeObjectUrl(blob);
     $('studio-player').classList.add('active');
     $('result-empty')?.classList.add('hidden');
-    $('metric-first').textContent = firstChunk == null ? '-' : `${firstChunk}ms`;
+    $('metric-first').textContent = firstChunk == null ? t('仅流式模式') : `${firstChunk}ms`;
     $('metric-time').textContent = `${processingTime}ms`;
     $('metric-size').textContent = `${(size / 1024).toFixed(1)} KB`;
     $('metric-chars').textContent = String($('studio-text').value.length);
