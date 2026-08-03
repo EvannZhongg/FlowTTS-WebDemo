@@ -3,6 +3,7 @@ const authenticate = require('../middleware/auth');
 const {
     createHistoryItem,
     listHistoryItems,
+    downloadHistoryAudio,
     deleteHistoryItem,
     clearHistoryItems
 } = require('../utils/history-store');
@@ -25,6 +26,28 @@ router.post('/', authenticate, async (req, res) => {
         return res.status(201).json({ code: 'success', item });
     } catch (error) {
         return res.status(500).json({ code: 'history_save_failed', message: error.message });
+    }
+});
+
+router.get('/:id/download', authenticate, async (req, res) => {
+    try {
+        const result = await downloadHistoryAudio(req.user.id, req.params.id);
+        if (!result) {
+            return res.status(404).json({ code: 'history_audio_not_found', message: 'History audio not found' });
+        }
+        const format = String(result.metadata.format || 'wav').replace(/[^a-z0-9]/gi, '') || 'wav';
+        const type = String(result.metadata.type || 'history').replace(/[^a-z0-9-]/gi, '-') || 'history';
+        const createdAt = new Date(result.metadata.createdAt);
+        const timestamp = Number.isNaN(createdAt.getTime())
+            ? Date.now()
+            : createdAt.toISOString().replace(/[:.]/g, '-');
+        res.setHeader('Content-Type', result.contentType);
+        res.setHeader('Content-Length', result.buffer.length);
+        res.setHeader('Content-Disposition', `attachment; filename="${type}-${timestamp}.${format}"`);
+        res.setHeader('Cache-Control', 'private, no-store');
+        return res.send(result.buffer);
+    } catch (error) {
+        return res.status(500).json({ code: 'history_download_failed', message: error.message });
     }
 });
 

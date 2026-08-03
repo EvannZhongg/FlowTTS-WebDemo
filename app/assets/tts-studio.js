@@ -1387,6 +1387,36 @@
     else location.href = `tts.html?${params.toString()}`;
   }
 
+  async function downloadHistory(id, button) {
+    const item = getHistoryItem(id);
+    if (!item?.downloadUrl) return;
+    button.disabled = true;
+    try {
+      const response = await apiFetch(`/api/history/${encodeURIComponent(id)}/download`, {
+        headers: authHeaders()
+      }, 'response');
+      const blob = await response.blob();
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const encodedName = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+      const plainName = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+      const filename = encodedName
+        ? decodeURIComponent(encodedName)
+        : plainName || `${item.type || 'history'}-${new Date(item.createdAt).toISOString().replace(/[:.]/g, '-')}.${item.format || 'wav'}`;
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      alert(t(`下载失败：${error.message}`));
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function initHistoryPage() {
     bindHistoryAudio();
     qsa('.history-filter').forEach((button) => button.addEventListener('click', () => {
@@ -1402,14 +1432,7 @@
       if (button.classList.contains('history-reuse')) reuseHistory(id);
       if (button.classList.contains('history-delete')) deleteHistory(id);
       if (button.classList.contains('history-download')) {
-        const item = getHistoryItem(id);
-        if (!item?.downloadUrl) return;
-        const anchor = document.createElement('a');
-        anchor.href = item.downloadUrl;
-        anchor.download = `${item.type || 'history'}-${new Date(item.createdAt).toISOString().replace(/[:.]/g, '-')}.${item.format || 'wav'}`;
-        document.body.appendChild(anchor);
-        anchor.click();
-        anchor.remove();
+        await downloadHistory(id, button);
       }
     });
     loadHistoryPage();

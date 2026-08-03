@@ -366,6 +366,7 @@
     if ((match = source.match(/^请求失败：(.+)$/))) return `Request failed: ${match[1]}`;
     if ((match = source.match(/^音色加载失败：(.+)$/))) return `Failed to load voices: ${match[1]}`;
     if ((match = source.match(/^加载失败：(.+)$/))) return `Loading failed: ${match[1]}`;
+    if ((match = source.match(/^下载失败：(.+)$/))) return `Download failed: ${match[1]}`;
     if ((match = source.match(/^删除失败：(.+)$/))) return `Delete failed: ${match[1]}`;
     if ((match = source.match(/^清空失败：(.+)$/))) return `Clear failed: ${match[1]}`;
     if ((match = source.match(/^合成失败：(.+)$/))) return `Synthesis failed: ${match[1]}`;

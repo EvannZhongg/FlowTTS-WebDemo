@@ -259,6 +259,19 @@ async function findHistoryItem(userId, recordId) {
     return metadata.userId === userId ? metadata : null;
 }
 
+async function downloadHistoryAudio(userId, recordId) {
+    validateUserId(userId);
+    const metadata = await findHistoryItem(userId, recordId);
+    if (!metadata?.audioPath) return null;
+    const { data, error } = await supabaseDb.storage.from(HISTORY_BUCKET).download(metadata.audioPath);
+    if (error) throw new Error(`Failed to download history audio: ${error.message}`);
+    return {
+        metadata,
+        buffer: Buffer.from(await data.arrayBuffer()),
+        contentType: metadata.audioMimeType || FORMAT_MIME_TYPES[metadata.format] || 'application/octet-stream'
+    };
+}
+
 async function deleteHistoryItem(userId, recordId) {
     validateUserId(userId);
     const metadata = await findHistoryItem(userId, recordId);
@@ -287,6 +300,7 @@ module.exports = {
     ensureHistoryBucket,
     createHistoryItem,
     listHistoryItems,
+    downloadHistoryAudio,
     deleteHistoryItem,
     clearHistoryItems
 };
