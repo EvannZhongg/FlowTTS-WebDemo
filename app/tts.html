@@ -69,10 +69,9 @@
             <summary><span>高级设置（格式 / 采样率）</span><span>⌄</span></summary>
             <div class="advanced-body">
               <div class="field-grid two">
-                <div class="field"><label>音频格式 <span class="api-tag">Format</span></label><div class="format-seg" id="studio-format"><button class="seg-item mono on" data-format="pcm" type="button">pcm</button><button class="seg-item mono" data-format="wav" type="button">wav</button><button class="seg-item mono" data-format="mp3" type="button">mp3</button><button class="seg-item mono placeholder-control" type="button" disabled title="当前后端未支持">opus</button></div></div>
+                <div class="field"><label>音频格式 <span class="api-tag">Format</span></label><div class="format-seg" id="studio-format"><button class="seg-item mono on" data-format="mp3" type="button">mp3</button><button class="seg-item mono" data-format="wav" type="button">wav</button><button class="seg-item mono" data-format="opus" type="button">opus</button><button class="seg-item mono" data-format="pcm" type="button">pcm</button></div></div>
                 <div class="field"><label for="studio-sample-rate">采样率 <span class="api-tag">SampleRate</span></label><select class="select mono" id="studio-sample-rate"><option value="24000">24000 Hz</option><option value="16000">16000 Hz</option></select></div>
               </div>
-              <div class="placeholder-banner"><span>◌</span><div><strong>参考原型中的待接能力</strong>MP3 比特率、Opus、字幕级别和时间戳当前没有后端参数通路，界面不提交这些字段。详见 TODO 文档。</div></div>
             </div>
           </details>
 

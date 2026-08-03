@@ -87,7 +87,6 @@
     '采样率': 'Sample rate',
     '当前后端未支持': 'Not supported by the current backend',
     '参考原型中的待接能力': 'Capabilities pending backend support',
-    'MP3 比特率、Opus、字幕级别和时间戳当前没有后端参数通路，界面不提交这些字段。详见 TODO 文档。': 'MP3 bitrate, Opus, subtitle level, and timestamps currently have no backend parameter path, so the UI does not submit these fields. See the TODO document for details.',
     '本次合成将消耗 100 点配额': 'This synthesis will cost 100 quota points',
     '本次流式合成将消耗 100 点配额': 'This streaming synthesis will cost 100 quota points',
     '⌘ / Ctrl + Enter 快速合成': '⌘ / Ctrl + Enter to synthesize',

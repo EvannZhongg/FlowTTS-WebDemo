@@ -99,7 +99,7 @@ router.get('/voices', async (req, res) => {
  * {
  *   "text": "要合成的文本",
  *   "voiceId": "v-female-R2s4N9qJ",
- *   "format": "pcm",          // pcm | wav | mp3 (default: pcm)
+ *   "format": "pcm",          // pcm | wav | mp3 | opus (default: pcm)
  *   "sampleRate": 24000,       // 16000 | 24000 (default: 24000)
  *   "speedRatio": 1.0,
  *   "volumeRatio": 1.0,
@@ -115,7 +115,7 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
             voiceId = 'v-female-R2s4N9qJ', // 默认音色：温柔姐姐
             language, // 可选语言参数
             model: requestedModel, // 可选 model 参数: flow_02_turbo | flow_01_ex
-            format, // 音频格式: pcm | wav | mp3 (默认 pcm)
+            format, // 音频格式: pcm | wav | mp3 | opus (默认 pcm)
             sampleRate, // 采样率: 16000 | 24000 (默认 24000)
             speed = 1, // 语速 (0.5-2.0)
             volume = 1, // 音量 (0.5-2.0)
@@ -135,8 +135,8 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
         const validatedVolume = Math.max(0, Math.min(10, parseFloat(volume) || 1));
         const validatedPitch = Math.max(-12, Math.min(12, parseFloat(pitch) || 0));
 
-        // 验证音频格式 (非流式支持 pcm/wav/mp3，默认 pcm)
-        const VALID_FORMATS = ['pcm', 'wav', 'mp3'];
+        // 非流式接口原生支持 pcm/wav/mp3/opus，默认保持服务端原始 PCM 输出。
+        const VALID_FORMATS = ['pcm', 'wav', 'mp3', 'opus'];
         const validatedFormat = VALID_FORMATS.includes(format) ? format : 'pcm';
         const validatedSampleRate = [16000, 24000].includes(Number(sampleRate)) ? Number(sampleRate) : 24000;
 
@@ -181,7 +181,8 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
                 ...(validatedEmotion ? { Emotion: validatedEmotion } : {}) // 情感风格，仅 flow_01_ex 生效
             },
             AudioFormat: {
-                Format: validatedFormat, // ✅ 支持 pcm/wav/mp3
+                // 由腾讯云直接生成所选格式；服务端只透传 Base64，不做本地音频转码。
+                Format: validatedFormat,
                 SampleRate: validatedSampleRate
             },
             ...(requestedLanguage ? { Language: requestedLanguage } : {}) // 未指定时由云端自动检测
@@ -217,10 +218,14 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
             code: 'success',
             message: 'TTS synthesis completed successfully',
             audio: response.Audio,
+            audioFormat: validatedFormat,
+            sampleRate: validatedSampleRate,
             requestId: response.RequestId,
             requestedLanguage: requestedLanguage || null, // 前端请求的语言（未指定为 null）
             providerAutoDetect: !requestedLanguage, // 是否由云服务商自动检测
             appliedParams: { // 返回实际使用的参数
+                format: validatedFormat,
+                sampleRate: validatedSampleRate,
                 speed: validatedSpeed,
                 volume: validatedVolume,
                 pitch: validatedPitch,

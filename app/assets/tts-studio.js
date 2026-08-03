@@ -43,6 +43,8 @@
     selectedVoice: '',
     mode: 'tts',
     ttsAudioBlob: null,
+    ttsDownloadBlob: null,
+    ttsFormat: 'mp3',
     streamAudioBlob: null,
     cloneAudioBlob: null,
     clonedVoiceId: '',
@@ -197,11 +199,29 @@
     return bytes.buffer;
   }
 
-  function downloadBlob(blob, prefix = 'tts') {
+  const AUDIO_EXTENSIONS = {
+    'audio/wav': 'wav',
+    'audio/x-wav': 'wav',
+    'audio/mpeg': 'mp3',
+    'audio/mp3': 'mp3',
+    'audio/ogg': 'opus',
+    'audio/opus': 'opus',
+    'application/ogg': 'opus',
+    'audio/l16': 'pcm',
+    'application/octet-stream': 'pcm'
+  };
+
+  function audioExtension(blob, preferredFormat = '') {
+    const normalized = String(preferredFormat || '').toLowerCase();
+    if (['pcm', 'wav', 'mp3', 'opus'].includes(normalized)) return normalized;
+    return AUDIO_EXTENSIONS[String(blob?.type || '').toLowerCase()] || 'wav';
+  }
+
+  function downloadBlob(blob, prefix = 'tts', preferredFormat = '') {
     if (!blob) return;
     const anchor = document.createElement('a');
     anchor.href = makeObjectUrl(blob);
-    anchor.download = `${prefix}-${new Date().toISOString().replace(/[:.]/g, '-')}.wav`;
+    anchor.download = `${prefix}-${new Date().toISOString().replace(/[:.]/g, '-')}.${audioExtension(blob, preferredFormat)}`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -529,7 +549,7 @@
   function getStudioRequest() {
     const customVoice = $('studio-custom-voice').value.trim();
     const model = currentStudioModel();
-    const format = qsa('#studio-format .seg-item').find((button) => button.classList.contains('on'))?.dataset.format || 'pcm';
+    const format = qsa('#studio-format .seg-item').find((button) => button.classList.contains('on'))?.dataset.format || 'mp3';
     return {
       text: $('studio-text').value.trim(),
       voiceId: customVoice || state.selectedVoice,
@@ -544,8 +564,12 @@
     };
   }
 
-  function showStudioResult(blob, processingTime, size, firstChunk = null) {
-    state.ttsAudioBlob = state.mode === 'tts' ? blob : state.ttsAudioBlob;
+  function showStudioResult(blob, processingTime, size, firstChunk = null, options = {}) {
+    if (state.mode === 'tts') {
+      state.ttsAudioBlob = blob;
+      state.ttsDownloadBlob = options.downloadBlob || blob;
+      state.ttsFormat = options.format || audioExtension(state.ttsDownloadBlob);
+    }
     state.streamAudioBlob = state.mode === 'streaming' ? blob : state.streamAudioBlob;
     $('studio-audio').src = makeObjectUrl(blob);
     $('studio-player').classList.add('active');
@@ -568,13 +592,35 @@
     readQuotaFromResponse(response, data);
     if (!data.audio) throw new Error(t('服务端未返回音频数据'));
     const raw = base64ToArrayBuffer(data.audio);
-    let blob;
-    if (request.format === 'wav') blob = new Blob([raw], { type: 'audio/wav' });
-    else if (request.format === 'mp3') blob = new Blob([raw], { type: 'audio/mpeg' });
-    else blob = pcmToWav(raw, request.sampleRate);
+    const format = data.audioFormat || data.appliedParams?.format || request.format;
+    const sampleRate = Number(data.sampleRate || data.appliedParams?.sampleRate || request.sampleRate);
+    let playbackBlob;
+    let downloadAudio;
+    if (format === 'wav') {
+      playbackBlob = new Blob([raw], { type: 'audio/wav' });
+      downloadAudio = playbackBlob;
+    } else if (format === 'mp3') {
+      playbackBlob = new Blob([raw], { type: 'audio/mpeg' });
+      downloadAudio = playbackBlob;
+    } else if (format === 'opus') {
+      playbackBlob = new Blob([raw], { type: 'audio/ogg; codecs=opus' });
+      downloadAudio = playbackBlob;
+    } else {
+      playbackBlob = pcmToWav(raw, sampleRate);
+      downloadAudio = new Blob([raw], { type: 'application/octet-stream' });
+    }
     const elapsed = Date.now() - started;
-    showStudioResult(blob, elapsed, raw.byteLength);
-    await saveHistory('tts', { ...request, processingTime: elapsed, size: raw.byteLength }, blob);
+    showStudioResult(playbackBlob, elapsed, raw.byteLength, null, {
+      downloadBlob: downloadAudio,
+      format
+    });
+    await saveHistory('tts', {
+      ...request,
+      format,
+      processingTime: elapsed,
+      size: raw.byteLength,
+      playbackAudio: playbackBlob
+    }, downloadAudio);
   }
 
   async function synthesizeStream(request) {
@@ -688,10 +734,14 @@
       $('studio-speed-value').textContent = '1.0'; $('studio-volume-value').textContent = '1.0'; $('studio-pitch-value').textContent = '0';
       $('studio-language').value = '';
       $('studio-voice-search').value = '';
+      qsa('#studio-format .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.format === 'mp3'));
       clearMessage('studio-message');
       $('studio-player').classList.remove('active');
       $('result-empty')?.classList.remove('hidden');
       $('studio-download').disabled = true;
+      state.ttsAudioBlob = null;
+      state.ttsDownloadBlob = null;
+      state.ttsFormat = 'mp3';
       $('studio-result-status').textContent = t('待合成'); $('studio-result-status').className = 'status-pill';
       state.selectedVoice = state.voices[0]?.id || '';
       renderStudioLanguageFilters();
@@ -702,7 +752,10 @@
       const output = $(`${input.id}-value`); if (output) output.textContent = Number(input.value).toFixed(input.step.includes('.') ? 1 : 0);
     }));
     $('studio-submit').addEventListener('click', runStudioSynthesis);
-    $('studio-download').addEventListener('click', () => downloadBlob(state.mode === 'streaming' ? state.streamAudioBlob : state.ttsAudioBlob, state.mode));
+    $('studio-download').addEventListener('click', () => {
+      if (state.mode === 'streaming') downloadBlob(state.streamAudioBlob, state.mode, 'wav');
+      else downloadBlob(state.ttsDownloadBlob || state.ttsAudioBlob, state.mode, state.ttsFormat);
+    });
     $('studio-text').addEventListener('keydown', (event) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') { event.preventDefault(); runStudioSynthesis(); }
     });
@@ -1024,7 +1077,8 @@
     tx.objectStore('history').add({
       type, text: meta.text || '', voiceName: meta.voiceName || '', voice: meta.voiceId || '', voiceId: meta.voiceId || '', language: meta.language || '',
       model: meta.model || '', processingTime: meta.processingTime || 0, sampleRate: meta.sampleRate || 24000,
-      size: meta.size || audio?.size || 0, audio: audio || null, createdAt: Date.now()
+      format: meta.format || audioExtension(audio), size: meta.size || audio?.size || 0,
+      audio: meta.playbackAudio || audio || null, downloadAudio: audio || null, createdAt: Date.now()
     });
   }
 
@@ -1083,7 +1137,10 @@
       const button = event.target.closest('button'); if (!button) return; const id = button.dataset.id;
       if (button.classList.contains('history-reuse')) reuseHistory(id);
       if (button.classList.contains('history-delete')) deleteHistory(id);
-      if (button.classList.contains('history-download')) { const item = await getHistoryItem(id); downloadBlob(item?.audio, item?.type || 'history'); }
+      if (button.classList.contains('history-download')) {
+        const item = await getHistoryItem(id);
+        downloadBlob(item?.downloadAudio || item?.audio, item?.type || 'history', item?.format);
+      }
     });
     renderHistoryPage();
   }
