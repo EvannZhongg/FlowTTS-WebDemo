@@ -19,70 +19,53 @@ const TTS_HOST = 'trtc.ai.tencentcloudapi.com';
 const TTS_VERSION = '2019-07-22';
 const TTS_REGION = process.env.TRTC_REGION || 'ap-beijing';
 const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '';
-const CLONED_VOICE_LIMIT = 20;
+const MIN_CLONE_AUDIO_SECONDS = 6;
+const MAX_CLONE_AUDIO_SECONDS = 30;
 
-async function requireCloneCapacity(req, res, next) {
-    try {
-        const { count, error } = await supabaseDb
-            .from('cloned_voices')
-            .select('voice_id', { count: 'exact', head: true })
-            .eq('user_id', req.user.id)
-            .eq('is_active', true);
-
-        if (error) throw error;
-
-        const current = Number(count || 0);
-        if (current >= CLONED_VOICE_LIMIT) {
-            return res.status(409).json({
-                code: 'clone_capacity_exceeded',
-                message: `Cloned voice capacity reached (${current}/${CLONED_VOICE_LIMIT})`,
-                capacity: { current, limit: CLONED_VOICE_LIMIT, remaining: 0 }
-            });
-        }
-
-        req.cloneCapacity = {
-            current,
-            limit: CLONED_VOICE_LIMIT,
-            remaining: CLONED_VOICE_LIMIT - current
-        };
-        next();
-    } catch (error) {
-        logger.error({ userId: req.user?.id, error: error.message }, '[Voice Clone] Capacity check failed');
-        return res.status(500).json({
-            code: 'capacity_check_failed',
-            message: 'Failed to check cloned voice capacity: ' + error.message
+function validateCloneAudio(req, res, next) {
+    const { audioData, audioDuration } = req.body || {};
+    if (!audioData) {
+        return res.status(400).json({
+            code: 'missing_audio_data',
+            message: 'Missing required field: audioData (base64 encoded audio)'
         });
     }
+
+    const duration = Number(audioDuration);
+    if (!Number.isFinite(duration)
+        || duration < MIN_CLONE_AUDIO_SECONDS
+        || duration > MAX_CLONE_AUDIO_SECONDS) {
+        return res.status(400).json({
+            code: 'invalid_audio_duration',
+            message: `Audio duration must be between ${MIN_CLONE_AUDIO_SECONDS} and ${MAX_CLONE_AUDIO_SECONDS} seconds`
+        });
+    }
+
+    req.cloneAudioDuration = duration;
+    next();
 }
 
 /**
  * POST /api/voice/clone
- * Clone voice from audio sample (50 quota, max 20 active voices per user)
+ * Clone voice from a 6–30 second audio sample (50 quota)
  *
  * Body:
  * {
  *   "audioData": "base64...",
  *   "voiceName": "My Voice",           // optional, 用户自定义名称
- *   "audioDuration": 8.5,              // optional, 音频时长（秒）
+ *   "audioDuration": 8.5,              // required, 6–30 秒
  *   "description": "Description"       // optional, 描述信息
  * }
  */
-router.post('/clone', authenticate, requireCloneCapacity, requireQuota('voice-clone'), async (req, res) => {
+router.post('/clone', authenticate, validateCloneAudio, requireQuota('voice-clone'), async (req, res) => {
     try {
         const {
             audioData,
             voiceName,
-            audioDuration,
             description,
             model // 可选: flow_02_turbo | flow_01_ex
         } = req.body;
-
-        if (!audioData) {
-            return res.status(400).json({
-                code: 'missing_audio_data',
-                message: 'Missing required field: audioData (base64 encoded audio)'
-            });
-        }
+        const validatedAudioDuration = req.cloneAudioDuration;
 
         // Get Tencent Cloud credentials from environment
         const secretId = process.env.TX_SECRET_ID;
@@ -109,8 +92,8 @@ router.post('/clone', authenticate, requireCloneCapacity, requireQuota('voice-cl
         logger.info({
             userId: req.user.id,
             email: req.user.email,
-            audioDuration
-        }, `🎙️ Voice Clone: (${audioDuration || '?'}s)`);
+            audioDuration: validatedAudioDuration
+        }, `🎙️ Voice Clone: (${validatedAudioDuration}s)`);
 
         const response = await callTencentAPI(
             TTS_SERVICE,
@@ -132,7 +115,7 @@ router.post('/clone', authenticate, requireCloneCapacity, requireQuota('voice-cl
                 voice_name: voiceName || null,
                 model: resolvedModel,
                 description: description || null,
-                audio_duration: audioDuration || null
+                audio_duration: validatedAudioDuration
             })
             .select()
             .single();
@@ -159,12 +142,7 @@ router.post('/clone', authenticate, requireCloneCapacity, requireQuota('voice-cl
             voiceId: response.VoiceId,
             requestId: response.RequestId,
             quota: req.quotaInfo, // { daily, used, remaining }
-            clonedVoice: clonedVoice || null,
-            capacity: {
-                current: req.cloneCapacity.current + 1,
-                limit: CLONED_VOICE_LIMIT,
-                remaining: Math.max(CLONED_VOICE_LIMIT - req.cloneCapacity.current - 1, 0)
-            }
+            clonedVoice: clonedVoice || null
         });
     } catch (error) {
         logger.error({
@@ -207,12 +185,7 @@ router.get('/list', authenticate, async (req, res) => {
 
         res.json({
             code: 'success',
-            voices: data,
-            capacity: {
-                current: data.length,
-                limit: CLONED_VOICE_LIMIT,
-                remaining: Math.max(CLONED_VOICE_LIMIT - data.length, 0)
-            }
+            voices: data
         });
     } catch (error) {
         logger.error({ error: error.message }, '[Voice Clone] List failed');

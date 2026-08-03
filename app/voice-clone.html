@@ -10,7 +10,7 @@
 <body data-page="clone">
   <script src="assets/tts-shell.js"></script>
   <main class="app-main"><div class="page-shell">
-    <header class="page-heading"><div class="page-kicker">VOICE CLONING</div><h1>声音克隆</h1><p>6-180秒参考音频即可复刻音色。限时免费，生成后即可用于合成</p></header>
+    <header class="page-heading"><div class="page-kicker">VOICE CLONING</div><h1>声音克隆</h1><p>6-30秒参考音频即可复刻音色。限时免费，生成后即可用于合成</p></header>
     <div class="clone-grid">
       <section class="panel">
         <div class="section-head"><span class="section-title">创建克隆音色</span><span class="todo-pill">限时体验</span></div>
@@ -30,10 +30,10 @@
         </div>
         <div class="field"><label for="clone-model">模型</label><select class="select mono" id="clone-model"><option value="">自动</option><option value="flow_02_turbo">flow_02_turbo</option><option value="flow_01_ex">flow_01_ex</option></select></div>
         <div class="consent-note">提交即表示您确认该声音属于本人或已获得合法授权，并知悉可随时请求删除。</div>
-        <div class="gen-meta"><span>本次克隆将消耗 50 点配额</span><span>音频要求：6–180 秒</span></div>
+        <div class="gen-meta"><span>本次克隆将消耗 50 点配额</span><span>音频要求：6–30 秒</span></div>
         <button class="primary-button" id="clone-btn" type="button">开始克隆</button>
         <div class="loading" id="clone-loading"><span class="spinner"></span><span>正在转换音频并提交克隆...</span></div><div class="message" id="clone-message"></div>
-        <div class="divider"></div><div class="section-head"><div class="section-title">已保存的音色</div><span class="muted mono" id="clone-count">-- / 20</span></div><div class="voice-list" id="cloned-voice-list"><div class="empty-state">正在加载...</div></div>
+        <div class="divider"></div><div class="section-head"><div class="section-title">已保存的音色</div></div><div class="voice-list" id="cloned-voice-list"><div class="empty-state">正在加载...</div></div>
       </section>
 
       <section class="panel">
@@ -46,7 +46,6 @@
         <button class="primary-button" id="clone-synth-btn" type="button">合成并试听</button>
         <div class="loading" id="clone-synth-loading"><span class="spinner"></span><span>正在合成...</span></div><div class="message" id="clone-synth-message"></div>
         <div class="audio-player result-card" id="clone-player"><audio id="clone-audio" controls></audio><div class="metrics"><div class="metric"><b id="clone-time">-</b><span>处理耗时</span></div><div class="metric"><b id="clone-size">-</b><span>文件大小</span></div></div><button class="secondary-button" id="clone-download" type="button">下载 WAV</button></div>
-        <div class="placeholder-banner"><span>◌</span><div><strong>暂未接入的参考能力</strong>训练进度、克隆数量上限和云端任务状态当前没有后端数据，不做伪实现。</div></div>
       </section>
     </div>
   </div></main>

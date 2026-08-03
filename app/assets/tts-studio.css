@@ -321,9 +321,6 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .history-meta { color: var(--ink-4); font-size: 11px; }
 .empty-state { padding: 46px 16px; color: var(--ink-4); text-align: center; border: 1px dashed var(--line-strong); border-radius: 12px; background: #fbfaf7; }
 
-.placeholder-banner { display: grid; grid-template-columns: auto 1fr; gap: 12px; align-items: start; padding: 14px; color: var(--amber); background: var(--amber-light); border-radius: 12px; font-size: 12px; }
-.placeholder-banner strong { display: block; color: var(--ink-2); margin-bottom: 2px; }
-
 body.dark .topbar { background: rgba(23,23,21,.9); }
 body.dark .console-tabs,
 body.dark .textarea-wrap,

@@ -48,7 +48,7 @@
     'SSE 流式合成': 'SSE streaming synthesis',
     '实时查看连接状态、已接收分块、首包时间和总大小；完成后可播放、下载并自动写入历史记录。': 'Monitor connection status, received chunks, time to first chunk, and total size in real time. Play, download, and save the result to history when complete.',
     '开始流式体验 · 消耗 100 点': 'Start streaming · Costs 100 points',
-    '6–180 秒，即刻克隆音色': 'Clone a voice from 6–180 seconds of audio',
+    '6–30 秒，即刻克隆音色': 'Clone a voice from 6–30 seconds of audio',
     '上传清晰人声或直接在线录音。系统会转换为 16kHz 单声道 WAV，克隆完成即可用于语音合成。': 'Upload clear speech or record it online. Audio is converted to 16 kHz mono WAV and can be used for synthesis as soon as cloning is complete.',
     '上传 / 录音': 'Upload / Record',
     '创建音色': 'Create voice',
@@ -148,7 +148,7 @@
 
     '声音克隆 · TTS Studio': 'Voice Cloning · TTS Studio',
     '声音克隆': 'Voice cloning',
-    '6-180秒参考音频即可复刻音色。限时免费，生成后即可用于合成': 'Clone a voice from 6–180 seconds of reference audio. Ready to use immediately.',
+    '6-30秒参考音频即可复刻音色。限时免费，生成后即可用于合成': 'Clone a voice from 6–30 seconds of reference audio. Ready to use immediately.',
     '创建克隆音色': 'Create a cloned voice',
     '限时体验': 'Limited-time trial',
     '音色名称': 'Voice name',
@@ -165,10 +165,8 @@
     '重新录音': 'Record again',
     '提交即表示您确认该声音属于本人或已获得合法授权，并知悉可随时请求删除。': 'By submitting, you confirm that the voice is yours or that you have legal authorization, and acknowledge that you may request deletion at any time.',
     '本次克隆将消耗 50 点配额': 'This clone will cost 50 quota points',
-    '音频要求：6–180 秒': 'Audio requirement: 6–180 seconds',
+    '音频要求：6–30 秒': 'Audio requirement: 6–30 seconds',
     '开始克隆': 'Start cloning',
-    '容量已满': 'Capacity full',
-    '已达到 20 个克隆音色上限，请先删除一个音色': 'The 20 cloned voice limit has been reached. Delete a voice first.',
     '正在转换音频并提交克隆...': 'Converting audio and submitting the clone...',
     '已保存的音色': 'Saved voices',
     '-- 个': '--',
@@ -182,8 +180,6 @@
     '合成并试听': 'Synthesize and preview',
     '正在合成...': 'Synthesizing...',
     '下载 WAV': 'Download WAV',
-    '暂未接入的参考能力': 'Reference capabilities not yet connected',
-    '训练进度、克隆数量上限和云端任务状态当前没有后端数据，不做伪实现。': 'Training progress, clone limits, and cloud task status are not available from the backend and are therefore not simulated.',
     '可用': 'Available',
     '使用': 'Use',
     '复制': 'Copy',
@@ -376,8 +372,7 @@
     if ((match = source.match(/^克隆失败：(.+)$/))) return `Cloning failed: ${match[1]}`;
     if ((match = source.match(/^无法开始录音：(.+)$/))) return `Could not start recording: ${match[1]}`;
     if ((match = source.match(/^克隆成功，Voice ID：(.+)$/))) return `Clone created. Voice ID: ${match[1]}`;
-    if ((match = source.match(/^已达到克隆音色容量上限（(\d+) \/ (\d+)），请先删除一个音色后再试$/))) return `Cloned voice capacity reached (${match[1]} / ${match[2]}). Delete a voice and try again.`;
-    if ((match = source.match(/^音频时长为 (.+) 秒，请使用 6–180 秒音频$/))) return `Audio duration is ${match[1]} seconds. Please use audio between 6 and 180 seconds.`;
+    if ((match = source.match(/^音频时长为 (.+) 秒，请使用 6–30 秒音频$/))) return `Audio duration is ${match[1]} seconds. Please use audio between 6 and 30 seconds.`;
     if ((match = source.match(/^(.+) · 将转换为 16kHz 单声道 WAV$/))) return `${match[1]} · Will be converted to 16 kHz mono WAV`;
     return source;
   }
