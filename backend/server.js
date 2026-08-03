@@ -7,6 +7,7 @@ const logger = require('./utils/logger');
 const ttsRoutes = require('./routes/tts');
 const voiceCloneRoutes = require('./routes/voice-clone');
 const userRoutes = require('./routes/user');
+const historyRoutes = require('./routes/history');
 
 const PORT = parseInt(process.env.API_PORT) || 9000;
 const HOST = process.env.API_HOST || '0.0.0.0';
@@ -45,6 +46,7 @@ app.get('/health', (req, res) => {
 app.use('/api/tts', ttsRoutes);
 app.use('/api/voice', voiceCloneRoutes);
 app.use('/api/user', userRoutes);
+app.use('/api/history', historyRoutes);
 
 // 404
 app.use((req, res) => {

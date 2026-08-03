@@ -200,13 +200,14 @@
 
     '历史记录 · TTS Studio': 'History · TTS Studio',
     '所有历史记录': 'All history',
-    '本站点的合成、克隆音色和克隆试听记录，可随时播放重听。数据保存在当前浏览器中。': 'Replay synthesis, cloned voice, and clone preview records at any time. Data is stored in this browser.',
+    '合成、克隆音色和克隆试听记录按登录账号保存在云端，可跨设备查看和播放。': 'Synthesis, cloned voices, and clone auditions are stored in the cloud per account and available across devices.',
     '记录': 'Records',
     '全部清空': 'Clear all',
     '全部 / All': 'All',
     '流式': 'Streaming',
     '克隆 / Cloning': 'Cloning',
-    '正在读取本地历史...': 'Reading local history...',
+    '正在读取云端历史...': 'Loading cloud history...',
+    '登录后可查看账号历史记录': 'Sign in to view your account history.',
     '复用': 'Reuse',
     '下载': 'Download',
 
@@ -351,7 +352,7 @@
   function translatePattern(source) {
     let match;
     if (source.startsWith('音色加载失败：')) return `Failed to load voices: ${source.slice('音色加载失败：'.length)}`;
-    if (source.startsWith('IndexedDB 初始化失败：')) return `IndexedDB initialization failed: ${source.slice('IndexedDB 初始化失败：'.length)}`;
+    if (source.startsWith('历史记录加载失败：')) return `Failed to load history: ${source.slice('历史记录加载失败：'.length)}`;
     if ((match = source.match(/^\+(\d+) 更多语言$/))) return `+${match[1]} more languages`;
     if ((match = source.match(/^当前模型 (.+) · (\d+) 个可用音色$/))) return `Current model: ${match[1]} · ${match[2]} available voices`;
     if ((match = source.match(/^(\d+) 个音色$/))) return `${match[1]} voices`;
@@ -366,6 +367,7 @@
     if ((match = source.match(/^音色加载失败：(.+)$/))) return `Failed to load voices: ${match[1]}`;
     if ((match = source.match(/^加载失败：(.+)$/))) return `Loading failed: ${match[1]}`;
     if ((match = source.match(/^删除失败：(.+)$/))) return `Delete failed: ${match[1]}`;
+    if ((match = source.match(/^清空失败：(.+)$/))) return `Clear failed: ${match[1]}`;
     if ((match = source.match(/^合成失败：(.+)$/))) return `Synthesis failed: ${match[1]}`;
     if ((match = source.match(/^克隆失败：(.+)$/))) return `Cloning failed: ${match[1]}`;
     if ((match = source.match(/^无法开始录音：(.+)$/))) return `Could not start recording: ${match[1]}`;

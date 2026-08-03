@@ -31,7 +31,7 @@ node server.js
 │   ├── tts.html                  # 文本转语音 / SSE 流式合成
 │   ├── voice-clone.html          # 声音克隆
 │   ├── voices.html               # 音色库
-│   ├── history.html              # 本地历史记录
+│   ├── history.html              # 按账号隔离的云端历史记录
 │   ├── assets/                   # 共享样式、导航与业务脚本
 │   ├── supabase-auth-inject.js   # 登录注入
 │   └── quota-interceptor.js      # 配额拦截

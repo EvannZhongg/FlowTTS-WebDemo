@@ -57,8 +57,8 @@
     recordedUrl: '',
     recordingStartedAt: 0,
     recordTimer: null,
-    historyDb: null,
     historyFilter: 'all',
+    historyItems: [],
     libraryCategory: 'all',
     libraryModel: 'all',
     languageFiltersExpanded: { studio: false, library: false },
@@ -404,6 +404,12 @@
       localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
     });
     window.addEventListener('quotaUpdated', (event) => updateQuota(event.detail));
+    window.addEventListener('authReady', () => {
+      if (PAGE === 'history') renderHistoryPage();
+    });
+    window.addEventListener('authStateChanged', () => {
+      if (PAGE === 'history') renderHistoryPage();
+    });
     const initialQuota = window.SupabaseAuthInject?.getQuota?.();
     if (initialQuota) updateQuota(initialQuota);
     window.addEventListener('localeChanged', () => {
@@ -438,11 +444,17 @@
   function initHomePage() {
     const panels = qsa('[data-home-panel]');
     const tabs = qsa('[data-home-tab]');
+    const homeModelButtons = qsa('#home-demo-model .seg-item');
+    const getHomeModel = () => homeModelButtons.find((button) => button.classList.contains('on'))?.dataset.model || 'flow_02_turbo';
     const setPanel = (name) => {
       tabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.homeTab === name));
       panels.forEach((panel) => panel.classList.toggle('active', panel.dataset.homePanel === name));
     };
     tabs.forEach((tab) => tab.addEventListener('click', () => setPanel(tab.dataset.homeTab)));
+    homeModelButtons.forEach((button) => button.addEventListener('click', () => {
+      homeModelButtons.forEach((item) => item.classList.toggle('on', item === button));
+      updateTryLink();
+    }));
     const text = $('home-demo-text');
     const updateHomeCount = () => { if ($('home-demo-count')) $('home-demo-count').textContent = `${text.value.length} / 1000`; };
     text?.addEventListener('input', updateHomeCount);
@@ -471,12 +483,12 @@
       const params = new URLSearchParams({
         text: text?.value || '',
         voice: $('home-demo-voice')?.value || '',
-        model: $('home-demo-model')?.value || 'flow_02_turbo',
+        model: getHomeModel(),
         language: $('home-demo-language')?.value || ''
       });
       $('home-try-tts').href = `tts.html?${params.toString()}`;
     };
-    ['home-demo-text', 'home-demo-model', 'home-demo-language', 'home-demo-voice'].forEach((id) => $(id)?.addEventListener('input', updateTryLink));
+    ['home-demo-text', 'home-demo-language', 'home-demo-voice'].forEach((id) => $(id)?.addEventListener('input', updateTryLink));
     $('home-try-tts')?.addEventListener('pointerdown', updateTryLink);
     updateHomeCount();
     updateTryLink();
@@ -806,6 +818,15 @@
     });
   }
 
+  async function audioPayload(blob, format = '') {
+    if (!blob) return null;
+    return {
+      data: await blobToBase64(blob),
+      mimeType: blob.type || 'application/octet-stream',
+      format: format || audioExtension(blob)
+    };
+  }
+
   async function processAudioForCloning(file) {
     const context = new (window.AudioContext || window.webkitAudioContext)();
     try {
@@ -1077,79 +1098,98 @@
     }).catch((error) => { $('library-grid').innerHTML = `<div class="empty-state">${escapeHtml(t(`音色加载失败：${error.message}`))}</div>`; });
   }
 
-  function openHistoryDb() {
-    return new Promise((resolve, reject) => {
-      const request = indexedDB.open('ttsDemo', 1);
-      request.onupgradeneeded = (event) => {
-        const db = event.target.result;
-        if (!db.objectStoreNames.contains('history')) {
-          const store = db.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
-          store.createIndex('type', 'type'); store.createIndex('createdAt', 'createdAt');
-        }
-      };
-      request.onsuccess = () => { state.historyDb = request.result; resolve(request.result); };
-      request.onerror = () => reject(request.error);
-    });
-  }
-
   async function saveHistory(type, meta, audio) {
-    if (!state.historyDb) { try { await openHistoryDb(); } catch (_) { return; } }
-    const tx = state.historyDb.transaction('history', 'readwrite');
-    tx.objectStore('history').add({
-      type, text: meta.text || '', voiceName: meta.voiceName || '', voice: meta.voiceId || '', voiceId: meta.voiceId || '', language: meta.language || '',
-      model: meta.model || '', processingTime: meta.processingTime || 0, sampleRate: meta.sampleRate || 24000,
-      format: meta.format || audioExtension(audio), size: meta.size || audio?.size || 0,
-      audio: meta.playbackAudio || audio || null, downloadAudio: audio || null, createdAt: Date.now()
-    });
+    if (!getSession()?.access_token) return;
+    const format = meta.format || audioExtension(audio);
+    try {
+      await apiFetch('/api/history', {
+        method: 'POST',
+        headers: authHeaders(true),
+        body: JSON.stringify({
+          type,
+          text: meta.text || '',
+          voiceName: meta.voiceName || '',
+          voiceId: meta.voiceId || '',
+          language: meta.language || '',
+          model: meta.model || '',
+          processingTime: meta.processingTime || 0,
+          sampleRate: meta.sampleRate || 24000,
+          format,
+          size: meta.size || audio?.size || 0,
+          audio: await audioPayload(audio, format),
+          playbackAudio: meta.playbackAudio && meta.playbackAudio !== audio
+            ? await audioPayload(meta.playbackAudio, audioExtension(meta.playbackAudio))
+            : null
+        })
+      });
+    } catch (error) {
+      console.warn('[History] Failed to save cloud history:', error);
+    }
   }
 
-  function getHistoryItems() {
-    return new Promise((resolve) => {
-      if (!state.historyDb) return resolve([]);
-      const request = state.historyDb.transaction('history', 'readonly').objectStore('history').getAll();
-      request.onsuccess = () => resolve((request.result || []).sort((a, b) => b.createdAt - a.createdAt));
-      request.onerror = () => resolve([]);
-    });
+  async function getHistoryItems() {
+    const data = await apiFetch('/api/history', { headers: authHeaders() });
+    state.historyItems = data.items || [];
+    return state.historyItems;
   }
 
   async function renderHistoryPage() {
     const list = $('history-list'); if (!list) return;
-    const all = await getHistoryItems();
+    if (!getSession()?.access_token) {
+      list.innerHTML = `<div class="empty-state">${t('登录后可查看账号历史记录')}</div>`;
+      return;
+    }
+    let all;
+    try {
+      list.innerHTML = `<div class="empty-state">${t('正在读取云端历史...')}</div>`;
+      all = await getHistoryItems();
+    } catch (error) {
+      list.innerHTML = `<div class="empty-state">${escapeHtml(t(`历史记录加载失败：${error.message}`))}</div>`;
+      return;
+    }
     const items = state.historyFilter === 'all' ? all : all.filter((item) => state.historyFilter === 'cloning' ? item.type.startsWith('clone') : item.type === state.historyFilter);
     if (!items.length) { list.innerHTML = `<div class="empty-state">${t('暂无历史记录。完成文本转语音、流式合成、克隆音色或克隆试听后会自动保存在这里。')}</div>`; return; }
     list.innerHTML = items.map((item) => {
-      const url = item.audio ? makeObjectUrl(item.audio) : ''; const label = item.type === 'tts' ? 'Text-to-Speech' : item.type === 'streaming' ? 'Streaming' : item.type === 'clone-create' ? 'Cloned Voice' : 'Cloning';
+      const url = item.audioUrl || ''; const label = item.type === 'tts' ? 'Text-to-Speech' : item.type === 'streaming' ? 'Streaming' : item.type === 'clone-create' ? 'Cloned Voice' : 'Cloning';
       const title = item.type === 'clone-create' ? item.voiceName || item.voiceId : item.text || '';
-      return `<div class="history-row"><div class="history-main"><div class="history-title">${label} · ${escapeHtml(title)}</div><div class="history-meta">${escapeHtml(item.voiceId || item.voice || '')} · ${item.type === 'clone-create' ? 'Cloning' : label} · ${formatDateTime(item.createdAt)}</div></div>${url ? `<audio src="${url}" controls></audio>` : ''}<div class="row-actions">${item.type !== 'clone-create' ? `<button class="small-button history-reuse" data-id="${item.id}">${t('复用')}</button>` : ''}${item.audio ? `<button class="small-button history-download" data-id="${item.id}">${t('下载')}</button>` : ''}<button class="small-button danger history-delete" data-id="${item.id}">${t('删除')}</button></div></div>`;
+      return `<div class="history-row"><div class="history-main"><div class="history-title">${label} · ${escapeHtml(title)}</div><div class="history-meta">${escapeHtml(item.voiceId || '')} · ${item.type === 'clone-create' ? 'Cloning' : label} · ${formatDateTime(item.createdAt)}</div></div>${url ? `<audio src="${escapeHtml(url)}" controls></audio>` : ''}<div class="row-actions">${item.type !== 'clone-create' ? `<button class="small-button history-reuse" data-id="${item.id}">${t('复用')}</button>` : ''}${item.downloadUrl ? `<button class="small-button history-download" data-id="${item.id}">${t('下载')}</button>` : ''}<button class="small-button danger history-delete" data-id="${item.id}">${t('删除')}</button></div></div>`;
     }).join('');
   }
 
   function getHistoryItem(id) {
-    return new Promise((resolve) => {
-      const request = state.historyDb.transaction('history', 'readonly').objectStore('history').get(Number(id));
-      request.onsuccess = () => resolve(request.result); request.onerror = () => resolve(null);
-    });
+    return state.historyItems.find((item) => item.id === id) || null;
   }
 
   async function deleteHistory(id) {
-    const tx = state.historyDb.transaction('history', 'readwrite'); tx.objectStore('history').delete(Number(id));
-    tx.oncomplete = renderHistoryPage;
+    try {
+      await apiFetch(`/api/history/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+      });
+      await renderHistoryPage();
+    } catch (error) {
+      alert(t(`删除失败：${error.message}`));
+    }
   }
 
   async function clearHistory() {
     if (!confirm(t('确认清空全部历史记录吗？'))) return;
-    const tx = state.historyDb.transaction('history', 'readwrite'); tx.objectStore('history').clear(); tx.oncomplete = renderHistoryPage;
+    try {
+      await apiFetch('/api/history', { method: 'DELETE', headers: authHeaders() });
+      await renderHistoryPage();
+    } catch (error) {
+      alert(t(`清空失败：${error.message}`));
+    }
   }
 
   async function reuseHistory(id) {
-    const item = await getHistoryItem(id); if (!item) return;
-    const params = new URLSearchParams({ text: item.text || '', voice: item.voiceId || item.voice || '', mode: item.type === 'streaming' ? 'streaming' : 'tts' });
+    const item = getHistoryItem(id); if (!item) return;
+    const params = new URLSearchParams({ text: item.text || '', voice: item.voiceId || '', mode: item.type === 'streaming' ? 'streaming' : 'tts' });
     if (item.type === 'clone-tts' || item.type === 'clone-create') location.href = `voice-clone.html?text=${encodeURIComponent(item.text || '')}&voice=${encodeURIComponent(item.voiceId || '')}`;
     else location.href = `tts.html?${params.toString()}`;
   }
 
   async function initHistoryPage() {
-    try { await openHistoryDb(); } catch (error) { $('history-list').innerHTML = `<div class="empty-state">${escapeHtml(t(`IndexedDB 初始化失败：${error.message}`))}</div>`; return; }
     qsa('.history-filter').forEach((button) => button.addEventListener('click', () => {
       state.historyFilter = button.dataset.filter; qsa('.history-filter').forEach((item) => item.classList.remove('on')); button.classList.add('on'); renderHistoryPage();
     }));
@@ -1159,8 +1199,14 @@
       if (button.classList.contains('history-reuse')) reuseHistory(id);
       if (button.classList.contains('history-delete')) deleteHistory(id);
       if (button.classList.contains('history-download')) {
-        const item = await getHistoryItem(id);
-        downloadBlob(item?.downloadAudio || item?.audio, item?.type || 'history', item?.format);
+        const item = getHistoryItem(id);
+        if (!item?.downloadUrl) return;
+        const anchor = document.createElement('a');
+        anchor.href = item.downloadUrl;
+        anchor.download = `${item.type || 'history'}-${new Date(item.createdAt).toISOString().replace(/[:.]/g, '-')}.${item.format || 'wav'}`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
       }
     });
     renderHistoryPage();
@@ -1187,7 +1233,6 @@
     if (PAGE === 'voices') initVoicesPage();
     if (PAGE === 'history') initHistoryPage();
     applyUrlState();
-    if (!state.historyDb) openHistoryDb().catch(() => {});
   });
 
   window.addEventListener('beforeunload', () => {
