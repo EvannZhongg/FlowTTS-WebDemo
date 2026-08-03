@@ -29,7 +29,7 @@
           <div class="use-cases">
             <span class="muted">示例</span>
             <button class="use-chip" type="button" data-example="同学们，今天我们来认识声音是怎样产生的。请把手轻轻放在喉咙上，读出一个长音，感受声带的振动。" data-voice="v-female-Z3x9LmQ2">课堂教育</button>
-            <button class="use-chip" type="button" data-example="您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。" data-voice="female-kefu-xiaomei">客服场景</button>
+            <button class="use-chip" type="button" data-example="您好，欢迎致电腾讯云智能客服中心。请问有什么可以帮您？" data-voice="female-kefu-xiaomei">客服场景</button>
             <button class="use-chip" type="button" data-example="勇者，前方的迷雾森林危机四伏。握紧你的武器，真正的冒险现在才刚刚开始。" data-voice="v-male-Bk7vD3xP">游戏</button>
             <button class="use-chip" type="button" data-example="夜色渐深，他站在旧城墙下，想起了那封迟到了十年的信。" data-voice="v-male-D1a3XyN1">有声书</button>
           </div>
@@ -43,7 +43,7 @@
           </div>
 
           <div class="textarea-wrap">
-            <textarea id="studio-text" maxlength="1000">您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。</textarea>
+            <textarea id="studio-text" maxlength="1000">您好，欢迎致电腾讯云智能客服中心。请问有什么可以帮您？</textarea>
             <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span><span class="mono" id="studio-char-count">0 / 1000</span> · <button class="link-btn" id="studio-clear" type="button">清空</button></span></div>
           </div>
 
@@ -60,6 +60,7 @@
           </div>
 
           <div class="sliders">
+            <div class="sliders-head"><span>声音参数</span><button class="link-btn" id="studio-params-reset" type="button">重置</button></div>
             <label class="slider-field"><span class="slider-head"><b>语速 <span class="api-tag">Speed</span></b><output id="studio-speed-value">1.0</output></span><input type="range" id="studio-speed" min="0.5" max="2" step="0.1" value="1"><span class="muted">0.5–2.0</span></label>
             <label class="slider-field"><span class="slider-head"><b>音量 <span class="api-tag">Volume</span></b><output id="studio-volume-value">1.0</output></span><input type="range" id="studio-volume" min="0" max="10" step="0.1" value="1"><span class="muted">0–10</span></label>
             <label class="slider-field"><span class="slider-head"><b>音高 <span class="api-tag">Pitch</span></b><output id="studio-pitch-value">0</output></span><input type="range" id="studio-pitch" min="-12" max="12" step="1" value="0"><span class="muted">-12–12</span></label>

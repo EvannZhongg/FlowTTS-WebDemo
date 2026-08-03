@@ -446,6 +446,13 @@
     const text = $('home-demo-text');
     const updateHomeCount = () => { if ($('home-demo-count')) $('home-demo-count').textContent = `${text.value.length} / 1000`; };
     text?.addEventListener('input', updateHomeCount);
+    $('home-demo-clear')?.addEventListener('click', () => {
+      text.value = '';
+      text.dataset.i18nUserEdited = '1';
+      text.focus();
+      updateHomeCount();
+      updateTryLink();
+    });
     qsa('[data-home-example]').forEach((button) => button.addEventListener('click', () => {
       qsa('[data-home-example]').forEach((item) => item.classList.remove('active'));
       button.classList.add('active');
@@ -518,6 +525,15 @@
     const text = $('studio-text')?.value || '';
     const max = 1000;
     $('studio-char-count').textContent = `${text.length} / ${max}`;
+  }
+
+  function resetStudioVoiceParams() {
+    $('studio-speed').value = '1';
+    $('studio-volume').value = '1';
+    $('studio-pitch').value = '0';
+    $('studio-speed-value').textContent = '1.0';
+    $('studio-volume-value').textContent = '1.0';
+    $('studio-pitch-value').textContent = '0';
   }
 
   function setMode(mode) {
@@ -725,13 +741,18 @@
       }
     }));
     $('studio-text').addEventListener('input', () => { $('studio-text').dataset.userEdited = '1'; updateCharCount(); });
-    $('studio-clear').addEventListener('click', () => { $('studio-text').value = ''; $('studio-text').dataset.userEdited = '1'; updateCharCount(); });
+    $('studio-clear').addEventListener('click', () => {
+      $('studio-text').value = '';
+      $('studio-text').dataset.userEdited = '1';
+      $('studio-text').focus();
+      updateCharCount();
+    });
+    $('studio-params-reset').addEventListener('click', resetStudioVoiceParams);
     $('studio-reset').addEventListener('click', () => {
-      $('studio-text').value = t('您好，欢迎致电智能客服中心。请问有什么可以帮您？如需人工服务，请按零。');
+      $('studio-text').value = t('您好，欢迎致电腾讯云智能客服中心。请问有什么可以帮您？');
       $('studio-text').dataset.userEdited = '1';
       $('studio-custom-voice').value = '';
-      $('studio-speed').value = '1'; $('studio-volume').value = '1'; $('studio-pitch').value = '0';
-      $('studio-speed-value').textContent = '1.0'; $('studio-volume-value').textContent = '1.0'; $('studio-pitch-value').textContent = '0';
+      resetStudioVoiceParams();
       $('studio-language').value = '';
       $('studio-voice-search').value = '';
       qsa('#studio-format .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.format === 'mp3'));
