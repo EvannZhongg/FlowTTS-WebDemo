@@ -230,40 +230,39 @@
             }
             .supabase-stepper {
                 margin-top: 18px;
-                display: flex;
-                align-items: center;
-                gap: 0;
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
             }
             .supabase-step {
-                flex: 1;
-                display: flex;
+                min-width: 0;
+                display: grid;
+                grid-template-columns: 26px minmax(0, 1fr);
                 align-items: center;
-                gap: 10px;
+                column-gap: 8px;
                 position: relative;
-                padding-right: 18px;
                 color: var(--supabase-text-muted);
-                font-size: 12px;
-                letter-spacing: 0.5px;
-            }
-            .supabase-step:last-child {
-                padding-right: 0;
+                isolation: isolate;
             }
             .supabase-step::after {
                 content: '';
                 position: absolute;
-                top: 50%;
-                right: 0;
-                width: calc(100% - 44px);
+                z-index: 0;
+                top: 13px;
+                left: 13px;
+                width: 100%;
                 height: 2px;
                 background: rgba(148, 163, 184, 0.2);
-                transform: translateY(-50%);
+                pointer-events: none;
             }
             .supabase-step:last-child::after {
                 display: none;
             }
             .supabase-step .dot {
+                position: relative;
+                z-index: 1;
                 width: 26px;
                 height: 26px;
+                box-sizing: border-box;
                 border-radius: 50%;
                 border: 2px solid rgba(148, 163, 184, 0.4);
                 display: inline-flex;
@@ -275,8 +274,16 @@
                 background: var(--supabase-surface);
             }
             .supabase-step .label {
+                position: relative;
+                z-index: 1;
+                width: max-content;
+                max-width: 100%;
+                padding: 2px 6px 2px 0;
+                background: var(--supabase-surface);
                 font-size: 12px;
                 font-weight: 600;
+                line-height: 1.35;
+                white-space: nowrap;
             }
             .supabase-step[data-state="active"] {
                 color: var(--supabase-text);
@@ -303,7 +310,7 @@
                 background: rgba(45, 164, 78, 0.45);
             }
             .supabase-modal-body {
-                margin-top: 28px;
+                margin-top: 26px;
                 display: flex;
                 flex-direction: column;
                 gap: 20px;
@@ -433,8 +440,25 @@
                 border-color: rgba(248, 113, 113, 0.45);
             }
             .supabase-inline-actions {
-                display: flex;
-                gap: 12px;
+                display: grid;
+                grid-template-columns: minmax(0, 1fr) minmax(112px, 0.72fr);
+                gap: 10px;
+                margin-top: 2px;
+            }
+            #otp-form .supabase-helper {
+                padding: 12px 14px;
+                border: 1px solid rgba(31, 111, 235, 0.12);
+                border-radius: 12px;
+                background: rgba(31, 111, 235, 0.06);
+            }
+            #otp-form .supabase-input-group {
+                gap: 8px;
+            }
+            #otp-form #supabase-verify-otp {
+                margin-top: 2px;
+            }
+            #otp-form .supabase-status {
+                margin-top: 2px;
             }
             .supabase-helper {
                 margin: 0;
@@ -752,25 +776,41 @@
                 animation: shake 0.4s;
             }
             @media (max-width: 640px) {
+                #supabase-login-modal {
+                    align-items: flex-start;
+                    padding: 14px;
+                    overflow-y: auto;
+                }
                 .supabase-modal-content {
+                    margin: auto 0;
                     padding: 24px 20px 28px;
                 }
                 .supabase-modal-header h2 {
                     font-size: 20px;
                 }
                 .supabase-stepper {
-                    flex-direction: column;
-                    align-items: flex-start;
-                    gap: 8px;
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
                 }
                 .supabase-step {
-                    padding-right: 0;
+                    grid-template-columns: 24px minmax(0, 1fr);
+                    column-gap: 5px;
+                }
+                .supabase-step .dot {
+                    width: 24px;
+                    height: 24px;
+                    font-size: 11px;
                 }
                 .supabase-step::after {
-                    display: none;
+                    top: 12px;
+                    left: 12px;
+                }
+                .supabase-step .label {
+                    padding-right: 3px;
+                    font-size: 11px;
+                    letter-spacing: 0;
                 }
                 .supabase-inline-actions {
-                    flex-direction: column;
+                    grid-template-columns: 1fr;
                 }
                 .pricing-plans {
                     grid-template-columns: 1fr;
