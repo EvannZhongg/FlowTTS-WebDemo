@@ -101,6 +101,7 @@ router.get('/voices', async (req, res) => {
  *   "voiceId": "v-female-R2s4N9qJ",
  *   "format": "pcm",          // pcm | wav | mp3 | opus (default: pcm)
  *   "sampleRate": 24000,       // 16000 | 24000 (default: 24000)
+ *   "bitrate": 128,            // 32 | 64 | 128 | 192 | 256 (MP3 only)
  *   "speedRatio": 1.0,
  *   "volumeRatio": 1.0,
  *   "emotionCategory": "happy"
@@ -117,6 +118,7 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
             model: requestedModel, // 可选 model 参数: flow_02_turbo | flow_01_ex
             format, // 音频格式: pcm | wav | mp3 | opus (默认 pcm)
             sampleRate, // 采样率: 16000 | 24000 (默认 24000)
+            bitrate, // MP3 比特率: 32 | 64 | 128 | 192 | 256 (默认 128)
             speed = 1, // 语速 (0.5-2.0)
             volume = 1, // 音量 (0.5-2.0)
             pitch = 0, // 音高 (-10 to 10)
@@ -137,8 +139,13 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
 
         // 非流式接口原生支持 pcm/wav/mp3/opus，默认保持服务端原始 PCM 输出。
         const VALID_FORMATS = ['pcm', 'wav', 'mp3', 'opus'];
+        const VALID_MP3_BITRATES = [32, 64, 128, 192, 256];
         const validatedFormat = VALID_FORMATS.includes(format) ? format : 'pcm';
         const validatedSampleRate = [16000, 24000].includes(Number(sampleRate)) ? Number(sampleRate) : 24000;
+        const requestedBitrate = Number(bitrate);
+        const validatedBitrate = validatedFormat === 'mp3'
+            ? (VALID_MP3_BITRATES.includes(requestedBitrate) ? requestedBitrate : 128)
+            : null;
 
         // Get Tencent Cloud credentials from environment
         const { secretId, secretKey } = getTencentCredentials();
@@ -183,7 +190,8 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
             AudioFormat: {
                 // 由腾讯云直接生成所选格式；服务端只透传 Base64，不做本地音频转码。
                 Format: validatedFormat,
-                SampleRate: validatedSampleRate
+                SampleRate: validatedSampleRate,
+                ...(validatedBitrate ? { Bitrate: validatedBitrate } : {})
             },
             ...(requestedLanguage ? { Language: requestedLanguage } : {}) // 未指定时由云端自动检测
         };
@@ -195,13 +203,14 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
             language: requestedLanguage || '(provider-auto)',
             format: validatedFormat,
             sampleRate: validatedSampleRate,
+            bitrate: validatedBitrate,
             speed: validatedSpeed,
             volume: validatedVolume,
             pitch: validatedPitch,
             emotion: validatedEmotion,
             providerAutoDetect: !requestedLanguage, // 是否由云端自动检测
             textLength: text.length
-        }, `🎤 TTS Synthesize: ${voiceId} (${validatedFormat}/${validatedSampleRate}Hz, speed: ${validatedSpeed}, volume: ${validatedVolume}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
+        }, `🎤 TTS Synthesize: ${voiceId} (${validatedFormat}/${validatedSampleRate}Hz${validatedBitrate ? `/${validatedBitrate}kbps` : ''}, speed: ${validatedSpeed}, volume: ${validatedVolume}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
 
         const response = await callTencentAPI(
             TTS_SERVICE,
@@ -226,6 +235,7 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
             appliedParams: { // 返回实际使用的参数
                 format: validatedFormat,
                 sampleRate: validatedSampleRate,
+                bitrate: validatedBitrate,
                 speed: validatedSpeed,
                 volume: validatedVolume,
                 pitch: validatedPitch,

@@ -67,11 +67,12 @@
           </div>
 
           <details class="advanced" id="studio-advanced">
-            <summary><span>高级设置（格式 / 采样率）</span><span>⌄</span></summary>
+            <summary><span>高级设置（格式 / 采样率 / 比特率）</span><span>⌄</span></summary>
             <div class="advanced-body">
-              <div class="field-grid two">
+              <div class="field-grid">
                 <div class="field"><label>音频格式 <span class="api-tag">Format</span></label><div class="format-seg" id="studio-format"><button class="seg-item mono on" data-format="mp3" type="button">mp3</button><button class="seg-item mono" data-format="wav" type="button">wav</button><button class="seg-item mono" data-format="opus" type="button">opus</button><button class="seg-item mono" data-format="pcm" type="button">pcm</button></div></div>
                 <div class="field"><label for="studio-sample-rate">采样率 <span class="api-tag">SampleRate</span></label><select class="select mono" id="studio-sample-rate"><option value="24000">24000 Hz</option><option value="16000">16000 Hz</option></select></div>
+                <div class="field" id="studio-bitrate-field"><label for="studio-bitrate">比特率 <span class="api-tag">Bitrate</span></label><select class="select mono" id="studio-bitrate"><option value="128">128 kbps</option><option value="32">32 kbps</option><option value="64">64 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option></select><span class="field-hint">仅 MP3 生效</span></div>
               </div>
             </div>
           </details>

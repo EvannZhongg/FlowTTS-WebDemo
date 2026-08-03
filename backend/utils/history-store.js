@@ -160,6 +160,7 @@ async function createHistoryItem(userId, input) {
             model: sanitizeText(input.model, 100),
             processingTime: sanitizeNumber(input.processingTime),
             sampleRate: sanitizeNumber(input.sampleRate, 24000),
+            bitrate: sanitizeNumber(input.bitrate),
             format: audio?.format || format,
             size: sanitizeNumber(input.size, audio?.buffer.length || 0),
             createdAt,

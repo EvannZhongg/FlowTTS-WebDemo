@@ -649,8 +649,14 @@
       volume: Number($('studio-volume').value),
       pitch: Number($('studio-pitch').value),
       format,
-      sampleRate: Number($('studio-sample-rate').value)
+      sampleRate: Number($('studio-sample-rate').value),
+      ...(format === 'mp3' ? { bitrate: Number($('studio-bitrate').value) } : {})
     };
+  }
+
+  function updateStudioBitrateField() {
+    const format = qsa('#studio-format .seg-item').find((button) => button.classList.contains('on'))?.dataset.format || 'mp3';
+    $('studio-bitrate-field')?.classList.toggle('hidden', format !== 'mp3');
   }
 
   function showStudioResult(blob, processingTime, size, firstChunk = null, options = {}) {
@@ -803,6 +809,7 @@
       if (button.disabled) return;
       qsa('#studio-format .seg-item').forEach((item) => item.classList.remove('on'));
       button.classList.add('on');
+      updateStudioBitrateField();
     }));
     qsa('[data-example]').forEach((button) => button.addEventListener('click', () => {
       $('studio-text').value = button.dataset.example; $('studio-text').dataset.userEdited = '1'; updateCharCount();
@@ -829,6 +836,9 @@
       $('studio-language').value = '';
       $('studio-voice-search').value = '';
       qsa('#studio-format .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.format === 'mp3'));
+      $('studio-sample-rate').value = '24000';
+      $('studio-bitrate').value = '128';
+      updateStudioBitrateField();
       clearMessage('studio-message');
       $('studio-player').classList.remove('active');
       $('result-empty')?.classList.remove('hidden');
@@ -867,7 +877,7 @@
       }
       chooseStudioVoice(state.selectedVoice, false);
     }).catch((error) => showMessage('studio-message', 'error', t(`音色加载失败：${error.message}`)));
-    updateCharCount(); updateModelControls(); setMode(new URLSearchParams(location.search).get('mode') === 'streaming' ? 'streaming' : 'tts');
+    updateCharCount(); updateModelControls(); updateStudioBitrateField(); setMode(new URLSearchParams(location.search).get('mode') === 'streaming' ? 'streaming' : 'tts');
   }
 
   async function blobToBase64(blob) {
@@ -1175,6 +1185,7 @@
           model: meta.model || '',
           processingTime: meta.processingTime || 0,
           sampleRate: meta.sampleRate || 24000,
+          bitrate: meta.bitrate || 0,
           format,
           size: meta.size || audio?.size || 0,
           audio: await audioPayload(audio, format),
