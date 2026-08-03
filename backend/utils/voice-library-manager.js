@@ -4,7 +4,10 @@ const { createClient } = require('@supabase/supabase-js');
 const logger = require('./logger');
 
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+const supabaseKey = process.env.SUPABASE_SECRET_KEY
+    || process.env.SUPABASE_SERVICE_ROLE_KEY
+    || process.env.SUPABASE_PUBLISHABLE_KEY
+    || process.env.SUPABASE_ANON_KEY;
 const supabaseDb = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 const CLONED_CACHE_TTL = 5 * 60 * 1000;

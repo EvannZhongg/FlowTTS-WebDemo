@@ -42,6 +42,23 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', port: PORT, timestamp: new Date().toISOString() });
 });
 
+// Public browser configuration. Never expose SUPABASE_SECRET_KEY here.
+app.get('/api/config', (req, res) => {
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+    if (!supabaseUrl || !supabasePublishableKey) {
+        return res.status(503).json({
+            code: 'public_config_missing',
+            message: 'Supabase public configuration is not available'
+        });
+    }
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
+    return res.json({
+        supabaseUrl,
+        supabasePublishableKey
+    });
+});
+
 // Routes
 app.use('/api/tts', ttsRoutes);
 app.use('/api/voice', voiceCloneRoutes);

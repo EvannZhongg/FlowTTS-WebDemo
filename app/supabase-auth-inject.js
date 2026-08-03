@@ -5,8 +5,8 @@
  * 无需修改现有代码，自动处理邮箱登录
  *
  * @usage
- * 1. 在 Supabase 创建项目，获取 URL 和 ANON_KEY
- * 2. 修改下方配置（SUPABASE_URL 和 SUPABASE_ANON_KEY）
+ * 1. 在 Supabase 创建项目，获取 URL 和 Publishable Key
+ * 2. 后端通过 /api/config 暴露公开配置
  * 3. 在页面 <head> 中添加：
  *    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
  *    <script src="supabase-auth-inject.js"></script>
@@ -25,21 +25,15 @@
 (function() {
     'use strict';
 
-    // ==================== 配置（请修改为你的 Supabase 项目信息）====================
-
-    const SUPABASE_URL = 'https://qcbmusynjrhkxvnosxab.supabase.co';  // Supabase 项目 URL
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFjYm11c3luanJoa3h2bm9zeGFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg1NDM2MzksImV4cCI6MjA3NDExOTYzOX0.8FTaqLib0DyFB-xU1vafXjTSsAE4svfrxNSNrA-tYaM';  // Supabase 匿名密钥
-
-
     // ==================== 应用配置 ====================
 
     const APP_CONFIG = {
         // API Server URL - 前后端同源，自动适配任意环境
         API_BASE: window.location.origin,
 
-        // Supabase 配置
-        SUPABASE_URL: SUPABASE_URL,
-        SUPABASE_ANON_KEY: SUPABASE_ANON_KEY,
+        // Supabase 公开配置由后端 /api/config 加载
+        SUPABASE_URL: '',
+        SUPABASE_PUBLISHABLE_KEY: '',
 
         // 配额设置
         QUOTA: {
@@ -95,6 +89,25 @@
 
     // ==================== Supabase 初始化 ====================
     
+    async function loadPublicConfig() {
+        const response = await fetch(`${APP_CONFIG.API_BASE}/api/config`, {
+            headers: { Accept: 'application/json' },
+            cache: 'no-cache'
+        });
+        if (!response.ok) {
+            const raw = await response.text();
+            let message = raw;
+            try { message = JSON.parse(raw).message || raw; } catch (_) {}
+            throw new Error(message || `HTTP ${response.status}`);
+        }
+        const config = await response.json();
+        if (!config.supabaseUrl || !config.supabasePublishableKey) {
+            throw new Error('Supabase public configuration is incomplete');
+        }
+        APP_CONFIG.SUPABASE_URL = config.supabaseUrl;
+        APP_CONFIG.SUPABASE_PUBLISHABLE_KEY = config.supabasePublishableKey;
+    }
+
     function initSupabase() {
         // 检查 Supabase SDK 是否已加载
         if (!window.supabase || !window.supabase.createClient) {
@@ -103,7 +116,10 @@
         }
 
         try {
-            authState.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            authState.supabase = window.supabase.createClient(
+                APP_CONFIG.SUPABASE_URL,
+                APP_CONFIG.SUPABASE_PUBLISHABLE_KEY
+            );
             log('初始化成功');
             return true;
         } catch (error) {
@@ -1830,9 +1846,10 @@
     async function init() {
         log('正在初始化...');
 
-        // 检查配置
-        if (SUPABASE_URL.includes('your-project') || SUPABASE_ANON_KEY.includes('your-anon-key')) {
-            log('请先配置 SUPABASE_URL 和 SUPABASE_ANON_KEY', 'error');
+        try {
+            await loadPublicConfig();
+        } catch (error) {
+            log('加载 Supabase 公开配置失败: ' + error.message, 'error');
             return;
         }
 

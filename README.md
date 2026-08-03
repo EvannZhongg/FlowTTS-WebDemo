@@ -53,6 +53,9 @@ node server.js
 | `TRTC_SDK_APP_ID` | TRTC 应用 ID |
 | `TRTC_REGION` | 地域，默认 `ap-beijing` |
 | `SUPABASE_URL` | Supabase 项目 URL |
-| `SUPABASE_ANON_KEY` | Supabase 匿名密钥 |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase 服务密钥 |
+| `SUPABASE_PUBLISHABLE_KEY` | 浏览器和 Auth 验证使用的公开 Key |
+| `SUPABASE_SECRET_KEY` | 仅服务端使用的 Secret Key，不得暴露到前端 |
+| `SUPABASE_JWKS_URL` | Supabase Auth JWKS 地址，预留给本地 JWT 验证 |
+| `SUPABASE_JWT_SECRET` | 旧版 JWT Secret；当前代码不直接使用 |
+| `SUPABASE_HISTORY_BUCKET` | 私有历史音频 Storage Bucket |
 | `API_PORT` | 服务端口，默认 `9000` |
