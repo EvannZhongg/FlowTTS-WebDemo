@@ -1058,7 +1058,7 @@
       const data = await apiFetch('/api/voice/list', { headers: authHeaders() });
       state.clonedVoices = data.voices || [];
       list.innerHTML = state.clonedVoices.length ? state.clonedVoices.map((voice) => `<div class="list-row">
-        <div class="list-main"><div class="list-name">${escapeHtml(voice.voice_name || t('未命名'))} <span class="status-pill done">${t('可用')}</span></div><div class="list-id">${escapeHtml(voice.voice_id)}</div><div class="list-meta">${voice.created_at ? formatDateTime(voice.created_at) : ''}${voice.audio_duration ? ` · ${Number(voice.audio_duration).toFixed(1)}s` : ''}</div></div>
+        <div class="list-main"><div class="list-name">${escapeHtml(voice.voice_name || t('未命名'))} <span class="status-pill done">${t('可用')}</span></div><div class="clone-voice-meta-row"><div class="list-id">${escapeHtml(voice.voice_id)}</div><div class="list-meta">${voice.created_at ? formatDateTime(voice.created_at) : ''}${voice.audio_duration ? ` · ${Number(voice.audio_duration).toFixed(1)}s` : ''}</div></div></div>
         <div class="row-actions"><button class="small-button use-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('使用')}</button><button class="small-button copy-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('复制')}</button><button class="small-button danger delete-clone" data-voice-id="${escapeHtml(voice.voice_id)}">${t('删除')}</button></div>
       </div>`).join('') : `<div class="empty-state">${t('暂无克隆音色')}</div>`;
     } catch (error) { list.innerHTML = `<div class="empty-state">${escapeHtml(t(`加载失败：${error.message}`))}</div>`; }
