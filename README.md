@@ -9,7 +9,7 @@
 - 声音克隆（上传或录制音频，生成专属音色）
 - 双模型音色库（101 个 `flow_02_turbo` 精选音色 + 327 个 `flow_01_ex` 系统音色）
 - 多语言支持（中文、英语、日语、韩语等）
-- 任意邮箱验证码登录/自动注册 + Supabase JWT 鉴权
+- 任意邮箱确认链接登录/自动注册 + Supabase JWT 鉴权
 - 体验配额管理（默认 10,000 点；普通/流式合成 100 点，克隆与克隆试听 50 点）
 
 ## 快速开始
@@ -55,7 +55,5 @@ node server.js
 | `SUPABASE_URL` | Supabase 项目 URL |
 | `SUPABASE_PUBLISHABLE_KEY` | 浏览器和 Auth 验证使用的公开 Key |
 | `SUPABASE_SECRET_KEY` | 仅服务端使用的 Secret Key，不得暴露到前端 |
-| `SUPABASE_JWKS_URL` | Supabase Auth JWKS 地址，预留给本地 JWT 验证 |
-| `SUPABASE_JWT_SECRET` | 旧版 JWT Secret；当前代码不直接使用 |
 | `SUPABASE_HISTORY_BUCKET` | 私有历史音频 Storage Bucket |
 | `API_PORT` | 服务端口，默认 `9000` |

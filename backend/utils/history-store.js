@@ -6,7 +6,7 @@
  *   <userId>/audio/<recordId>/download.<ext>
  *   <userId>/audio/<recordId>/playback.<ext>
  *
- * The bucket is private. The backend uses the service role and only returns
+ * The bucket is private. The backend uses the server-only secret key and only returns
  * short-lived signed URLs after the caller's JWT has been verified.
  */
 

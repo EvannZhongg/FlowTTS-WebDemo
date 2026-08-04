@@ -13,7 +13,7 @@
  *
  * @features
  * - 浮动登录按钮，独立于现有 UI
- * - 任意邮箱验证码无密码登录/注册
+ * - 任意邮箱确认链接无密码登录/注册
  * - 登录状态持久化（localStorage）
  * - 自动刷新 Session
  * - 完全不侵入现有代码
@@ -82,7 +82,7 @@
         }
     }
 
-    function isEmailOtpUser(user) {
+    function isEmailUser(user) {
         const provider = user?.app_metadata?.provider || user?.identities?.[0]?.provider || '';
         return provider === 'email';
     }
@@ -118,7 +118,16 @@
         try {
             authState.supabase = window.supabase.createClient(
                 APP_CONFIG.SUPABASE_URL,
-                APP_CONFIG.SUPABASE_PUBLISHABLE_KEY
+                APP_CONFIG.SUPABASE_PUBLISHABLE_KEY,
+                {
+                    auth: {
+                        persistSession: true,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: true,
+                        storage: window.localStorage,
+                        storageKey: `flowtts-auth-${new URL(APP_CONFIG.SUPABASE_URL).hostname.split('.')[0]}`
+                    }
+                }
             );
             log('初始化成功');
             return true;
@@ -374,17 +383,6 @@
             body.dark .supabase-input-group input:focus {
                 background: rgba(15, 23, 42, 0.6);
             }
-            #supabase-otp {
-                text-align: center;
-                letter-spacing: 6px;
-                font-size: 22px;
-                font-weight: 700;
-                font-family: "SFMono-Regular", Menlo, Consolas, "Courier New", monospace;
-            }
-            .supabase-input-group input.error-border {
-                border: 2px solid rgba(220, 38, 38, 0.7) !important;
-                background: rgba(254, 226, 226, 0.6);
-            }
             .supabase-btn {
                 width: 100%;
                 padding: 11px 16px;
@@ -419,62 +417,6 @@
             }
             body.dark .supabase-btn.primary {
                 box-shadow: 0 8px 18px rgba(31, 111, 235, 0.28);
-            }
-            .supabase-btn.subtle {
-                background: rgba(15, 23, 42, 0.04);
-                color: var(--supabase-text);
-            }
-            .supabase-btn.subtle:hover:not(:disabled) {
-                background: rgba(15, 23, 42, 0.08);
-                border-color: rgba(15, 23, 42, 0.15);
-            }
-            body.dark .supabase-btn.subtle {
-                background: rgba(148, 163, 184, 0.08);
-                border-color: rgba(148, 163, 184, 0.18);
-                color: #e2e8f0;
-            }
-            body.dark .supabase-btn.subtle:hover:not(:disabled) {
-                background: rgba(148, 163, 184, 0.16);
-                border-color: rgba(148, 163, 184, 0.3);
-            }
-            .supabase-btn.danger {
-                background: rgba(220, 38, 38, 0.08);
-                border-color: rgba(220, 38, 38, 0.24);
-                color: #b91c1c;
-            }
-            .supabase-btn.danger:hover:not(:disabled) {
-                background: rgba(220, 38, 38, 0.15);
-                border-color: rgba(220, 38, 38, 0.35);
-            }
-            body.dark .supabase-btn.danger {
-                background: rgba(248, 113, 113, 0.14);
-                border-color: rgba(248, 113, 113, 0.32);
-                color: #fca5a5;
-            }
-            body.dark .supabase-btn.danger:hover:not(:disabled) {
-                background: rgba(248, 113, 113, 0.24);
-                border-color: rgba(248, 113, 113, 0.45);
-            }
-            .supabase-inline-actions {
-                display: grid;
-                grid-template-columns: minmax(0, 1fr) minmax(112px, 0.72fr);
-                gap: 10px;
-                margin-top: 2px;
-            }
-            #otp-form .supabase-helper {
-                padding: 12px 14px;
-                border: 1px solid rgba(31, 111, 235, 0.12);
-                border-radius: 12px;
-                background: rgba(31, 111, 235, 0.06);
-            }
-            #otp-form .supabase-input-group {
-                gap: 8px;
-            }
-            #otp-form #supabase-verify-otp {
-                margin-top: 2px;
-            }
-            #otp-form .supabase-status {
-                margin-top: 2px;
             }
             .supabase-helper {
                 margin: 0;
@@ -555,6 +497,22 @@
                 margin: 0;
                 font-size: 13px;
                 color: var(--supabase-text-muted);
+            }
+            .supabase-account-settings {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                padding: 14px;
+                border: 1px solid var(--supabase-border);
+                border-radius: 14px;
+                background: rgba(15, 23, 42, 0.025);
+            }
+            body.dark .supabase-account-settings {
+                background: rgba(148, 163, 184, 0.06);
+            }
+            .supabase-account-settings .supabase-btn {
+                padding-block: 9px;
+                font-size: 13px;
             }
             .user-row {
                 display: flex;
@@ -783,14 +741,6 @@
                 opacity: 1;
                 pointer-events: auto;
             }
-            @keyframes shake {
-                0%, 100% { transform: translateX(0); }
-                20%, 60% { transform: translateX(-6px); }
-                40%, 80% { transform: translateX(6px); }
-            }
-            .shake {
-                animation: shake 0.4s;
-            }
             @media (max-width: 640px) {
                 #supabase-login-modal {
                     align-items: flex-start;
@@ -825,9 +775,6 @@
                     font-size: 11px;
                     letter-spacing: 0;
                 }
-                .supabase-inline-actions {
-                    grid-template-columns: 1fr;
-                }
                 .pricing-plans {
                     grid-template-columns: 1fr;
                     gap: 12px;
@@ -850,18 +797,18 @@
                     <div>
                         <span class="supabase-modal-tag">账户登录</span>
                         <h2 id="supabase-modal-title">登录账户</h2>
-                        <p class="supabase-modal-desc">使用邮箱验证码安全登录，个人配置将与账号保持同步。</p>
+                        <p class="supabase-modal-desc">使用邮箱确认链接安全登录，个人配置将与账号保持同步。</p>
                     </div>
                     <button type="button" class="supabase-close-btn" id="supabase-close-modal" aria-label="关闭登录窗口">✕</button>
                 </div>
                 <div class="supabase-stepper" id="supabase-stepper">
                     <div class="supabase-step" data-step="1" data-state="active">
                         <span class="dot">1</span>
-                        <span class="label">验证邮箱</span>
+                        <span class="label">填写邮箱</span>
                     </div>
                     <div class="supabase-step" data-step="2" data-state="pending">
                         <span class="dot">2</span>
-                        <span class="label">输入验证码</span>
+                        <span class="label">查收邮件</span>
                     </div>
                     <div class="supabase-step" data-step="3" data-state="pending">
                         <span class="dot">3</span>
@@ -876,24 +823,12 @@
                         </div>
                         <div class="supabase-input-group">
                             <label for="supabase-company">公司名称 <span class="optional">可选</span></label>
-                            <input type="text" id="supabase-company" placeholder="方便我们更好地为你服务" autocomplete="organization" />
+                            <input type="text" id="supabase-company" maxlength="100" placeholder="仅首次注册时保存，登录后可在账户中修改" autocomplete="organization" />
                         </div>
-                        <button class="supabase-btn primary" id="supabase-send-otp">发送验证码</button>
-                        <p class="supabase-helper">首次使用的邮箱将在验证码验证通过后自动注册，无需设置密码。</p>
+                        <button class="supabase-btn primary" id="supabase-send-link">发送登录链接</button>
+                        <p class="supabase-helper">同一邮箱会进入同一账户。公司名称仅在首次注册时保存，已有账户不会因再次填写而被覆盖。</p>
+                        <p class="supabase-helper">请在希望保持登录的设备上打开邮件链接。登录状态会保存在该设备，除非主动退出或清除浏览器数据。</p>
                         <div class="supabase-status" id="supabase-status"></div>
-                    </div>
-                    <div id="otp-form" class="supabase-form-step" style="display:none;">
-                        <p class="supabase-helper">验证码已发送至 <strong id="verify-email"></strong></p>
-                        <div class="supabase-input-group">
-                            <label for="supabase-otp">验证码</label>
-                            <input type="text" id="supabase-otp" placeholder="123456" maxlength="6" inputmode="numeric" autocomplete="one-time-code" />
-                        </div>
-                        <button class="supabase-btn primary" id="supabase-verify-otp">验证并登录</button>
-                        <div class="supabase-inline-actions">
-                            <button class="supabase-btn subtle" id="supabase-resend-otp" disabled>60 秒后可重发</button>
-                            <button class="supabase-btn danger" id="supabase-cancel-otp">取消</button>
-                        </div>
-                        <div class="supabase-status" id="supabase-otp-status"></div>
                     </div>
                     <div id="logout-form" class="supabase-form-step" style="display:none;">
                         <div class="supabase-user-info">
@@ -906,6 +841,14 @@
                                 </div>
                                 <p class="company" id="user-company"></p>
                             </div>
+                        </div>
+                        <div class="supabase-account-settings">
+                            <div class="supabase-input-group">
+                                <label for="supabase-account-company">公司名称</label>
+                                <input type="text" id="supabase-account-company" maxlength="100" placeholder="填写或修改公司名称" autocomplete="organization" />
+                            </div>
+                            <button class="supabase-btn" id="supabase-save-company" type="button">保存公司名称</button>
+                            <div class="supabase-status" id="supabase-company-status"></div>
                         </div>
                         <div class="supabase-quota-section" id="quota-section">
                             <div class="quota-header">
@@ -1002,16 +945,11 @@
         document.getElementById('supabase-close-modal').addEventListener('click', () => toggleModal(false));
 
         // 绑定事件
-        document.getElementById('supabase-send-otp').addEventListener('click', sendOtp);
-        document.getElementById('supabase-verify-otp').addEventListener('click', verifyOtp);
-        document.getElementById('supabase-resend-otp').addEventListener('click', sendOtp);
-        document.getElementById('supabase-cancel-otp').addEventListener('click', cancelVerification);
+        document.getElementById('supabase-send-link').addEventListener('click', sendLoginLink);
         document.getElementById('supabase-logout').addEventListener('click', logout);
+        document.getElementById('supabase-save-company').addEventListener('click', saveCompany);
         document.getElementById('supabase-email').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendOtp();
-        });
-        document.getElementById('supabase-otp').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') verifyOtp();
+            if (e.key === 'Enter') sendLoginLink();
         });
 
         // 升级相关事件
@@ -1077,6 +1015,13 @@
         status.className = `supabase-status ${type}`;
     }
 
+    function showCompanyStatus(message, type = 'success') {
+        const status = document.getElementById('supabase-company-status');
+        if (!status) return;
+        status.textContent = message;
+        status.className = `supabase-status ${type}`;
+    }
+
     function setLoginStep(step) {
         const steps = document.querySelectorAll('.supabase-step');
         steps.forEach(el => {
@@ -1095,25 +1040,16 @@
             return;
         }
 
-        const otpForm = document.getElementById('otp-form');
-        if (otpForm && otpForm.style.display !== 'none') {
-            document.getElementById('supabase-otp')?.focus();
-            return;
-        }
-
         document.getElementById('supabase-email')?.focus();
     }
 
     // ==================== 登录逻辑 ====================
 
-    let verificationEmail = null;  // 记录正在验证的邮箱
-    let countdownTimer = null;     // 倒计时定时器
-
-    // 发送验证码
-    async function sendOtp() {
+    // 发送确认/登录链接
+    async function sendLoginLink() {
         const emailInput = document.getElementById('supabase-email');
         const companyInput = document.getElementById('supabase-company');
-        const btn = document.getElementById('supabase-send-otp');
+        const btn = document.getElementById('supabase-send-link');
         const email = emailInput.value.trim();
         const company = companyInput?.value.trim() || '';
 
@@ -1137,6 +1073,7 @@
                 email,
                 options: {
                     shouldCreateUser: true,
+                    emailRedirectTo: `${window.location.origin}/app/index.html`,
                     data: {
                         company: company,
                         full_name: company,  // 同步到 Display name
@@ -1147,207 +1084,76 @@
 
             if (error) throw error;
 
-            // 保存邮箱和公司信息
-            verificationEmail = email;
-            if (company) {
-                sessionStorage.setItem('pending_company_update', company);
-            }
-
-            // 切换到验证码输入界面
-            document.getElementById('email-form').style.display = 'none';
-            document.getElementById('otp-form').style.display = 'block';
-            document.getElementById('verify-email').textContent = email;
             setLoginStep(2);
-            showOtpStatus('验证码已发送，请查收邮箱。', 'success');
-
-            // 自动聚焦到验证码输入框
-            setTimeout(() => {
-                document.getElementById('supabase-otp').focus();
-            }, 100);
-
-            // 开始倒计时
-            startCountdown(60);
-
-            log('验证码已发送到: ' + email);
+            showStatus(`登录链接已发送至 ${email}，请前往邮箱点击链接完成登录。`, 'success');
+            log('登录链接已发送到: ' + email);
         } catch (error) {
             showStatus('❌ 发送失败: ' + error.message, 'error');
-            log('发送验证码失败: ' + error.message, 'error');
+            log('发送登录链接失败: ' + error.message, 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = '发送验证码';
+            btn.textContent = t('发送登录链接');
         }
     }
 
-    // 验证验证码并登录
-    async function verifyOtp() {
-        const otpInput = document.getElementById('supabase-otp');
-        const btn = document.getElementById('supabase-verify-otp');
-        const token = otpInput.value.trim();
-
-        if (token.length !== 6) {
-            showOtpStatus('请输入 6 位验证码', 'error');
+    async function saveCompany() {
+        const input = document.getElementById('supabase-account-company');
+        const button = document.getElementById('supabase-save-company');
+        const company = input?.value.trim() || '';
+        if (company.length > 100) {
+            showCompanyStatus(t('公司名称最多 100 个字符'), 'error');
             return;
         }
-
-        if (!verificationEmail) {
-            showOtpStatus('错误：未找到邮箱信息', 'error');
+        if (!authState.session?.access_token) {
+            showCompanyStatus(t('登录状态已失效，请重新登录'), 'error');
             return;
         }
 
         try {
-            btn.disabled = true;
-            btn.textContent = '验证中...';
-
-            const { data, error } = await authState.supabase.auth.verifyOtp({
-                email: verificationEmail,
-                token: token,
-                type: 'email'
+            button.disabled = true;
+            button.textContent = t('保存中...');
+            const response = await fetch(`${APP_CONFIG.API_BASE}/api/user/profile`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${authState.session.access_token}`
+                },
+                body: JSON.stringify({ company })
             });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || `HTTP ${response.status}`);
 
-            if (error) throw error;
-
-            if (data.session) {
-                showOtpStatus('✅ 登录成功！', 'success');
-                log('登录成功: ' + verificationEmail);
-                setLoginStep(3);
-
-                // 延迟关闭弹窗，让用户看到成功提示
-                setTimeout(() => {
-                    toggleModal();
-                    // 重置表单
-                    resetForms();
-                    btn.disabled = false;
-                    btn.textContent = '验证并登录';
-                }, 1000);
-            } else {
-                throw new Error('登录失败：未返回会话信息');
-            }
+            const { data: userData, error: userError } = await authState.supabase.auth.updateUser({
+                data: {
+                    company,
+                    full_name: company,
+                    updated_at: new Date().toISOString()
+                }
+            });
+            if (userError) throw userError;
+            authState.user = userData.user || authState.user;
+            updateLoginStatus(authState.user);
+            showCompanyStatus(t('公司名称已保存'), 'success');
         } catch (error) {
-            const errorStr = error.message.toLowerCase();
-            let errorMsg = '验证失败';
-
-            // 调试日志：记录原始错误消息
-            console.log('[Supabase Auth] 原始错误:', error.message);
-            log('验证失败原因: ' + error.message, 'error');
-
-            // 精确匹配错误类型
-            if (errorStr.includes('invalid') || errorStr.includes('incorrect')) {
-                errorMsg = '❌ 验证码错误，请检查后重新输入';
-            } else if (errorStr.includes('expired') || errorStr.includes('expire')) {
-                errorMsg = '⏰ 验证码已过期，请点击"重新发送"';
-            } else if (errorStr.includes('too many') || errorStr.includes('rate limit')) {
-                errorMsg = '⚠️ 尝试次数过多，请稍后再试';
-            } else if (errorStr.includes('not found')) {
-                errorMsg = '❌ 验证码不存在或已使用';
-            } else {
-                // 其他错误显示简化消息
-                errorMsg = '❌ 验证失败，请重试';
-            }
-
-            showOtpStatus(errorMsg, 'error');
-
-            // 添加抖动动画和红色边框
-            const otpInput = document.getElementById('supabase-otp');
-            otpInput.classList.add('shake', 'error-border');
-            setTimeout(() => {
-                otpInput.classList.remove('shake', 'error-border');
-            }, 500);
-
-            btn.disabled = false;
-            btn.textContent = '验证并登录';
+            showCompanyStatus(`${t('保存失败')}：${error.message}`, 'error');
+        } finally {
+            button.disabled = false;
+            button.textContent = t('保存公司名称');
         }
-    }
-
-    // 倒计时功能
-    function startCountdown(seconds) {
-        const btn = document.getElementById('supabase-resend-otp');
-        if (!btn) return;
-
-        btn.disabled = true;
-
-        let remaining = seconds;
-
-        // 清除之前的定时器
-        if (countdownTimer) {
-            clearInterval(countdownTimer);
-        }
-
-        countdownTimer = setInterval(() => {
-            btn.textContent = i18n?.getLocale?.() === 'en' ? `Resend in ${remaining}s` : `${remaining} 秒后可重发`;
-            remaining--;
-
-            if (remaining < 0) {
-                clearInterval(countdownTimer);
-                btn.disabled = false;
-                btn.textContent = t('重新发送');
-            }
-        }, 1000);
-    }
-
-    // 取消验证
-    function cancelVerification() {
-        resetForms();
-        const emailForm = document.getElementById('email-form');
-        const otpForm = document.getElementById('otp-form');
-        if (emailForm) emailForm.style.display = 'block';
-        if (otpForm) otpForm.style.display = 'none';
-        setLoginStep(1);
-
-        // 清除倒计时
-        if (countdownTimer) {
-            clearInterval(countdownTimer);
-            countdownTimer = null;
-        }
-
-        const resendBtn = document.getElementById('supabase-resend-otp');
-        if (resendBtn) {
-            resendBtn.disabled = true;
-            resendBtn.textContent = i18n?.getLocale?.() === 'en' ? 'Resend in 60s' : '60 秒后可重发';
-        }
-
-        verificationEmail = null;
-        log('取消验证');
-        focusLoginField();
     }
 
     // 重置表单
     function resetForms() {
         const emailInput = document.getElementById('supabase-email');
         const companyInput = document.getElementById('supabase-company');
-        const otpInput = document.getElementById('supabase-otp');
         const status = document.getElementById('supabase-status');
-        const otpStatus = document.getElementById('supabase-otp-status');
-        const verifyEmailLabel = document.getElementById('verify-email');
 
         if (emailInput) emailInput.value = '';
         if (companyInput) companyInput.value = '';
-        if (otpInput) {
-            otpInput.value = '';
-            otpInput.classList.remove('shake', 'error-border');
-        }
         if (status) {
             status.className = 'supabase-status';
             status.textContent = '';
         }
-        if (otpStatus) {
-            otpStatus.className = 'supabase-status';
-            otpStatus.textContent = '';
-        }
-        if (verifyEmailLabel) {
-            verifyEmailLabel.textContent = '';
-        }
-        const resendBtn = document.getElementById('supabase-resend-otp');
-        if (resendBtn) {
-            resendBtn.disabled = true;
-            resendBtn.textContent = i18n?.getLocale?.() === 'en' ? 'Resend in 60s' : '60 秒后可重发';
-        }
-    }
-
-    // 显示验证码状态
-    function showOtpStatus(message, type = 'success') {
-        const status = document.getElementById('supabase-otp-status');
-        status.textContent = message;
-        status.className = `supabase-status ${type}`;
     }
 
     async function logout() {
@@ -1602,6 +1408,16 @@
             const data = await response.json();
 
             if (data.quota) {
+                if (data.user && authState.user) {
+                    authState.user = {
+                        ...authState.user,
+                        user_metadata: {
+                            ...(authState.user.user_metadata || {}),
+                            company: data.user.company || authState.user.user_metadata?.company || ''
+                        }
+                    };
+                    updateLoginStatus(authState.user);
+                }
                 // 包含 subscription_tier, subscription_start, subscription_end, auto_renew 字段
                 updateQuota({
                     daily: data.quota.daily || 0,
@@ -1688,7 +1504,6 @@
         const avatar = document.getElementById('studio-account-avatar');
         const accountLabel = document.getElementById('studio-account-label');
         const loginForm = document.getElementById('email-form');
-        const otpForm = document.getElementById('otp-form');
         const logoutForm = document.getElementById('logout-form');
 
         if (user) {
@@ -1700,13 +1515,14 @@
                 btn.setAttribute('aria-label', t('查看账户状态'));
             }
             if (loginForm) loginForm.style.display = 'none';
-            if (otpForm) otpForm.style.display = 'none';
             if (logoutForm) logoutForm.style.display = 'flex';
             document.getElementById('user-email').textContent = user.email;
 
             // 显示公司信息
             const companyEl = document.getElementById('user-company');
             const company = user.user_metadata?.company;
+            const companyInput = document.getElementById('supabase-account-company');
+            if (companyInput && document.activeElement !== companyInput) companyInput.value = company || '';
             if (company && companyEl) {
                 companyEl.textContent = i18n?.getLocale?.() === 'en' ? `Company: ${company}` : `公司：${company}`;
                 companyEl.style.display = 'block';
@@ -1747,10 +1563,8 @@
                 btn.setAttribute('aria-label', t('打开登录窗口'));
             }
             if (loginForm) loginForm.style.display = 'block';
-            if (otpForm) otpForm.style.display = 'none';
             if (logoutForm) logoutForm.style.display = 'none';
             setLoginStep(1);
-            verificationEmail = null;
             resetForms();
 
             log('未登录');
@@ -1864,13 +1678,13 @@
         authState.supabase.auth.onAuthStateChange(async (event, session) => {
             log(`状态变化: ${event}`);
 
-            if (session?.user && !isEmailOtpUser(session.user)) {
-                log('检测到非邮箱验证码账号，已拒绝该会话', 'warn');
+            if (session?.user && !isEmailUser(session.user)) {
+                log('检测到非邮箱账号，已拒绝该会话', 'warn');
                 authState.session = null;
                 authState.user = null;
                 updateLoginStatus(null);
                 await authState.supabase.auth.signOut({ scope: 'local' });
-                showStatus('当前仅支持邮箱验证码登录，请使用邮箱重新登录。', 'error');
+                showStatus('当前仅支持邮箱登录，请使用邮箱重新登录。', 'error');
                 return;
             }
 
@@ -1878,39 +1692,6 @@
             authState.user = session?.user || null;
 
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                // 如果有待更新的公司信息，更新 user_metadata
-                const pendingCompany = sessionStorage.getItem('pending_company_update');
-
-                if (pendingCompany && session?.user) {
-                    const currentCompany = session.user.user_metadata?.company;
-
-                    // 如果公司信息不存在或不同，则更新
-                    if (!currentCompany || currentCompany !== pendingCompany) {
-                        try {
-                            const { error } = await authState.supabase.auth.updateUser({
-                                data: {
-                                    company: pendingCompany,
-                                    full_name: pendingCompany,  // 同步到 Display name，便于 Dashboard 查看
-                                    updated_at: new Date().toISOString()
-                                }
-                            });
-
-                            if (error) {
-                                log('更新公司信息失败: ' + error.message, 'error');
-                            } else {
-                                log(`公司信息已更新: ${pendingCompany}`);
-                                // 刷新用户信息以获取最新的 metadata
-                                const { data: { user } } = await authState.supabase.auth.getUser();
-                                authState.user = user;
-                            }
-                        } catch (err) {
-                            log('更新公司信息异常: ' + err.message, 'warn');
-                        }
-                    }
-                    // 无论成功或失败，都清除 pending 状态
-                    sessionStorage.removeItem('pending_company_update');
-                }
-
                 updateLoginStatus(authState.user || session.user);
 
                 // 获取用户配额信息
@@ -1919,13 +1700,12 @@
                 // 注意：authReady 事件将在 getSession() 检查后统一触发（避免重复）
             } else if (event === 'SIGNED_OUT') {
                 updateLoginStatus(null);
-                sessionStorage.removeItem('pending_company_update');
             }
         });
 
         // 检查当前登录状态
         const { data: { session } } = await authState.supabase.auth.getSession();
-        if (session?.user && !isEmailOtpUser(session.user)) {
+        if (session?.user && !isEmailUser(session.user)) {
             await authState.supabase.auth.signOut({ scope: 'local' });
             authState.session = null;
             authState.user = null;
@@ -1996,7 +1776,6 @@
         config: APP_CONFIG,                           // 暴露配置
         getSupabaseClient: () => authState.supabase,
         logout: logout,
-        cancelVerification: cancelVerification,
         updateFunctionButtonsState: updateFunctionButtonsState // 功能按钮状态管理
     };
 

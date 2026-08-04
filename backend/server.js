@@ -33,6 +33,17 @@ app.use(cors({
 // Static files
 app.use('/app', express.static(path.join(__dirname, '../app')));
 
+// Preserve Supabase auth query/hash parameters while moving root callbacks to the app.
+const sendAppRedirect = (req, res) => {
+    res.type('html').send(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Redirecting...</title></head>
+<body><script>
+location.replace('/app/index.html' + location.search + location.hash);
+</script><noscript><a href="/app/index.html">Open TTS Studio</a></noscript></body></html>`);
+};
+app.get('/', sendAppRedirect);
+app.get('/auth/callback', sendAppRedirect);
+
 // Body parser
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -45,7 +56,7 @@ app.get('/health', (req, res) => {
 // Public browser configuration. Never expose SUPABASE_SECRET_KEY here.
 app.get('/api/config', (req, res) => {
     const supabaseUrl = process.env.SUPABASE_URL || '';
-    const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+    const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || '';
     if (!supabaseUrl || !supabasePublishableKey) {
         return res.status(503).json({
             code: 'public_config_missing',

@@ -9,8 +9,8 @@ const logger = require('./logger');
 
 // Initialize Supabase clients
 const supabaseUrl = process.env.SUPABASE_URL;
-const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
-const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
 
 if (!supabaseUrl || !supabasePublishableKey) {
     logger.warn('[Supabase] Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY in .env');
@@ -100,12 +100,13 @@ async function verifyJWT(authHeader) {
 
         const provider = user.app_metadata?.provider || user.identities?.[0]?.provider || '';
         if (provider !== 'email') {
-            throw new Error('Only email verification code accounts are supported');
+            throw new Error('Only email accounts are supported');
         }
 
         return {
             id: user.id,
             email: user.email,
+            company: user.user_metadata?.company || '',
             provider
         };
     } catch (error) {
@@ -178,6 +179,23 @@ async function getUserProfile(userId) {
         return resetData;
     }
 
+    return data;
+}
+
+async function updateUserCompany(userId, email, company) {
+    validateUserId(userId);
+    const normalizedCompany = typeof company === 'string' ? company.trim().slice(0, 100) : '';
+    const profile = await getUserProfile(userId);
+    const { data, error } = await supabaseDb
+        .from('user_profile')
+        .update({
+            email: email || profile.email || null,
+            company: normalizedCompany || null
+        })
+        .eq('user_id', userId)
+        .select()
+        .single();
+    if (error) throw new Error(`Failed to update company: ${error.message}`);
     return data;
 }
 
@@ -312,6 +330,7 @@ module.exports = {
     supabaseDb,
     verifyJWT,
     getUserProfile,
+    updateUserCompany,
     updateQuota,
     checkQuota,
     getQuotaByTier,
