@@ -19,35 +19,72 @@ const TTS_HOST = 'trtc.ai.tencentcloudapi.com';
 const TTS_VERSION = '2019-07-22';
 const TTS_REGION = process.env.TRTC_REGION || 'ap-beijing';
 const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '';
+const MIN_CLONE_AUDIO_SECONDS = 6;
+const MAX_CLONE_AUDIO_SECONDS = 30;
+const VALID_CLONE_MODELS = ['flow_02_turbo', 'flow_01_ex'];
+
+async function insertClonedVoice(record) {
+    const insert = (row) => supabaseDb
+        .from('cloned_voices')
+        .insert(row)
+        .select()
+        .single();
+
+    let result = await insert(record);
+    if (result.error?.code === '23514' && result.error.message?.includes('cloned_voices_model_check')) {
+        logger.warn({
+            voiceId: record.voice_id,
+            requestedModel: record.model
+        }, '[Voice Clone] Legacy cloned_voices model constraint detected; retrying with model=null');
+        result = await insert({ ...record, model: null });
+    }
+    return result;
+}
+
+function validateCloneAudio(req, res, next) {
+    const { audioData, audioDuration } = req.body || {};
+    if (!audioData) {
+        return res.status(400).json({
+            code: 'missing_audio_data',
+            message: 'Missing required field: audioData (base64 encoded audio)'
+        });
+    }
+
+    const duration = Number(audioDuration);
+    if (!Number.isFinite(duration)
+        || duration < MIN_CLONE_AUDIO_SECONDS
+        || duration > MAX_CLONE_AUDIO_SECONDS) {
+        return res.status(400).json({
+            code: 'invalid_audio_duration',
+            message: `Audio duration must be between ${MIN_CLONE_AUDIO_SECONDS} and ${MAX_CLONE_AUDIO_SECONDS} seconds`
+        });
+    }
+
+    req.cloneAudioDuration = duration;
+    next();
+}
 
 /**
  * POST /api/voice/clone
- * Clone voice from audio sample (10 quota)
+ * Clone voice from a 6–30 second audio sample (50 quota)
  *
  * Body:
  * {
  *   "audioData": "base64...",
  *   "voiceName": "My Voice",           // optional, 用户自定义名称
- *   "audioDuration": 8.5,              // optional, 音频时长（秒）
+ *   "audioDuration": 8.5,              // required, 6–30 秒
  *   "description": "Description"       // optional, 描述信息
  * }
  */
-router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res) => {
+router.post('/clone', authenticate, validateCloneAudio, requireQuota('voice-clone'), async (req, res) => {
     try {
         const {
             audioData,
             voiceName,
-            audioDuration,
             description,
             model // 可选: flow_02_turbo | flow_01_ex
         } = req.body;
-
-        if (!audioData) {
-            return res.status(400).json({
-                code: 'missing_audio_data',
-                message: 'Missing required field: audioData (base64 encoded audio)'
-            });
-        }
+        const validatedAudioDuration = req.cloneAudioDuration;
 
         // Get Tencent Cloud credentials from environment
         const secretId = process.env.TX_SECRET_ID;
@@ -58,8 +95,7 @@ router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res
         }
 
         // Call Tencent VoiceClone API
-        const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const resolvedModel = (model && VALID_MODELS.includes(model)) ? model : null;
+        const resolvedModel = (model && VALID_CLONE_MODELS.includes(model)) ? model : null;
         logger.info({ userId: req.user.id, model, resolvedModel }, '🎙️ Voice Clone model');
         const params = {
             SdkAppId: parseInt(SDK_APP_ID),
@@ -74,8 +110,8 @@ router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res
         logger.info({
             userId: req.user.id,
             email: req.user.email,
-            audioDuration
-        }, `🎙️ Voice Clone: (${audioDuration || '?'}s)`);
+            audioDuration: validatedAudioDuration
+        }, `🎙️ Voice Clone: (${validatedAudioDuration}s)`);
 
         const response = await callTencentAPI(
             TTS_SERVICE,
@@ -89,18 +125,14 @@ router.post('/clone', authenticate, requireQuota('voice-clone'), async (req, res
         );
 
         // 保存克隆记录到数据库
-        const { data: clonedVoice, error: dbError } = await supabaseDb
-            .from('cloned_voices')
-            .insert({
-                user_id: req.user.id,
-                voice_id: response.VoiceId,
-                voice_name: voiceName || null,
-                model: resolvedModel,
-                description: description || null,
-                audio_duration: audioDuration || null
-            })
-            .select()
-            .single();
+        const { data: clonedVoice, error: dbError } = await insertClonedVoice({
+            user_id: req.user.id,
+            voice_id: response.VoiceId,
+            voice_name: voiceName || null,
+            model: resolvedModel,
+            description: description || null,
+            audio_duration: validatedAudioDuration
+        });
 
         if (dbError) {
             logger.error({

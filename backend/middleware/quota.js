@@ -9,8 +9,10 @@ const { checkQuota, updateQuota } = require('../utils/supabase');
 
 // Quota costs for different operations
 const QUOTA_COSTS = {
-    'tts-synthesize': 1,
-    'tts-stream': 1,
+    // TTS 体验 Demo 产品规则：普通/流式合成每次 100 点，声音克隆每次 50 点。
+    'tts-synthesize': 100,
+    'tts-stream': 100,
+    'voice-clone-audition': 50,
     'llm-chat': 1,
     'llm-voice-match': 1, // LLM 音色匹配消耗 1 配额
     'llm-voice-select': 1, // LLM 音色智能选择消耗 1 配额
@@ -18,7 +20,7 @@ const QUOTA_COSTS = {
     'translate-text': 5, // 文本翻译消耗 5 配额
     'hunyuan-image': 5,
     'aihubmix-image': 5,
-    'voice-clone': 10, // 声音克隆消耗 10 配额
+    'voice-clone': 50, // 声音克隆消耗 50 配额
     'voice-isolator': 3, // 声音分离/降噪消耗 3 配额
     'interpreter-start': 10, // 同声传译消耗 10 配额
     'transcription-start': 5, // 纯文本转录消耗 5 配额
@@ -43,14 +45,13 @@ const QUOTA_COSTS = {
  * @returns {Function} Express middleware
  */
 function requireQuota(operation) {
-    const cost = QUOTA_COSTS[operation];
-
-    if (cost === undefined) {
-        throw new Error(`Unknown operation: ${operation}`);
-    }
-
     return async (req, res, next) => {
         try {
+            const resolvedOperation = typeof operation === 'function' ? operation(req) : operation;
+            const cost = QUOTA_COSTS[resolvedOperation];
+            if (cost === undefined) {
+                throw new Error(`Unknown operation: ${resolvedOperation}`);
+            }
             const userId = req.user.id;
 
             // Check if user has enough quota

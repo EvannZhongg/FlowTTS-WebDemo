@@ -153,6 +153,14 @@
             if (url.includes('supabase.co')) {
                 return false;
             }
+            try {
+                const parsed = new URL(url, window.location.href);
+                if (parsed.origin === window.location.origin && parsed.pathname.startsWith('/api/')) {
+                    return true;
+                }
+            } catch (_) {
+                // Continue with legacy host checks below.
+            }
             return url.includes('api.realtime-ai.chat') ||
                    url.includes('localhost:9000') ||
                    url.includes('127.0.0.1:9000');
@@ -175,7 +183,10 @@
             if (contentType.includes('application/json')) {
                 await processJsonResponse(response);
             } else if (contentType.includes('text/event-stream')) {
-                await processSseResponse(response);
+                // SSE 配额由响应头和页面主读取器处理。这里不再消费一份克隆流，
+                // 避免长音频在浏览器中被双路读取/缓冲。
+                const quota = parseQuotaFromResponse(response, null);
+                if (quota) updateQuotaDisplay(quota);
             }
         } catch (error) {
             console.warn('[QuotaInterceptor] Error processing response:', error);
@@ -189,9 +200,10 @@
         // Call original fetch
         const response = await originalFetch(resource, init);
 
-        // Only process our API responses (avoid unnecessary cloning)
+        // Only process our API responses. JSON parsing clones internally;
+        // SSE only inspects headers and never consumes the response body.
         if (isOurApi(response.url)) {
-            processResponse(response.clone()).catch(error => {
+            processResponse(response).catch(error => {
                 console.warn('[QuotaInterceptor] Async processing error:', error);
             });
         }

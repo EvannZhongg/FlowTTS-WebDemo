@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>声音克隆 · TTS Studio</title>
+  <link rel="stylesheet" href="assets/tts-studio.css">
+  <script src="assets/i18n.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-auth-inject.js"></script><script src="quota-interceptor.js"></script>
+</head>
+<body data-page="clone">
+  <script src="assets/tts-shell.js"></script>
+  <main class="app-main"><div class="page-shell clone-page-shell">
+    <header class="page-heading clone-page-heading"><div class="page-kicker">VOICE CLONING</div><h1>声音克隆</h1><p>6-30秒参考音频即可复刻音色。限时免费，生成后即可用于合成</p></header>
+    <div class="console clone-studio">
+      <div class="console-body clone-studio-body">
+        <section class="clone-section">
+          <div class="section-head clone-section-head"><span class="section-title">创建克隆音色</span><span class="clone-free-badge">限时体验</span></div>
+          <div class="field"><label for="clone-name">音色名称 <span class="api-tag">VoiceName</span></label><input class="input mono" id="clone-name" maxlength="36" value="my_custom_voice"><span class="field-hint" id="clone-name-hint">仅限数字、英文字母和下划线，最多 36 位</span></div>
+          <div class="clone-source-toolbar">
+            <div class="sub-tabs"><button class="sub-tab active" data-clone-tab="upload" type="button">上传音频</button><button class="sub-tab" data-clone-tab="record" type="button">在线录音</button></div>
+            <div class="clone-model-field"><label for="clone-model">模型</label><select class="select mono" id="clone-model"><option value="">自动</option><option value="flow_02_turbo">flow_02_turbo</option><option value="flow_01_ex">flow_01_ex</option></select></div>
+          </div>
+          <div class="clone-source-panels">
+            <div class="sub-tab-content active" id="clone-upload-tab">
+              <div class="dropzone" id="clone-dropzone">
+                <svg class="dropzone-icon" aria-hidden="true" width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M12 15V4M12 4L8 8M12 4L16 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M4 15V18C4 19.1 4.9 20 6 20H18C19.1 20 20 19.1 20 18V15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <strong>点击或拖拽上传音频</strong>
+                <span id="clone-file-info">支持 WAV、MP3、M4A 等浏览器可解码的音频格式</span>
+                <span class="dropzone-note">需为本人或已获授权声音，可随时请求删除</span>
+                <input type="file" id="clone-file" accept="audio/*">
+              </div>
+            </div>
+            <div class="sub-tab-content" id="clone-record-tab">
+              <div class="record-box">
+                <div class="record-main"><button class="record-button" id="record-button" type="button" aria-label="开始或停止录音">●</button><div><div class="record-time" id="record-time">0.0s</div><div class="muted" id="record-status">点击开始录音</div></div></div>
+                <div class="record-progress"><i id="record-progress"></i></div>
+                <div class="record-result"><audio class="hidden" id="recording-audio" controls></audio><button class="small-button" id="record-reset" type="button" disabled>重新录音</button></div>
+              </div>
+            </div>
+          </div>
+          <div class="consent-note">提交即表示您确认该声音属于本人或已获得合法授权，并知悉可随时请求删除。</div>
+          <div class="gen-meta"><span>本次克隆将消耗 50 点配额</span><span>音频要求：6–30 秒</span></div>
+          <button class="primary-button clone-create-button" id="clone-btn" type="button">开始克隆</button>
+          <div class="loading" id="clone-loading"><span class="spinner"></span><span>正在转换音频并提交克隆...</span></div><div class="message" id="clone-message"></div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="clone-section clone-saved-section">
+          <div class="section-head clone-section-head"><div class="section-title">已保存的音色</div></div>
+          <div class="voice-list" id="cloned-voice-list"><div class="empty-state">正在加载...</div></div>
+        </section>
+
+        <div class="divider"></div>
+
+        <section class="clone-section">
+          <div class="section-title">合成并应用</div>
+          <div class="clone-apply-grid">
+            <div class="field"><label for="clone-use-voice-id">Voice ID</label><input class="input mono" id="clone-use-voice-id" placeholder="从上方选择，或手动填写"></div>
+            <div class="field"><label for="clone-language">发音语言</label><select class="select" id="clone-language"></select></div>
+            <div class="field"><label for="clone-synth-model">模型</label><select class="select mono" id="clone-synth-model"><option value="">自动</option><option value="flow_02_turbo">flow_02_turbo</option><option value="flow_01_ex">flow_01_ex</option></select></div>
+          </div>
+          <div class="field hidden" id="clone-emotion-field"><label for="clone-emotion">情感风格</label><select class="select" id="clone-emotion"></select></div>
+          <div class="textarea-wrap clone-textarea"><textarea id="clone-text">欢迎使用 TRTC-AI。您刚才克隆的声音，现在可以用来读出这段话了。</textarea></div>
+          <div class="gen-meta"><span>本次合成将消耗 50 点配额</span><span>试听将计入声音克隆历史</span></div>
+          <div class="clone-synth-action"><button class="primary-button" id="clone-synth-btn" type="button">合成并试听</button></div>
+          <div class="loading" id="clone-synth-loading"><span class="spinner"></span><span>正在合成...</span></div><div class="message" id="clone-synth-message"></div>
+          <div class="audio-player result-card" id="clone-player"><audio id="clone-audio" controls></audio><div class="metrics"><div class="metric"><b id="clone-time">-</b><span>处理耗时</span></div><div class="metric"><b id="clone-size">-</b><span>文件大小</span></div></div><button class="secondary-button" id="clone-download" type="button">下载 WAV</button></div>
+        </section>
+      </div>
+    </div>
+  </div></main>
+  <script src="assets/tts-studio.js"></script>
+</body></html>

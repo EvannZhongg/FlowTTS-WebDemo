@@ -7,7 +7,7 @@
  * - 获取可用音色列表（公开接口，无需认证）
  *
  * 认证：需要 JWT token（除 /voices 端点外）
- * 配额：每次合成消费 1 配额
+ * 配额：普通/流式合成 100 点，克隆音色试听 50 点
  *
  * 环境变量：
  * - TX_SECRET_ID：腾讯云 SecretId
@@ -72,13 +72,15 @@ router.get('/voices', async (req, res) => {
         const includeExtended = req.query.includeExtended === 'true';
 
         // 根据参数选择不同的方法
-        const { preset } = includeExtended
+        const { preset, languageMap, languageMaps } = includeExtended
             ? await voiceLibraryManager.getAllVoices()
             : await voiceLibraryManager.getStandardVoices();
 
         // 返回预设音色（不包含克隆音色，因为这是公开端点）
         res.json({
-            voices: preset
+            voices: preset,
+            languageMap,
+            languageMaps
         });
     } catch (error) {
         logger.error('[TTS] Failed to load voices:', error);
@@ -91,28 +93,32 @@ router.get('/voices', async (req, res) => {
 
 /**
  * POST /api/tts/synthesize
- * Normal TTS synthesis (1 quota)
+ * Normal TTS synthesis (100 points; clone audition 50 points)
  *
  * Body:
  * {
  *   "text": "要合成的文本",
  *   "voiceId": "v-female-R2s4N9qJ",
- *   "format": "pcm",          // pcm | wav | mp3 (default: pcm)
+ *   "format": "pcm",          // pcm | wav | mp3 | opus (default: pcm)
  *   "sampleRate": 24000,       // 16000 | 24000 (default: 24000)
+ *   "bitrate": 128,            // 32 | 64 | 128 | 192 | 256 (MP3 only)
  *   "speedRatio": 1.0,
  *   "volumeRatio": 1.0,
  *   "emotionCategory": "happy"
  * }
  */
-router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (req, res) => {
+router.post('/synthesize', authenticate, requireQuota((req) => (
+    req.body?.billingContext === 'clone-audition' ? 'voice-clone-audition' : 'tts-synthesize'
+)), async (req, res) => {
     try {
         const {
             text,
             voiceId = 'v-female-R2s4N9qJ', // 默认音色：温柔姐姐
             language, // 可选语言参数
             model: requestedModel, // 可选 model 参数: flow_02_turbo | flow_01_ex
-            format, // 音频格式: pcm | wav | mp3 (默认 pcm)
+            format, // 音频格式: pcm | wav | mp3 | opus (默认 pcm)
             sampleRate, // 采样率: 16000 | 24000 (默认 24000)
+            bitrate, // MP3 比特率: 32 | 64 | 128 | 192 | 256 (默认 128)
             speed = 1, // 语速 (0.5-2.0)
             volume = 1, // 音量 (0.5-2.0)
             pitch = 0, // 音高 (-10 to 10)
@@ -131,19 +137,23 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
         const validatedVolume = Math.max(0, Math.min(10, parseFloat(volume) || 1));
         const validatedPitch = Math.max(-12, Math.min(12, parseFloat(pitch) || 0));
 
-        // 验证音频格式 (非流式支持 pcm/wav/mp3，默认 pcm)
-        const VALID_FORMATS = ['pcm', 'wav', 'mp3'];
+        // 非流式接口原生支持 pcm/wav/mp3/opus，默认保持服务端原始 PCM 输出。
+        const VALID_FORMATS = ['pcm', 'wav', 'mp3', 'opus'];
+        const VALID_MP3_BITRATES = [32, 64, 128, 192, 256];
         const validatedFormat = VALID_FORMATS.includes(format) ? format : 'pcm';
         const validatedSampleRate = [16000, 24000].includes(Number(sampleRate)) ? Number(sampleRate) : 24000;
+        const requestedBitrate = Number(bitrate);
+        const validatedBitrate = validatedFormat === 'mp3'
+            ? (VALID_MP3_BITRATES.includes(requestedBitrate) ? requestedBitrate : 128)
+            : null;
 
         // Get Tencent Cloud credentials from environment
         const { secretId, secretKey } = getTencentCredentials();
 
-        // model 优先级：前端显式指定 > voice-library-manager 自动判断
+        // 已知系统音色必须使用音色库声明的模型，克隆音色可由前端显式指定。
         const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const model = (requestedModel && VALID_MODELS.includes(requestedModel))
-            ? requestedModel
-            : await voiceLibraryManager.getModelForVoice(voiceId);
+        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId);
+        const model = voiceModel || ((requestedModel && VALID_MODELS.includes(requestedModel)) ? requestedModel : '');
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';
@@ -178,8 +188,10 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
                 ...(validatedEmotion ? { Emotion: validatedEmotion } : {}) // 情感风格，仅 flow_01_ex 生效
             },
             AudioFormat: {
-                Format: validatedFormat, // ✅ 支持 pcm/wav/mp3
-                SampleRate: validatedSampleRate
+                // 由腾讯云直接生成所选格式；服务端只透传 Base64，不做本地音频转码。
+                Format: validatedFormat,
+                SampleRate: validatedSampleRate,
+                ...(validatedBitrate ? { Bitrate: validatedBitrate } : {})
             },
             ...(requestedLanguage ? { Language: requestedLanguage } : {}) // 未指定时由云端自动检测
         };
@@ -191,13 +203,14 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
             language: requestedLanguage || '(provider-auto)',
             format: validatedFormat,
             sampleRate: validatedSampleRate,
+            bitrate: validatedBitrate,
             speed: validatedSpeed,
             volume: validatedVolume,
             pitch: validatedPitch,
             emotion: validatedEmotion,
             providerAutoDetect: !requestedLanguage, // 是否由云端自动检测
             textLength: text.length
-        }, `🎤 TTS Synthesize: ${voiceId} (${validatedFormat}/${validatedSampleRate}Hz, speed: ${validatedSpeed}, volume: ${validatedVolume}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
+        }, `🎤 TTS Synthesize: ${voiceId} (${validatedFormat}/${validatedSampleRate}Hz${validatedBitrate ? `/${validatedBitrate}kbps` : ''}, speed: ${validatedSpeed}, volume: ${validatedVolume}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
 
         const response = await callTencentAPI(
             TTS_SERVICE,
@@ -214,10 +227,15 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
             code: 'success',
             message: 'TTS synthesis completed successfully',
             audio: response.Audio,
+            audioFormat: validatedFormat,
+            sampleRate: validatedSampleRate,
             requestId: response.RequestId,
             requestedLanguage: requestedLanguage || null, // 前端请求的语言（未指定为 null）
             providerAutoDetect: !requestedLanguage, // 是否由云服务商自动检测
             appliedParams: { // 返回实际使用的参数
+                format: validatedFormat,
+                sampleRate: validatedSampleRate,
+                bitrate: validatedBitrate,
                 speed: validatedSpeed,
                 volume: validatedVolume,
                 pitch: validatedPitch,
@@ -242,7 +260,7 @@ router.post('/synthesize', authenticate, requireQuota('tts-synthesize'), async (
 
 /**
  * POST /api/tts/synthesize-stream
- * SSE streaming TTS synthesis (1 quota)
+ * SSE streaming TTS synthesis (100 points)
  *
  * Body: same as /synthesize
  */
@@ -271,11 +289,10 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
         res.setHeader('Cache-Control', 'no-cache');
         res.setHeader('Connection', 'keep-alive');
 
-        // model 优先级：前端显式指定 > voice-library-manager 自动判断
+        // 已知系统音色必须使用音色库声明的模型，克隆音色可由前端显式指定。
         const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const model = (requestedModel && VALID_MODELS.includes(requestedModel))
-            ? requestedModel
-            : await voiceLibraryManager.getModelForVoice(voiceId);
+        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId);
+        const model = voiceModel || ((requestedModel && VALID_MODELS.includes(requestedModel)) ? requestedModel : '');
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
         const requestedLanguage = (typeof language === 'string' && language.trim()) ? language.trim() : '';

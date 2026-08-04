@@ -6,6 +6,8 @@ const logger = require('./utils/logger');
 
 const ttsRoutes = require('./routes/tts');
 const voiceCloneRoutes = require('./routes/voice-clone');
+const userRoutes = require('./routes/user');
+const historyRoutes = require('./routes/history');
 
 const PORT = parseInt(process.env.API_PORT) || 9000;
 const HOST = process.env.API_HOST || '0.0.0.0';
@@ -31,6 +33,17 @@ app.use(cors({
 // Static files
 app.use('/app', express.static(path.join(__dirname, '../app')));
 
+// Preserve Supabase auth query/hash parameters while moving root callbacks to the app.
+const sendAppRedirect = (req, res) => {
+    res.type('html').send(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Redirecting...</title></head>
+<body><script>
+location.replace('/app/index.html' + location.search + location.hash);
+</script><noscript><a href="/app/index.html">Open TTS Studio</a></noscript></body></html>`);
+};
+app.get('/', sendAppRedirect);
+app.get('/auth/callback', sendAppRedirect);
+
 // Body parser
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -40,9 +53,28 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', port: PORT, timestamp: new Date().toISOString() });
 });
 
+// Public browser configuration. Never expose SUPABASE_SECRET_KEY here.
+app.get('/api/config', (req, res) => {
+    const supabaseUrl = process.env.SUPABASE_URL || '';
+    const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY || '';
+    if (!supabaseUrl || !supabasePublishableKey) {
+        return res.status(503).json({
+            code: 'public_config_missing',
+            message: 'Supabase public configuration is not available'
+        });
+    }
+    res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
+    return res.json({
+        supabaseUrl,
+        supabasePublishableKey
+    });
+});
+
 // Routes
 app.use('/api/tts', ttsRoutes);
 app.use('/api/voice', voiceCloneRoutes);
+app.use('/api/user', userRoutes);
+app.use('/api/history', historyRoutes);
 
 // 404
 app.use((req, res) => {
@@ -60,5 +92,5 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, HOST, () => {
     logger.info({ port: PORT }, '🚀 FlowTTS Server started');
-    logger.info(`📍 http://${HOST}:${PORT}/app/tts.html`);
+    logger.info(`📍 http://${HOST}:${PORT}/app/index.html`);
 });
