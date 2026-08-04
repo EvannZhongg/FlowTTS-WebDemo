@@ -13,91 +13,84 @@
 <body data-page="home">
   <script src="assets/tts-shell.js"></script>
   <main class="app-main">
-    <div class="page-shell home-shell">
+    <div class="page-shell">
       <header class="home-hero">
-        <div class="page-kicker">TRTC-AI · FLOWTTS</div>
-        <h1>自然、低延迟、可克隆的语音工作台</h1>
-        <p>无需代码即可体验文本转语音、SSE 流式合成和声音克隆。选择场景，马上听见效果。</p>
-        <div class="hero-stats">
-          <span><strong>2</strong> 个模型</span><span><strong>428</strong> 个可用音色</span><span><strong>6–30s</strong> 声音克隆</span>
-        </div>
+        <h1>TTS Studio</h1>
+        <p>Text-to-Speech · Streaming · Voice Cloning</p>
       </header>
 
-      <section class="console home-console">
+      <section class="console">
         <div class="console-tabs">
-          <button class="ctab active" type="button" data-home-tab="tts">文本转语音</button>
-          <button class="ctab" type="button" data-home-tab="streaming">流式合成</button>
-          <button class="ctab" type="button" data-home-tab="clone">声音克隆</button>
+          <button class="ctab active" data-mode="tts" type="button">文本转语音</button>
+          <button class="ctab" data-mode="streaming" type="button">流式合成</button>
         </div>
         <div class="console-body">
-          <div class="home-demo-panel active" data-home-panel="tts">
-            <div class="use-cases">
-              <span class="muted">场景示例</span>
-              <button class="use-chip active" type="button" data-home-example data-scene="education">课堂教育</button>
-              <button class="use-chip" type="button" data-home-example data-scene="customer-service">客服场景</button>
-              <button class="use-chip" type="button" data-home-example data-scene="game">游戏</button>
-              <button class="use-chip" type="button" data-home-example data-scene="audiobook">有声书</button>
-            </div>
-            <div class="home-demo-grid">
-              <div class="textarea-wrap">
-                <textarea id="home-demo-text" maxlength="1000">同学们好，欢迎来到今天的物理课堂。今天我们要学习的内容是"牛顿第三定律"——也就是作用力与反作用力的关系。在我们日常生活中，这个定律无处不在。比如，当你站在地面上，你的脚向下压地面，地面同时给你一个向上的支撑力，这两个力大小相等、方向相反。再比如，火箭发射时，向下喷射的高温气体给火箭一个强大的向上推力。大家注意，作用力和反作用力一定作用在两个不同的物体上，而且它们是同时产生、同时消失的。接下来，请翻开课本第四十二页，我们一起来看几道经典例题，巩固一下今天的知识。</textarea>
-                <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span><span class="mono" id="home-demo-count">0 / 1000</span> · <button class="link-btn" id="home-demo-clear" type="button">清空</button></span></div>
-              </div>
-              <div class="home-demo-side">
-                <div class="home-config-card home-model-card">
-                  <div class="home-config-head"><span>模型</span><span class="api-tag">Model</span></div>
-                  <div class="model-seg home-model-seg" id="home-demo-model">
-                    <button class="seg-item mono on" type="button" data-model="flow_02_turbo">flow_02_turbo<span class="new-badge">New</span></button>
-                    <button class="seg-item mono" type="button" data-model="flow_01_ex">flow_01_ex</button>
-                  </div>
-                </div>
-                <label class="home-config-card" for="home-demo-language">
-                  <span class="home-config-head"><span>语言</span><span class="api-tag">Language</span></span>
-                  <span class="home-select-wrap"><select class="select" id="home-demo-language"><option value="">自动检测</option><option value="zh">中文</option><option value="en">英语</option><option value="ja">日语</option></select></span>
-                </label>
-                <label class="home-config-card" for="home-demo-voice">
-                  <span class="home-config-head"><span>推荐音色</span><span class="api-tag">Voice</span></span>
-                  <span class="home-select-wrap"><select class="select" id="home-demo-voice"><option value="v-female-A7c9QmP2" selected>温柔女老师</option><option value="female-kefu-xiaomei">客服小美</option><option value="v-male-D6p3KxN8">深沉男评析</option><option value="v-female-p9Xy7Q1L">清晰女旁白</option></select></span>
-                </label>
-              </div>
-            </div>
-            <div class="action-row">
-              <a class="primary-button" id="home-try-tts" href="tts.html">带入体验台</a>
-              <a class="secondary-button" href="voices.html">先浏览音色</a>
-            </div>
+          <div class="use-cases">
+            <span class="muted">示例</span>
+            <button class="use-chip active" type="button" data-example data-scene="education">课堂教育</button>
+            <button class="use-chip" type="button" data-example data-scene="customer-service">客服场景</button>
+            <button class="use-chip" type="button" data-example data-scene="game">游戏</button>
+            <button class="use-chip" type="button" data-example data-scene="audiobook">有声书</button>
           </div>
-          <div class="home-demo-panel" data-home-panel="streaming">
-            <div class="home-panel-main">
-              <div class="home-feature">
-                <span class="feature-icon">↯</span>
-                <div><h2>SSE 流式合成</h2><p>实时查看连接状态、已接收分块、首包时间和总大小；完成后可播放、下载并自动写入历史记录。</p></div>
-              </div>
-              <div class="stream-preview">
-                <span>Connecting</span><i></i><span>Connected</span><i></i><span>Receiving chunks</span><i></i><strong>Ready</strong>
-              </div>
-            </div>
-            <a class="primary-button" href="tts.html?mode=streaming">开始流式体验 · 消耗 100 点</a>
-          </div>
-          <div class="home-demo-panel" data-home-panel="clone">
-            <div class="home-panel-main">
-              <div class="home-feature">
-                <span class="feature-icon">◎</span>
-                <div><h2>6–30 秒，即刻克隆音色</h2><p>上传清晰人声或直接在线录音。系统会转换为 16kHz 单声道 WAV，克隆完成即可用于语音合成。</p></div>
-              </div>
-              <div class="clone-steps"><span><b>1</b> 上传 / 录音</span><span><b>2</b> 创建音色</span><span><b>3</b> 合成试听</span></div>
-            </div>
-            <a class="primary-button" href="voice-clone.html">开始克隆 · 消耗 50 点</a>
-          </div>
-        </div>
-      </section>
 
-      <section class="home-section">
-        <div class="section-copy"><div class="page-kicker">FEATURE EXPERIENCE</div><h2>从体验到接入，一条完整链路</h2><p>所有成功合成和克隆试听都会保存在本机历史记录中，便于对比音色与复用配置。</p></div>
-        <div class="feature-card-grid">
-          <a class="feature-card featured" href="tts.html"><span>01</span><h3>文本转语音</h3><p>双模型、场景预设、音色筛选与基础参数调节。</p><b>进入体验 →</b></a>
-          <a class="feature-card" href="voice-clone.html"><span>02</span><h3>声音克隆</h3><p>创建、管理并立即应用自己的专属 Voice ID。</p><b>创建音色 →</b></a>
-          <a class="feature-card" href="voices.html"><span>03</span><h3>精品音色库</h3><p>搜索、筛选、试听并复制后端真实可用音色。</p><b>浏览音色 →</b></a>
-          <a class="feature-card" href="history.html"><span>04</span><h3>历史记录</h3><p>播放、下载、复用与管理本次浏览器中的体验结果。</p><b>查看记录 →</b></a>
+          <div class="inline-head">
+            <div class="model-seg" id="studio-model">
+              <button class="seg-item mono on" type="button" data-model="flow_02_turbo">flow_02_turbo<span class="new-badge">New</span></button>
+              <button class="seg-item mono" type="button" data-model="flow_01_ex">flow_01_ex</button>
+            </div>
+            <div class="field" style="min-width:150px"><label for="studio-language">语言</label><select class="select" id="studio-language"></select></div>
+          </div>
+
+          <div class="textarea-wrap">
+            <textarea id="studio-text" maxlength="1000">同学们好，欢迎来到今天的物理课堂。今天我们要学习的内容是"牛顿第三定律"——也就是作用力与反作用力的关系。在我们日常生活中，这个定律无处不在。比如，当你站在地面上，你的脚向下压地面，地面同时给你一个向上的支撑力，这两个力大小相等、方向相反。再比如，火箭发射时，向下喷射的高温气体给火箭一个强大的向上推力。大家注意，作用力和反作用力一定作用在两个不同的物体上，而且它们是同时产生、同时消失的。接下来，请翻开课本第四十二页，我们一起来看几道经典例题，巩固一下今天的知识。</textarea>
+            <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span><span class="mono" id="studio-char-count">0 / 1000</span> · <button class="link-btn" id="studio-clear" type="button">清空</button></span></div>
+          </div>
+
+          <div class="voice-tools">
+            <div><div class="section-title">音色选择</div><div class="muted" id="studio-model-summary"></div></div>
+            <input class="search" id="studio-voice-search" placeholder="搜索音色 / Voice ID">
+          </div>
+          <div class="chips" id="studio-voice-cats"><button class="chip on" data-category="all" type="button">全部</button></div>
+          <div class="voice-carousel" id="studio-voice-list"></div>
+
+          <div class="field-grid two">
+            <div class="field"><label for="studio-custom-voice">自定义 Voice ID（可选） <span class="api-tag">VoiceId</span></label><input class="input mono studio-config-control" id="studio-custom-voice" placeholder="覆盖上方已选音色"></div>
+            <div class="field" id="studio-emotion-field"><label for="studio-emotion">情感风格 <span class="api-tag">Emotion</span></label><select class="select studio-config-control" id="studio-emotion"></select><span class="field-hint hidden" id="studio-emotion-hint">仅 flow_01_ex 支持情感风格</span></div>
+          </div>
+
+          <div class="sliders">
+            <div class="sliders-head"><span>声音参数</span><button class="link-btn" id="studio-params-reset" type="button">重置</button></div>
+            <label class="slider-field"><span class="slider-head"><b>语速 <span class="api-tag">Speed</span></b><output id="studio-speed-value">1.0</output></span><input type="range" id="studio-speed" min="0.5" max="2" step="0.1" value="1"><span class="muted">0.5–2.0</span></label>
+            <label class="slider-field"><span class="slider-head"><b>音量 <span class="api-tag">Volume</span></b><output id="studio-volume-value">1.0</output></span><input type="range" id="studio-volume" min="0" max="10" step="0.1" value="1"><span class="muted">0–10</span></label>
+            <label class="slider-field"><span class="slider-head"><b>音高 <span class="api-tag">Pitch</span></b><output id="studio-pitch-value">0</output></span><input type="range" id="studio-pitch" min="-12" max="12" step="1" value="0"><span class="muted">-12–12</span></label>
+          </div>
+
+          <details class="advanced" id="studio-advanced">
+            <summary><span>高级设置（格式 / 采样率 / 比特率）</span><span>⌄</span></summary>
+            <div class="advanced-body">
+              <div class="field-grid">
+                <div class="field"><label>音频格式 <span class="api-tag">Format</span></label><div class="format-seg" id="studio-format"><button class="seg-item mono on" data-format="mp3" type="button">mp3</button><button class="seg-item mono" data-format="wav" type="button">wav</button><button class="seg-item mono" data-format="opus" type="button">opus</button><button class="seg-item mono" data-format="pcm" type="button">pcm</button></div></div>
+                <div class="field"><label for="studio-sample-rate">采样率 <span class="api-tag">SampleRate</span></label><select class="select mono advanced-select" id="studio-sample-rate"><option value="24000">24000 Hz</option><option value="16000">16000 Hz</option></select></div>
+                <div class="field" id="studio-bitrate-field"><label for="studio-bitrate">比特率 <span class="api-tag">Bitrate</span></label><select class="select mono advanced-select" id="studio-bitrate"><option value="128">128 kbps</option><option value="32">32 kbps</option><option value="64">64 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option></select><span class="field-hint">仅 MP3 生效</span></div>
+              </div>
+            </div>
+          </details>
+
+          <div class="gen-meta"><span id="studio-cost">本次合成将消耗 100 点配额</span><span>⌘ / Ctrl + Enter 快速合成</span></div>
+          <div class="action-row"><button class="primary-button" id="studio-submit" type="button"><span id="studio-submit-label">合成语音</span></button><button class="secondary-button" id="studio-reset" type="button">重置全部</button></div>
+          <div class="loading" id="studio-loading"><span class="spinner"></span><span>正在请求语音服务...</span></div>
+          <div class="message" id="studio-message"></div>
+
+          <div class="divider"></div>
+          <div class="section-head"><span class="section-title">合成结果 <span class="status-pill" id="studio-result-status">待合成</span></span><button class="secondary-button" id="studio-download" type="button" disabled>下载音频</button></div>
+          <div class="stream-panel hidden" id="stream-status">
+            <div class="stream-row"><span>Connection</span><b class="good" id="stream-connection">未连接</b></div>
+            <div class="stream-row"><span>Chunks received</span><b id="stream-chunks">0</b></div>
+            <div class="stream-row"><span>Time to first chunk</span><b id="stream-first">-</b></div>
+            <div class="stream-row"><span>Total size</span><b id="stream-size">0 KB</b></div>
+          </div>
+          <div class="empty-result" id="result-empty">完成一次合成后，可在这里播放和下载真实音频。</div>
+          <div class="result-card audio-player" id="studio-player"><audio id="studio-audio" controls></audio><div class="metrics"><div class="metric"><b id="metric-first">-</b><span>首包时间</span></div><div class="metric"><b id="metric-time">-</b><span>处理耗时</span></div><div class="metric"><b id="metric-size">-</b><span>文件大小</span></div><div class="metric"><b id="metric-chars">-</b><span>文本字符</span></div></div></div>
         </div>
       </section>
     </div>

@@ -374,7 +374,7 @@
   function languageFilterHtml(model = 'all', expanded = false, activeCategory = 'all') {
     const counts = new Map();
     state.voices.forEach((voice) => {
-      if (model !== 'all' && effectiveVoiceModel(voice) !== model) return;
+      if (!voiceSupportsModel(voice, model)) return;
       counts.set(voice.language, (counts.get(voice.language) || 0) + 1);
     });
     const items = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
@@ -416,6 +416,14 @@
     return String(voice?.id || '').toLowerCase().includes('_ex') ? 'flow_01_ex' : 'flow_02_turbo';
   }
 
+  function voiceSupportsModel(voice, model) {
+    if (!model || model === 'all') return true;
+    const models = Array.isArray(voice?.models) && voice.models.length
+      ? voice.models
+      : [effectiveVoiceModel(voice)];
+    return models.includes(model);
+  }
+
   function currentStudioModel() {
     return qsa('#studio-model .seg-item').find((button) => button.classList.contains('on'))?.dataset.model || '';
   }
@@ -442,7 +450,10 @@
       </div>
       <div class="voice-name">${escapeHtml(voiceDisplayName(voice))}</div>
       <div class="voice-badges"><span class="voice-badge">${escapeHtml(voice.language || 'auto')}</span>${isExtended ? '<span class="voice-badge ex">ex</span>' : ''}</div>
-      <div class="voice-meta">${escapeHtml(langs)}<br>${escapeHtml(voice.id)}</div>
+      <div class="voice-meta">
+        <span class="voice-langs">${escapeHtml(langs)}</span>
+        <span class="voice-id">${escapeHtml(voice.id)}</span>
+      </div>
       ${library ? `<div class="voice-desc">${escapeHtml(voice.description || voice.scenarios || t('预设音色'))}</div>` : ''}
     </article>`;
   }
@@ -519,7 +530,7 @@
     const initialQuota = window.SupabaseAuthInject?.getQuota?.();
     if (initialQuota) updateQuota(initialQuota);
     window.addEventListener('localeChanged', () => {
-      if (PAGE === 'tts') {
+      if (PAGE === 'tts' || PAGE === 'home') {
         const selectedLanguage = $('studio-language')?.value || '';
         const selectedEmotion = $('studio-emotion')?.value || '';
         setSelectOptions($('studio-language'), availableLanguageOptions(currentStudioModel()));
@@ -547,70 +558,6 @@
     });
   }
 
-  function initHomePage() {
-    const panels = qsa('[data-home-panel]');
-    const tabs = qsa('[data-home-tab]');
-    const homeModelButtons = qsa('#home-demo-model .seg-item');
-    const getHomeModel = () => homeModelButtons.find((button) => button.classList.contains('on'))?.dataset.model || 'flow_02_turbo';
-    const setPanel = (name) => {
-      tabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.homeTab === name));
-      panels.forEach((panel) => panel.classList.toggle('active', panel.dataset.homePanel === name));
-    };
-    tabs.forEach((tab) => tab.addEventListener('click', () => setPanel(tab.dataset.homeTab)));
-    homeModelButtons.forEach((button) => button.addEventListener('click', () => {
-      homeModelButtons.forEach((item) => item.classList.toggle('on', item === button));
-      updateTryLink();
-    }));
-    const text = $('home-demo-text');
-    const selectedHomeScene = () => qsa('[data-home-example].active')[0]?.dataset.scene || '';
-    const updateHomeCount = () => { if ($('home-demo-count')) $('home-demo-count').textContent = `${text.value.length} / 1000`; };
-    text?.addEventListener('input', updateHomeCount);
-    $('home-demo-clear')?.addEventListener('click', () => {
-      text.value = '';
-      text.dataset.i18nUserEdited = '1';
-      text.focus();
-      updateHomeCount();
-      updateTryLink();
-    });
-    qsa('[data-home-example]').forEach((button) => button.addEventListener('click', () => {
-      qsa('[data-home-example]').forEach((item) => item.classList.remove('active'));
-      button.classList.add('active');
-      const scene = SCENE_PRESETS[button.dataset.scene];
-      text.value = sceneText(button.dataset.scene);
-      text.dataset.i18nUserEdited = '0';
-      if ($('home-demo-voice')) $('home-demo-voice').value = scene?.voice || '';
-      updateHomeCount();
-      updateTryLink();
-    }));
-    const updateTryLink = () => {
-      const params = new URLSearchParams({
-        text: text?.value || '',
-        voice: $('home-demo-voice')?.value || '',
-        model: getHomeModel(),
-        language: $('home-demo-language')?.value || '',
-        scene: selectedHomeScene()
-      });
-      $('home-try-tts').href = `tts.html?${params.toString()}`;
-    };
-    ['home-demo-text', 'home-demo-language', 'home-demo-voice'].forEach((id) => $(id)?.addEventListener('input', updateTryLink));
-    $('home-try-tts')?.addEventListener('pointerdown', updateTryLink);
-    window.addEventListener('localeChanged', () => {
-      const sceneId = selectedHomeScene();
-      if (!sceneId || text.dataset.i18nUserEdited === '1') return;
-      text.value = sceneText(sceneId);
-      updateHomeCount();
-      updateTryLink();
-    });
-    const initialScene = selectedHomeScene();
-    if (initialScene) {
-      text.value = sceneText(initialScene);
-      text.dataset.i18nUserEdited = '0';
-      if ($('home-demo-voice')) $('home-demo-voice').value = SCENE_PRESETS[initialScene]?.voice || '';
-    }
-    updateHomeCount();
-    updateTryLink();
-  }
-
   function renderStudioVoices() {
     const container = $('studio-voice-list');
     if (!container) return;
@@ -618,8 +565,7 @@
     const category = qsa('#studio-voice-cats .chip').find((chip) => chip.classList.contains('on'))?.dataset.category || 'all';
     const model = currentStudioModel();
     const list = state.voices.filter((voice) => {
-      const voiceModel = effectiveVoiceModel(voice);
-      return voiceMatches(voice, query, category) && (!model || voiceModel === model);
+      return voiceMatches(voice, query, category) && voiceSupportsModel(voice, model);
     });
     container.innerHTML = list.map((voice) => voiceCardHtml(voice, voice.id === state.selectedVoice)).join('') || `<div class="voice-empty">${t('没有匹配的音色')}</div>`;
     const summary = $('studio-model-summary');
@@ -728,8 +674,8 @@
     $('studio-emotion-hint')?.classList.toggle('hidden', supportsEmotion);
     if ($('studio-voice-search')) $('studio-voice-search').value = '';
     state.languageFiltersExpanded.studio = false;
-    const firstAvailable = state.voices.find((voice) => effectiveVoiceModel(voice) === model);
-    if (firstAvailable && !state.voices.some((voice) => voice.id === state.selectedVoice && effectiveVoiceModel(voice) === model)) state.selectedVoice = firstAvailable.id;
+    const firstAvailable = state.voices.find((voice) => voiceSupportsModel(voice, model));
+    if (firstAvailable && !state.voices.some((voice) => voice.id === state.selectedVoice && voiceSupportsModel(voice, model))) state.selectedVoice = firstAvailable.id;
     renderStudioLanguageFilters();
     renderStudioVoices();
   }
@@ -1251,7 +1197,7 @@
     const grid = $('library-grid'); if (!grid) return;
     const query = $('library-search').value; const category = state.libraryCategory;
     const list = state.voices.filter((voice) => voiceMatches(voice, query, category)
-      && (state.libraryModel === 'all' || effectiveVoiceModel(voice) === state.libraryModel));
+      && voiceSupportsModel(voice, state.libraryModel));
     $('library-count').textContent = i18n?.getLocale?.() === 'en' ? `${list.length} voices` : `${list.length} 个音色`;
     grid.innerHTML = list.map((voice) => voiceCardHtml(voice, false, true)).join('') || `<div class="empty-state">${t('没有匹配的音色')}</div>`;
   }
@@ -1272,7 +1218,11 @@
       state.languageFiltersExpanded.library = !state.languageFiltersExpanded.library;
       $('library-filters').innerHTML = languageFilterHtml(state.libraryModel, state.languageFiltersExpanded.library, state.libraryCategory);
     });
-    bindVoiceCards($('library-grid'), (voiceId) => { location.href = `tts.html?voice=${encodeURIComponent(voiceId)}`; });
+    bindVoiceCards($('library-grid'), (voiceId) => {
+      const voice = state.voiceById.get(voiceId);
+      const model = state.libraryModel === 'all' ? effectiveVoiceModel(voice) : state.libraryModel;
+      location.href = `tts.html?voice=${encodeURIComponent(voiceId)}&model=${encodeURIComponent(model)}`;
+    });
     loadVoices(true).then(() => {
       $('library-filters').innerHTML = languageFilterHtml('all', false, 'all');
       renderLibrary();
@@ -1567,7 +1517,7 @@
 
   function applyUrlState() {
     const params = new URLSearchParams(location.search);
-    if (PAGE === 'tts') {
+    if (PAGE === 'tts' || PAGE === 'home') {
       const hasScene = Boolean(params.get('scene') && SCENE_PRESETS[params.get('scene')]);
       if (!hasScene && params.get('text')) { $('studio-text').value = params.get('text'); $('studio-text').dataset.userEdited = '1'; }
       if (!hasScene && params.get('voice')) { $('studio-custom-voice').value = params.get('voice'); state.selectedVoice = params.get('voice'); }
@@ -1581,8 +1531,7 @@
 
   document.addEventListener('DOMContentLoaded', async () => {
     initShell();
-    if (PAGE === 'home') initHomePage();
-    if (PAGE === 'tts') initTtsPage();
+    if (PAGE === 'home' || PAGE === 'tts') initTtsPage();
     if (PAGE === 'clone') initClonePage();
     if (PAGE === 'voices') initVoicesPage();
     if (PAGE === 'history') initHistoryPage();
