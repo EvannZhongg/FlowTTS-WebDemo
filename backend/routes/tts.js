@@ -286,8 +286,10 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
 
         // Set SSE headers
         res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Cache-Control', 'no-cache, no-transform');
         res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+        res.flushHeaders?.();
 
         // 已知系统音色必须使用音色库声明的模型，克隆音色可由前端显式指定。
         const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];

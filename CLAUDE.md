@@ -4,7 +4,7 @@
 
 TTS 演示项目，前后端同源部署。后端 Express 服务托管前端静态文件，无跨域问题。
 
-- **前端**：`app/tts.html`（单文件，含完整 UI/逻辑）
+- **前端**：`public/app/`（Vercel 静态资源目录）
 - **后端**：`backend/`（Node.js/Express，端口 9000）
 - **云服务**：腾讯云 TRTC TTS API
 - **认证**：Supabase JWT + 每日配额
@@ -29,7 +29,7 @@ cd backend && npm install && node server.js
 | `backend/middleware/auth.js` | 验证 Bearer token |
 | `backend/middleware/quota.js` | 扣减配额（TTS=1，克隆=10） |
 | `backend/data/voices.json` | 预设音色列表（flow_01_turbo） |
-| `app/tts.html` | 前端页面，API 地址用 `window.location.origin` 自动适配 |
+| `public/app/tts.html` | 前端页面，API 地址用 `window.location.origin` 自动适配 |
 
 ## API
 

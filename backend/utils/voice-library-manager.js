@@ -138,5 +138,9 @@ class VoiceLibraryManager {
 }
 
 const voiceLibraryManager = new VoiceLibraryManager();
-setInterval(() => voiceLibraryManager.cleanupCache(), 10 * 60 * 1000);
+const cacheCleanupTimer = setInterval(
+    () => voiceLibraryManager.cleanupCache(),
+    10 * 60 * 1000
+);
+cacheCleanupTimer.unref?.();
 module.exports = voiceLibraryManager;

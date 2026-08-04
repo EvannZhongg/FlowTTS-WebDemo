@@ -1,0 +1,26 @@
+{
+  "name": "flowtts-webdemo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FlowTTS WebDemo - Vercel Express application",
+  "main": "server.js",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "node backend/server.js",
+    "build": "node scripts/verify-deployment.js",
+    "check": "node --check server.js && node --check backend/app.js && node --check backend/server.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.86.2",
+    "cors": "^2.8.5",
+    "express": "^5.2.1",
+    "pino": "^8.16.2"
+  },
+  "devDependencies": {
+    "dotenv": "^17.2.3",
+    "pino-pretty": "^10.2.0"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

@@ -11,6 +11,13 @@ const logger = require('./logger');
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabasePublishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
 const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY;
+const missingSupabaseConfig = new Proxy({}, {
+    get(_target, property) {
+        // Do not make the fallback look like a Promise to await/inspection code.
+        if (property === 'then') return undefined;
+        throw new Error('Supabase server configuration is missing');
+    }
+});
 
 if (!supabaseUrl || !supabasePublishableKey) {
     logger.warn('[Supabase] Missing SUPABASE_URL or SUPABASE_PUBLISHABLE_KEY in .env');
@@ -21,10 +28,14 @@ if (!supabaseUrl || !supabaseSecretKey) {
 }
 
 // Client for JWT verification (using the public browser key)
-const supabaseAuth = createClient(supabaseUrl, supabasePublishableKey);
+const supabaseAuth = supabaseUrl && supabasePublishableKey
+    ? createClient(supabaseUrl, supabasePublishableKey)
+    : missingSupabaseConfig;
 
 // Client for privileged database/storage operations (server-only secret key)
-const supabaseDb = createClient(supabaseUrl, supabaseSecretKey);
+const supabaseDb = supabaseUrl && supabaseSecretKey
+    ? createClient(supabaseUrl, supabaseSecretKey)
+    : missingSupabaseConfig;
 
 /**
  * Validate UUID format
