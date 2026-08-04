@@ -28,10 +28,10 @@
         <div class="console-body">
           <div class="use-cases">
             <span class="muted">示例</span>
-            <button class="use-chip" type="button" data-example="同学们，今天我们来认识声音是怎样产生的。请把手轻轻放在喉咙上，读出一个长音，感受声带的振动。" data-voice="v-female-Z3x9LmQ2">课堂教育</button>
-            <button class="use-chip" type="button" data-example="您好，欢迎致电腾讯云智能客服中心。请问有什么可以帮您？" data-voice="female-kefu-xiaomei">客服场景</button>
-            <button class="use-chip" type="button" data-example="勇者，前方的迷雾森林危机四伏。握紧你的武器，真正的冒险现在才刚刚开始。" data-voice="v-male-Bk7vD3xP">游戏</button>
-            <button class="use-chip" type="button" data-example="夜色渐深，他站在旧城墙下，想起了那封迟到了十年的信。" data-voice="v-male-D1a3XyN1">有声书</button>
+            <button class="use-chip" type="button" data-example data-scene="education">课堂教育</button>
+            <button class="use-chip active" type="button" data-example data-scene="customer-service">客服场景</button>
+            <button class="use-chip" type="button" data-example data-scene="game">游戏</button>
+            <button class="use-chip" type="button" data-example data-scene="audiobook">有声书</button>
           </div>
 
           <div class="inline-head">
@@ -43,7 +43,7 @@
           </div>
 
           <div class="textarea-wrap">
-            <textarea id="studio-text" maxlength="1000">您好，欢迎致电腾讯云智能客服中心。请问有什么可以帮您？</textarea>
+            <textarea id="studio-text" maxlength="1000">您好，感谢您致电客户服务中心，我是您的智能语音助手。请问有什么可以帮助您的？如果您需要查询订单状态，请按一；如果您需要办理退换货服务，请按二；如果您需要技术支持或故障报修，请按三；如需转接人工客服，请按零。在等待过程中，我想提醒您，我们最新推出的会员积分兑换活动已经上线，消费满一百积分即可兑换精美好礼。您也可以通过我们的官方小程序随时查看物流进度、修改收货地址或申请电子发票。感谢您的耐心等待，我们将竭诚为您服务。</textarea>
             <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span><span class="mono" id="studio-char-count">0 / 1000</span> · <button class="link-btn" id="studio-clear" type="button">清空</button></span></div>
           </div>
 
