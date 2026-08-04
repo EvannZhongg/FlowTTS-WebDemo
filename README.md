@@ -23,10 +23,52 @@ node server.js
 
 浏览器访问：`http://localhost:9000/app/index.html`
 
+也可以从仓库根目录启动：
+
+```bash
+npm install
+npm run dev
+```
+
+## Vercel 部署
+
+项目已按 Vercel Express 应用结构组织：
+
+```text
+├── server.js              # Vercel 自动识别的 Express Function 入口
+├── backend/app.js         # Express 应用（不监听端口）
+├── backend/server.js      # 仅用于本地长期运行
+├── scripts/verify-deployment.js
+├── public/app/            # Vercel 静态资源
+└── vercel.json
+```
+
+部署时应使用仓库根目录作为 Vercel 的 Root Directory，不要设置为
+`app` 或 `backend`。Vercel 会在构建阶段执行：
+
+```bash
+npm install
+npm run build
+```
+
+根路径 `/` 和 `/auth/callback` 由 Express 保留查询参数与 URL hash 后跳转至
+`/app/index.html`；`/api/**`、`/health` 由同一个 Express Function 处理。
+
+环境变量需要在 Vercel Project Settings 中配置，并勾选所需的 Production、
+Preview 和 Development 环境。Supabase Auth 的允许回调地址中也需要加入：
+
+```text
+https://<your-domain>/app/index.html
+```
+
+前端源码直接位于 `public/app/`。Vercel 不会从 Express 的
+`express.static()` 提供静态文件，因此不要再把页面移回仓库根目录的
+`app/`。
+
 ## 项目结构
 
 ```
-├── app/
+├── public/app/
 │   ├── index.html                # Studio 首页
 │   ├── tts.html                  # 文本转语音 / SSE 流式合成
 │   ├── voice-clone.html          # 声音克隆
