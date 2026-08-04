@@ -28,8 +28,8 @@
         <div class="console-body">
           <div class="use-cases">
             <span class="muted">示例</span>
-            <button class="use-chip" type="button" data-example data-scene="education">课堂教育</button>
-            <button class="use-chip active" type="button" data-example data-scene="customer-service">客服场景</button>
+            <button class="use-chip active" type="button" data-example data-scene="education">课堂教育</button>
+            <button class="use-chip" type="button" data-example data-scene="customer-service">客服场景</button>
             <button class="use-chip" type="button" data-example data-scene="game">游戏</button>
             <button class="use-chip" type="button" data-example data-scene="audiobook">有声书</button>
           </div>
@@ -43,7 +43,7 @@
           </div>
 
           <div class="textarea-wrap">
-            <textarea id="studio-text" maxlength="1000">您好，感谢您致电客户服务中心，我是您的智能语音助手。请问有什么可以帮助您的？如果您需要查询订单状态，请按一；如果您需要办理退换货服务，请按二；如果您需要技术支持或故障报修，请按三；如需转接人工客服，请按零。在等待过程中，我想提醒您，我们最新推出的会员积分兑换活动已经上线，消费满一百积分即可兑换精美好礼。您也可以通过我们的官方小程序随时查看物流进度、修改收货地址或申请电子发票。感谢您的耐心等待，我们将竭诚为您服务。</textarea>
+            <textarea id="studio-text" maxlength="1000">同学们好，欢迎来到今天的物理课堂。今天我们要学习的内容是"牛顿第三定律"——也就是作用力与反作用力的关系。在我们日常生活中，这个定律无处不在。比如，当你站在地面上，你的脚向下压地面，地面同时给你一个向上的支撑力，这两个力大小相等、方向相反。再比如，火箭发射时，向下喷射的高温气体给火箭一个强大的向上推力。大家注意，作用力和反作用力一定作用在两个不同的物体上，而且它们是同时产生、同时消失的。接下来，请翻开课本第四十二页，我们一起来看几道经典例题，巩固一下今天的知识。</textarea>
             <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span><span class="mono" id="studio-char-count">0 / 1000</span> · <button class="link-btn" id="studio-clear" type="button">清空</button></span></div>
           </div>
 
@@ -55,8 +55,8 @@
           <div class="voice-carousel" id="studio-voice-list"></div>
 
           <div class="field-grid two">
-            <div class="field"><label for="studio-custom-voice">自定义 Voice ID（可选）</label><input class="input mono" id="studio-custom-voice" placeholder="覆盖上方已选音色"></div>
-            <div class="field hidden" id="studio-emotion-field"><label for="studio-emotion">情感风格 <span class="api-tag">Emotion</span></label><select class="select" id="studio-emotion"></select></div>
+            <div class="field"><label for="studio-custom-voice">自定义 Voice ID（可选） <span class="api-tag">VoiceId</span></label><input class="input mono studio-config-control" id="studio-custom-voice" placeholder="覆盖上方已选音色"></div>
+            <div class="field" id="studio-emotion-field"><label for="studio-emotion">情感风格 <span class="api-tag">Emotion</span></label><select class="select studio-config-control" id="studio-emotion"></select><span class="field-hint hidden" id="studio-emotion-hint">仅 flow_01_ex 支持情感风格</span></div>
           </div>
 
           <div class="sliders">
@@ -71,8 +71,8 @@
             <div class="advanced-body">
               <div class="field-grid">
                 <div class="field"><label>音频格式 <span class="api-tag">Format</span></label><div class="format-seg" id="studio-format"><button class="seg-item mono on" data-format="mp3" type="button">mp3</button><button class="seg-item mono" data-format="wav" type="button">wav</button><button class="seg-item mono" data-format="opus" type="button">opus</button><button class="seg-item mono" data-format="pcm" type="button">pcm</button></div></div>
-                <div class="field"><label for="studio-sample-rate">采样率 <span class="api-tag">SampleRate</span></label><select class="select mono" id="studio-sample-rate"><option value="24000">24000 Hz</option><option value="16000">16000 Hz</option></select></div>
-                <div class="field" id="studio-bitrate-field"><label for="studio-bitrate">比特率 <span class="api-tag">Bitrate</span></label><select class="select mono" id="studio-bitrate"><option value="128">128 kbps</option><option value="32">32 kbps</option><option value="64">64 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option></select><span class="field-hint">仅 MP3 生效</span></div>
+                <div class="field"><label for="studio-sample-rate">采样率 <span class="api-tag">SampleRate</span></label><select class="select mono advanced-select" id="studio-sample-rate"><option value="24000">24000 Hz</option><option value="16000">16000 Hz</option></select></div>
+                <div class="field" id="studio-bitrate-field"><label for="studio-bitrate">比特率 <span class="api-tag">Bitrate</span></label><select class="select mono advanced-select" id="studio-bitrate"><option value="128">128 kbps</option><option value="32">32 kbps</option><option value="64">64 kbps</option><option value="192">192 kbps</option><option value="256">256 kbps</option></select><span class="field-hint">仅 MP3 生效</span></div>
               </div>
             </div>
           </details>

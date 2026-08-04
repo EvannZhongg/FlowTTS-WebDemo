@@ -82,6 +82,7 @@
     '自定义 Voice ID（可选）': 'Custom Voice ID (optional)',
     '覆盖上方已选音色': 'Override the selected voice above',
     '情感风格': 'Emotion',
+    '仅 flow_01_ex 支持情感风格': 'Emotion styles are available only with flow_01_ex',
     '语速': 'Speed',
     '音量': 'Volume',
     '音高': 'Pitch',

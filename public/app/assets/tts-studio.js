@@ -657,7 +657,10 @@
       : String(voiceId).replace(/["\\]/g, '\\$&');
     const card = container?.querySelector(`[data-voice-id="${escapedVoiceId}"]`);
     if (!container || !card) return;
-    const targetLeft = card.offsetLeft - Math.max(0, (container.clientWidth - card.offsetWidth) / 2);
+    const containerRect = container.getBoundingClientRect();
+    const cardRect = card.getBoundingClientRect();
+    const cardLeft = container.scrollLeft + cardRect.left - containerRect.left;
+    const targetLeft = cardLeft - Math.max(0, (container.clientWidth - card.offsetWidth) / 2);
     container.scrollTo({ left: Math.max(0, targetLeft), behavior });
   }
 
@@ -717,8 +720,12 @@
     const selectedLanguage = $('studio-language')?.value || '';
     setSelectOptions($('studio-language'), availableLanguageOptions(model));
     if (availableLanguageOptions(model).some(([value]) => value === selectedLanguage)) $('studio-language').value = selectedLanguage;
-    $('studio-emotion-field')?.classList.toggle('hidden', model !== 'flow_01_ex');
-    if (model !== 'flow_01_ex' && $('studio-emotion')) $('studio-emotion').value = '';
+    const supportsEmotion = model === 'flow_01_ex';
+    if ($('studio-emotion')) {
+      $('studio-emotion').disabled = !supportsEmotion;
+      if (!supportsEmotion) $('studio-emotion').value = '';
+    }
+    $('studio-emotion-hint')?.classList.toggle('hidden', supportsEmotion);
     if ($('studio-voice-search')) $('studio-voice-search').value = '';
     state.languageFiltersExpanded.studio = false;
     const firstAvailable = state.voices.find((voice) => effectiveVoiceModel(voice) === model);
@@ -967,16 +974,19 @@
     bindVoiceCards($('studio-voice-list'), (voiceId) => chooseStudioVoice(voiceId));
     loadVoices(true).then(() => {
       const params = new URLSearchParams(location.search);
-      const sceneId = params.get('scene');
-      if (sceneId && SCENE_PRESETS[sceneId]) {
+      const urlSceneId = params.get('scene');
+      const hasUrlScene = Boolean(urlSceneId && SCENE_PRESETS[urlSceneId]);
+      const canUseDefaultScene = !hasUrlScene && !params.get('voice') && !params.get('text');
+      const sceneId = hasUrlScene ? urlSceneId : (canUseDefaultScene ? defaultScene : '');
+      if (sceneId) {
         applyStudioScene(sceneId, { behavior: 'auto' });
       } else if (params.get('voice') && state.voiceById.has(params.get('voice'))) {
         state.selectedVoice = params.get('voice');
       }
-      if ((!sceneId || !SCENE_PRESETS[sceneId]) && params.get('model')) {
+      if (!sceneId && params.get('model')) {
         qsa('#studio-model .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.model === params.get('model')));
       }
-      if (!sceneId || !SCENE_PRESETS[sceneId]) updateModelControls();
+      if (!sceneId) updateModelControls();
       if (params.get('language') && availableLanguageOptions(currentStudioModel()).some(([value]) => value === params.get('language'))) {
         $('studio-language').value = params.get('language');
       }
