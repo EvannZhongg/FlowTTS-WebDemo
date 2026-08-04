@@ -374,7 +374,7 @@
   function languageFilterHtml(model = 'all', expanded = false, activeCategory = 'all') {
     const counts = new Map();
     state.voices.forEach((voice) => {
-      if (model !== 'all' && effectiveVoiceModel(voice) !== model) return;
+      if (!voiceSupportsModel(voice, model)) return;
       counts.set(voice.language, (counts.get(voice.language) || 0) + 1);
     });
     const items = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
@@ -416,6 +416,14 @@
     return String(voice?.id || '').toLowerCase().includes('_ex') ? 'flow_01_ex' : 'flow_02_turbo';
   }
 
+  function voiceSupportsModel(voice, model) {
+    if (!model || model === 'all') return true;
+    const models = Array.isArray(voice?.models) && voice.models.length
+      ? voice.models
+      : [effectiveVoiceModel(voice)];
+    return models.includes(model);
+  }
+
   function currentStudioModel() {
     return qsa('#studio-model .seg-item').find((button) => button.classList.contains('on'))?.dataset.model || '';
   }
@@ -442,7 +450,10 @@
       </div>
       <div class="voice-name">${escapeHtml(voiceDisplayName(voice))}</div>
       <div class="voice-badges"><span class="voice-badge">${escapeHtml(voice.language || 'auto')}</span>${isExtended ? '<span class="voice-badge ex">ex</span>' : ''}</div>
-      <div class="voice-meta">${escapeHtml(langs)}<br>${escapeHtml(voice.id)}</div>
+      <div class="voice-meta">
+        <span class="voice-langs">${escapeHtml(langs)}</span>
+        <span class="voice-id">${escapeHtml(voice.id)}</span>
+      </div>
       ${library ? `<div class="voice-desc">${escapeHtml(voice.description || voice.scenarios || t('预设音色'))}</div>` : ''}
     </article>`;
   }
@@ -618,8 +629,7 @@
     const category = qsa('#studio-voice-cats .chip').find((chip) => chip.classList.contains('on'))?.dataset.category || 'all';
     const model = currentStudioModel();
     const list = state.voices.filter((voice) => {
-      const voiceModel = effectiveVoiceModel(voice);
-      return voiceMatches(voice, query, category) && (!model || voiceModel === model);
+      return voiceMatches(voice, query, category) && voiceSupportsModel(voice, model);
     });
     container.innerHTML = list.map((voice) => voiceCardHtml(voice, voice.id === state.selectedVoice)).join('') || `<div class="voice-empty">${t('没有匹配的音色')}</div>`;
     const summary = $('studio-model-summary');
@@ -728,8 +738,8 @@
     $('studio-emotion-hint')?.classList.toggle('hidden', supportsEmotion);
     if ($('studio-voice-search')) $('studio-voice-search').value = '';
     state.languageFiltersExpanded.studio = false;
-    const firstAvailable = state.voices.find((voice) => effectiveVoiceModel(voice) === model);
-    if (firstAvailable && !state.voices.some((voice) => voice.id === state.selectedVoice && effectiveVoiceModel(voice) === model)) state.selectedVoice = firstAvailable.id;
+    const firstAvailable = state.voices.find((voice) => voiceSupportsModel(voice, model));
+    if (firstAvailable && !state.voices.some((voice) => voice.id === state.selectedVoice && voiceSupportsModel(voice, model))) state.selectedVoice = firstAvailable.id;
     renderStudioLanguageFilters();
     renderStudioVoices();
   }
@@ -1251,7 +1261,7 @@
     const grid = $('library-grid'); if (!grid) return;
     const query = $('library-search').value; const category = state.libraryCategory;
     const list = state.voices.filter((voice) => voiceMatches(voice, query, category)
-      && (state.libraryModel === 'all' || effectiveVoiceModel(voice) === state.libraryModel));
+      && voiceSupportsModel(voice, state.libraryModel));
     $('library-count').textContent = i18n?.getLocale?.() === 'en' ? `${list.length} voices` : `${list.length} 个音色`;
     grid.innerHTML = list.map((voice) => voiceCardHtml(voice, false, true)).join('') || `<div class="empty-state">${t('没有匹配的音色')}</div>`;
   }
@@ -1272,7 +1282,11 @@
       state.languageFiltersExpanded.library = !state.languageFiltersExpanded.library;
       $('library-filters').innerHTML = languageFilterHtml(state.libraryModel, state.languageFiltersExpanded.library, state.libraryCategory);
     });
-    bindVoiceCards($('library-grid'), (voiceId) => { location.href = `tts.html?voice=${encodeURIComponent(voiceId)}`; });
+    bindVoiceCards($('library-grid'), (voiceId) => {
+      const voice = state.voiceById.get(voiceId);
+      const model = state.libraryModel === 'all' ? effectiveVoiceModel(voice) : state.libraryModel;
+      location.href = `tts.html?voice=${encodeURIComponent(voiceId)}&model=${encodeURIComponent(model)}`;
+    });
     loadVoices(true).then(() => {
       $('library-filters').innerHTML = languageFilterHtml('all', false, 'all');
       renderLibrary();

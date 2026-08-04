@@ -152,7 +152,7 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
 
         // 已知系统音色必须使用音色库声明的模型，克隆音色可由前端显式指定。
         const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId);
+        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId, requestedModel);
         const model = voiceModel || ((requestedModel && VALID_MODELS.includes(requestedModel)) ? requestedModel : '');
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测
@@ -293,7 +293,7 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
 
         // 已知系统音色必须使用音色库声明的模型，克隆音色可由前端显式指定。
         const VALID_MODELS = ['flow_02_turbo', 'flow_01_ex'];
-        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId);
+        const voiceModel = await voiceLibraryManager.getModelForVoice(voiceId, requestedModel);
         const model = voiceModel || ((requestedModel && VALID_MODELS.includes(requestedModel)) ? requestedModel : '');
 
         // 语言处理：前端显式传入则透传；未传则不带 Language，交由云服务自行检测

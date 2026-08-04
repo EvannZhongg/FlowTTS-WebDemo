@@ -8,6 +8,8 @@ const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 const supabaseDb = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
 
 const CLONED_CACHE_TTL = 5 * 60 * 1000;
+const TURBO_MODEL = 'flow_02_turbo';
+const EX_MODEL = 'flow_01_ex';
 
 const FALLBACK_VOICES = [
     { id: 'v-female-R2s4N9qJ', name: '温柔姐姐', language: 'zh', description: '优质女声' },
@@ -38,12 +40,16 @@ class VoiceLibraryManager {
             this.extendedLanguageMap = extendedData.languageMap || {};
             this.standardVoices = (standardData.voices || []).map(voice => ({
                 ...voice,
-                model: voice.model || 'flow_02_turbo',
+                model: voice.model || TURBO_MODEL,
+                // Turbo 的 101 个音色同时可在 Ex 模型下使用。静态数据仍单独维护，
+                // 这里只在读取时声明模型兼容性，避免复制数据。
+                models: [TURBO_MODEL, EX_MODEL],
                 provider: voice.provider || 'tencent'
             }));
             this.extendedVoices = (extendedData.voices || []).map(voice => ({
                 ...voice,
-                model: 'flow_01_ex',
+                model: EX_MODEL,
+                models: [EX_MODEL],
                 provider: voice.provider || 'minimax'
             }));
             this.standardVoiceIds = new Set(this.standardVoices.map(v => v.id));
@@ -67,36 +73,46 @@ class VoiceLibraryManager {
 
     async getAllVoices() {
         this.init();
-        const languageMap = {};
-        for (const [code, item] of Object.entries(this.standardLanguageMap)) {
-            languageMap[code] = { name: item.name, count: item.count };
-        }
-        for (const [code, item] of Object.entries(this.extendedLanguageMap)) {
-            languageMap[code] = {
-                name: languageMap[code]?.name || item.name,
-                count: (languageMap[code]?.count || 0) + item.count
-            };
-        }
+        const exLanguageMap = this.mergeLanguageMaps(
+            this.standardLanguageMap,
+            this.extendedLanguageMap
+        );
         return {
             preset: [...this.standardVoices, ...this.extendedVoices],
             cloned: [],
-            languageMap,
+            languageMap: exLanguageMap,
             languageMaps: {
                 flow_02_turbo: { ...this.standardLanguageMap },
-                flow_01_ex: { ...this.extendedLanguageMap }
+                // Ex 展示自身 327 个音色和 Turbo 共享的 101 个音色，共 428 个。
+                flow_01_ex: exLanguageMap
             }
         };
+    }
+
+    mergeLanguageMaps(...maps) {
+        const merged = {};
+        for (const map of maps) {
+            for (const [code, item] of Object.entries(map || {})) {
+                merged[code] = {
+                    name: merged[code]?.name || item.name,
+                    count: (merged[code]?.count || 0) + (Number(item.count) || 0)
+                };
+            }
+        }
+        return merged;
     }
 
     /**
      * 获取音色对应的 TTS 模型
      * 系统音色根据静态映射返回模型，克隆音色从数据库查询。
      */
-    async getModelForVoice(voiceId) {
+    async getModelForVoice(voiceId, requestedModel = '') {
         this.init();
 
-        if (this.extendedVoiceIds.has(voiceId)) return 'flow_01_ex';
-        if (this.standardVoiceIds.has(voiceId)) return 'flow_02_turbo';
+        if (this.extendedVoiceIds.has(voiceId)) return EX_MODEL;
+        if (this.standardVoiceIds.has(voiceId)) {
+            return requestedModel === EX_MODEL ? EX_MODEL : TURBO_MODEL;
+        }
 
         // 检查缓存
         const now = Date.now();
