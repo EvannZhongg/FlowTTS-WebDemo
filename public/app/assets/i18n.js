@@ -311,6 +311,8 @@
     '登录': 'Sign in',
     '注册': 'Register',
     '登录 / 注册': 'Sign in / Register',
+    '加载中': 'Loading',
+    '正在恢复登录状态...': 'Restoring your session...',
     '邮箱登录': 'Email sign-in',
     '打开登录窗口': 'Open sign-in dialog',
     '查看账户状态': 'View account status',
@@ -414,12 +416,19 @@
 
   function applyAttributes(element) {
     if (!(element instanceof Element)) return;
+    const dynamicAttributes = new Set(
+      String(element.dataset.i18nDynamicAttrs || '')
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean)
+    );
     let sources = attributeSources.get(element);
     if (!sources) {
       sources = {};
       attributeSources.set(element, sources);
     }
     ATTRIBUTES.forEach((name) => {
+      if (dynamicAttributes.has(name)) return;
       if (!element.hasAttribute(name)) return;
       if (!(name in sources)) {
         const value = element.getAttribute(name);

@@ -98,4 +98,5 @@ https://<your-domain>/app/index.html
 | `SUPABASE_PUBLISHABLE_KEY` | 浏览器和 Auth 验证使用的公开 Key |
 | `SUPABASE_SECRET_KEY` | 仅服务端使用的 Secret Key，不得暴露到前端 |
 | `SUPABASE_HISTORY_BUCKET` | 私有历史音频 Storage Bucket |
+| `AUTH_REDIRECT_URL` | 可选；邮箱登录固定回调地址，例如 `https://your-domain/app/index.html` |
 | `API_PORT` | 服务端口，默认 `9000` |

@@ -96,7 +96,8 @@ app.get('/api/config', (req, res) => {
     res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=300');
     return res.json({
         supabaseUrl,
-        supabasePublishableKey
+        supabasePublishableKey,
+        authRedirectUrl: process.env.AUTH_REDIRECT_URL || ''
     });
 });
 
