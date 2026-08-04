@@ -530,7 +530,7 @@
     const initialQuota = window.SupabaseAuthInject?.getQuota?.();
     if (initialQuota) updateQuota(initialQuota);
     window.addEventListener('localeChanged', () => {
-      if (PAGE === 'tts') {
+      if (PAGE === 'tts' || PAGE === 'home') {
         const selectedLanguage = $('studio-language')?.value || '';
         const selectedEmotion = $('studio-emotion')?.value || '';
         setSelectOptions($('studio-language'), availableLanguageOptions(currentStudioModel()));
@@ -556,70 +556,6 @@
       }
       if (PAGE === 'history') renderHistoryPage();
     });
-  }
-
-  function initHomePage() {
-    const panels = qsa('[data-home-panel]');
-    const tabs = qsa('[data-home-tab]');
-    const homeModelButtons = qsa('#home-demo-model .seg-item');
-    const getHomeModel = () => homeModelButtons.find((button) => button.classList.contains('on'))?.dataset.model || 'flow_02_turbo';
-    const setPanel = (name) => {
-      tabs.forEach((tab) => tab.classList.toggle('active', tab.dataset.homeTab === name));
-      panels.forEach((panel) => panel.classList.toggle('active', panel.dataset.homePanel === name));
-    };
-    tabs.forEach((tab) => tab.addEventListener('click', () => setPanel(tab.dataset.homeTab)));
-    homeModelButtons.forEach((button) => button.addEventListener('click', () => {
-      homeModelButtons.forEach((item) => item.classList.toggle('on', item === button));
-      updateTryLink();
-    }));
-    const text = $('home-demo-text');
-    const selectedHomeScene = () => qsa('[data-home-example].active')[0]?.dataset.scene || '';
-    const updateHomeCount = () => { if ($('home-demo-count')) $('home-demo-count').textContent = `${text.value.length} / 1000`; };
-    text?.addEventListener('input', updateHomeCount);
-    $('home-demo-clear')?.addEventListener('click', () => {
-      text.value = '';
-      text.dataset.i18nUserEdited = '1';
-      text.focus();
-      updateHomeCount();
-      updateTryLink();
-    });
-    qsa('[data-home-example]').forEach((button) => button.addEventListener('click', () => {
-      qsa('[data-home-example]').forEach((item) => item.classList.remove('active'));
-      button.classList.add('active');
-      const scene = SCENE_PRESETS[button.dataset.scene];
-      text.value = sceneText(button.dataset.scene);
-      text.dataset.i18nUserEdited = '0';
-      if ($('home-demo-voice')) $('home-demo-voice').value = scene?.voice || '';
-      updateHomeCount();
-      updateTryLink();
-    }));
-    const updateTryLink = () => {
-      const params = new URLSearchParams({
-        text: text?.value || '',
-        voice: $('home-demo-voice')?.value || '',
-        model: getHomeModel(),
-        language: $('home-demo-language')?.value || '',
-        scene: selectedHomeScene()
-      });
-      $('home-try-tts').href = `tts.html?${params.toString()}`;
-    };
-    ['home-demo-text', 'home-demo-language', 'home-demo-voice'].forEach((id) => $(id)?.addEventListener('input', updateTryLink));
-    $('home-try-tts')?.addEventListener('pointerdown', updateTryLink);
-    window.addEventListener('localeChanged', () => {
-      const sceneId = selectedHomeScene();
-      if (!sceneId || text.dataset.i18nUserEdited === '1') return;
-      text.value = sceneText(sceneId);
-      updateHomeCount();
-      updateTryLink();
-    });
-    const initialScene = selectedHomeScene();
-    if (initialScene) {
-      text.value = sceneText(initialScene);
-      text.dataset.i18nUserEdited = '0';
-      if ($('home-demo-voice')) $('home-demo-voice').value = SCENE_PRESETS[initialScene]?.voice || '';
-    }
-    updateHomeCount();
-    updateTryLink();
   }
 
   function renderStudioVoices() {
@@ -1581,7 +1517,7 @@
 
   function applyUrlState() {
     const params = new URLSearchParams(location.search);
-    if (PAGE === 'tts') {
+    if (PAGE === 'tts' || PAGE === 'home') {
       const hasScene = Boolean(params.get('scene') && SCENE_PRESETS[params.get('scene')]);
       if (!hasScene && params.get('text')) { $('studio-text').value = params.get('text'); $('studio-text').dataset.userEdited = '1'; }
       if (!hasScene && params.get('voice')) { $('studio-custom-voice').value = params.get('voice'); state.selectedVoice = params.get('voice'); }
@@ -1595,8 +1531,7 @@
 
   document.addEventListener('DOMContentLoaded', async () => {
     initShell();
-    if (PAGE === 'home') initHomePage();
-    if (PAGE === 'tts') initTtsPage();
+    if (PAGE === 'home' || PAGE === 'tts') initTtsPage();
     if (PAGE === 'clone') initClonePage();
     if (PAGE === 'voices') initVoicesPage();
     if (PAGE === 'history') initHistoryPage();
