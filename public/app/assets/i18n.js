@@ -201,7 +201,7 @@
     '全部可用音色': 'All available voices',
     '全部模型': 'All models',
     '正在加载音色...': 'Loading voices...',
-    'flow_02_turbo 提供 101 个精选音色；flow_01_ex 提供 428 个音色。': 'flow_02_turbo provides 101 curated voices; flow_01_ex provides 428 voices.',
+    'flow_02_turbo 提供 101 个精选音色；flow_01_ex 提供 327 个音色。': 'flow_02_turbo provides 101 curated voices; flow_01_ex provides 327 voices.',
 
     '历史记录 · TTS Studio': 'History · TTS Studio',
     '所有历史记录': 'All history',
