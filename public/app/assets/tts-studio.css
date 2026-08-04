@@ -180,6 +180,10 @@ body.side-collapsed .side-toggle svg { transform: rotate(180deg); }
 .field label { color: var(--ink-3); font-size: 12px; font-weight: 600; }
 .input, .select { width: 100%; min-height: 38px; padding: 8px 11px; outline: 0; color: var(--ink); background: #fff; border: 1px solid var(--line-strong); border-radius: 8px; }
 .input:focus, .select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(0,82,217,.06); }
+.studio-config-control { height: 40px; min-height: 40px; padding: 8px 12px; background-color: #fff; border-color: var(--line-strong); border-radius: 9px; }
+.advanced-select { min-height: 40px; padding: 8px 12px; border: 3px solid #f0eee8; border-radius: 9px; box-shadow: inset 0 0 0 1px transparent; }
+.advanced-select:focus { border-color: #f0eee8; box-shadow: inset 0 0 0 1px var(--blue), 0 0 0 2px rgba(0,82,217,.06); }
+.select:disabled { cursor: not-allowed; color: var(--ink-4); background: var(--bg-muted); opacity: .75; }
 .field-hint { color: var(--ink-4); font-size: 11px; }
 .field-hint.error { color: var(--red); }
 .api-tag { padding: 1px 6px; color: var(--blue); background: var(--blue-light); border-radius: 4px; font: 10px var(--mono); }
