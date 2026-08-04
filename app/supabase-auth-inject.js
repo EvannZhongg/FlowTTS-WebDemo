@@ -51,6 +51,8 @@
 
     const i18n = window.TTSI18n;
     const t = (text, variables) => i18n?.t(text, variables) || text;
+    const QUOTA_SNAPSHOT_KEY = 'flowtts-quota-snapshot';
+    const QUOTA_CACHE_FRESH_MS = 5 * 60 * 1000;
 
     // ==================== 全局状态 ====================
 
@@ -1161,6 +1163,8 @@
             await authState.supabase.auth.signOut();
             authState.session = null;
             authState.user = null;
+            authState.quota = null;
+            localStorage.removeItem(QUOTA_SNAPSHOT_KEY);
 
             updateLoginStatus(null);
             toggleModal();
@@ -1214,18 +1218,53 @@
      * 前端在调用 API 后，从响应的 quota 字段更新配额
      * @param {Object} quotaData - API 响应中的 quota 对象 { daily, used, remaining, subscription_tier, subscription_end }
      */
-    function updateQuota(quotaData) {
-        if (!quotaData) return;
+    function normalizeQuota(quotaData) {
+        if (!quotaData || typeof quotaData !== 'object') return null;
+        const daily = Number(quotaData.daily ?? 0);
+        const used = Number(quotaData.used ?? 0);
+        const remaining = Number(quotaData.remaining ?? Math.max(daily - used, 0));
+        if (![daily, used, remaining].every(Number.isFinite)) return null;
+        return {
+            ...quotaData,
+            daily,
+            used,
+            remaining
+        };
+    }
 
-        authState.quota = quotaData;
-        log('配额已更新: ' + JSON.stringify(quotaData));
+    function readQuotaSnapshot() {
+        try {
+            const snapshot = JSON.parse(localStorage.getItem(QUOTA_SNAPSHOT_KEY) || 'null');
+            return snapshot?.quota ? snapshot : null;
+        } catch (_) {
+            return null;
+        }
+    }
+
+    function writeQuotaSnapshot(quota, userId = authState.session?.user?.id || '') {
+        try {
+            localStorage.setItem(QUOTA_SNAPSHOT_KEY, JSON.stringify({
+                userId,
+                quota,
+                timestamp: Date.now()
+            }));
+        } catch (_) {}
+    }
+
+    function updateQuota(quotaData, options = {}) {
+        if (!quotaData) return;
+        const quota = normalizeQuota(quotaData);
+        if (!quota) return;
+        authState.quota = quota;
+        if (options.persist !== false) writeQuotaSnapshot(quota);
+        log('配额已更新: ' + JSON.stringify(quota));
 
         // 更新 UI 显示
-        updateQuotaDisplay(quotaData);
+        updateQuotaDisplay(quota);
 
         // 触发自定义事件，通知页面配额已更新
         window.dispatchEvent(new CustomEvent('quotaUpdated', {
-            detail: quotaData
+            detail: quota
         }));
     }
 
@@ -1347,64 +1386,40 @@
             return;
         }
 
-        // 检查本地缓存
         const now = Date.now();
-        const cacheKey = `quota_cache_${authState.session.user.id}`;
-        const cacheData = sessionStorage.getItem(cacheKey);
+        let cached = readQuotaSnapshot();
+        if (cached && cached.userId && cached.userId !== authState.session.user.id) cached = null;
 
-        // 如果不是强制刷新，且有缓存且未过期（30秒），则使用缓存
-        if (!force && cacheData) {
-            try {
-                const { quota, timestamp } = JSON.parse(cacheData);
-                if (now - timestamp < 30000) { // 30秒缓存
-                    updateQuota(quota);
-                    log('使用缓存的配额信息', 'info');
-                    return;
-                }
-            } catch (e) {
-                // 忽略缓存解析错误，继续获取新数据
-            }
+        // Always paint the latest snapshot immediately; only fresh snapshots suppress a network call.
+        if (cached?.quota) updateQuota(cached.quota, { persist: false });
+        if (!force && cached?.quota && now - Number(cached.timestamp || 0) < QUOTA_CACHE_FRESH_MS) {
+            log('使用本地配额快照', 'info');
+            return;
         }
 
         try {
             const headers = {
                 'Authorization': `Bearer ${authState.session.access_token}`
             };
-
-            // 添加 If-None-Match 头（如果本地有 ETag）
-            if (cacheData) {
-                try {
-                    const { etag } = JSON.parse(cacheData);
-                    if (etag) {
-                        headers['If-None-Match'] = etag;
-                    }
-                } catch (e) {
-                    // 忽略
-                }
-            }
+            if (cached?.etag) headers['If-None-Match'] = cached.etag;
 
             const response = await fetch(`${APP_CONFIG.API_BASE}/api/user/quota`, {
                 method: 'GET',
                 headers
             });
 
-            // 304 Not Modified - 使用缓存
             if (response.status === 304) {
-                if (cacheData) {
-                    const { quota } = JSON.parse(cacheData);
-                    updateQuota(quota);
-                    log('配额未变化，使用缓存', 'info');
+                if (cached?.quota) {
+                    const refreshed = { ...cached, timestamp: now };
+                    localStorage.setItem(QUOTA_SNAPSHOT_KEY, JSON.stringify(refreshed));
+                    updateQuota(cached.quota, { persist: false });
                 }
                 return;
             }
 
-            if (!response.ok) {
-                throw new Error(`获取配额失败: ${response.status}`);
-            }
+            if (!response.ok) throw new Error(`获取配额失败: ${response.status}`);
 
-            // 获取 ETag
             const etag = response.headers.get('ETag');
-
             const data = await response.json();
 
             if (data.quota) {
@@ -1418,8 +1433,7 @@
                     };
                     updateLoginStatus(authState.user);
                 }
-                // 包含 subscription_tier, subscription_start, subscription_end, auto_renew 字段
-                updateQuota({
+                const quota = normalizeQuota({
                     daily: data.quota.daily || 0,
                     used: data.quota.used || 0,
                     remaining: data.quota.remaining || 0,
@@ -1428,23 +1442,14 @@
                     subscription_end: data.quota.subscription_end || null,
                     auto_renew: data.quota.auto_renew || false
                 });
-
-                // 缓存配额数据
-                const cacheToStore = {
-                    quota: {
-                        daily: data.quota.daily || 0,
-                        used: data.quota.used || 0,
-                        remaining: data.quota.remaining || 0,
-                        subscription_tier: data.quota.subscription_tier || 'free',
-                        subscription_start: data.quota.subscription_start || null,
-                        subscription_end: data.quota.subscription_end || null,
-                        auto_renew: data.quota.auto_renew || false
-                    },
+                updateQuota(quota, { persist: false });
+                const snapshot = {
+                    userId: authState.session.user.id,
+                    quota,
                     timestamp: now,
                     etag
                 };
-                sessionStorage.setItem(cacheKey, JSON.stringify(cacheToStore));
-
+                localStorage.setItem(QUOTA_SNAPSHOT_KEY, JSON.stringify(snapshot));
                 log('配额信息获取成功', 'success');
             } else {
                 log('配额数据格式错误', 'warn');
@@ -1463,37 +1468,7 @@
             // 更新 UI
             updateQuota(quotaData);
 
-            // 更新缓存
-            const cacheKey = `quota_cache_${authState.session?.user?.id}`;
-            if (cacheKey && authState.session) {
-                const now = Date.now();
-                const existingCache = sessionStorage.getItem(cacheKey);
-                let etag = null;
-
-                if (existingCache) {
-                    try {
-                        const parsed = JSON.parse(existingCache);
-                        etag = parsed.etag;
-                    } catch (e) {
-                        // 忽略
-                    }
-                }
-
-                const cacheToStore = {
-                    quota: {
-                        daily: quotaData.daily || 0,
-                        used: quotaData.used || 0,
-                        remaining: quotaData.remaining || 0,
-                        subscription_tier: quotaData.subscription_tier || 'free',
-                        subscription_start: quotaData.subscription_start || null,
-                        subscription_end: quotaData.subscription_end || null,
-                        auto_renew: quotaData.auto_renew || false
-                    },
-                    timestamp: now,
-                    etag
-                };
-                sessionStorage.setItem(cacheKey, JSON.stringify(cacheToStore));
-            }
+            // updateQuota persists a cross-page snapshot in localStorage.
         }
     }
 
@@ -1699,6 +1674,8 @@
 
                 // 注意：authReady 事件将在 getSession() 检查后统一触发（避免重复）
             } else if (event === 'SIGNED_OUT') {
+                authState.quota = null;
+                localStorage.removeItem(QUOTA_SNAPSHOT_KEY);
                 updateLoginStatus(null);
             }
         });
