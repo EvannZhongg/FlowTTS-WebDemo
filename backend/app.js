@@ -18,7 +18,27 @@ const parseAllowedOrigins = () => (process.env.CORS_ORIGINS || '')
     .map((value) => value.trim())
     .filter(Boolean);
 
-const isAllowedOrigin = (origin) => {
+const normalizeHost = (value) => String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\/.*$/, '');
+
+const getRequestHosts = (req) => {
+    const forwardedHosts = String(req.get('x-forwarded-host') || '')
+        .split(',')
+        .map(normalizeHost)
+        .filter(Boolean);
+    return new Set([
+        normalizeHost(req.get('host')),
+        ...forwardedHosts,
+        normalizeHost(process.env.VERCEL_URL),
+        normalizeHost(process.env.VERCEL_PROJECT_PRODUCTION_URL),
+        normalizeHost(process.env.VERCEL_BRANCH_URL)
+    ].filter(Boolean));
+};
+
+const isAllowedOrigin = (origin, req) => {
     if (!origin) return true;
 
     let url;
@@ -30,10 +50,10 @@ const isAllowedOrigin = (origin) => {
 
     if (['localhost', '127.0.0.1'].includes(url.hostname)) return true;
 
-    // Browser calls are same-origin in production. Trust the current Vercel host
-    // so preview deployments work without adding every generated hostname.
-    const vercelHost = process.env.VERCEL_URL;
-    if (vercelHost && url.hostname === vercelHost) return true;
+    // Always allow the origin that owns the current request. This is the
+    // correct same-origin check for Vercel production aliases, custom domains,
+    // preview URLs, and deployments behind a trusted reverse proxy.
+    if (getRequestHosts(req).has(normalizeHost(url.host))) return true;
 
     return parseAllowedOrigins().some((allowedOrigin) => {
         try {
@@ -44,12 +64,16 @@ const isAllowedOrigin = (origin) => {
     });
 };
 
-app.use(cors({
-    origin: (origin, callback) => {
-        if (isAllowedOrigin(origin)) return callback(null, true);
+app.use(cors((req, callback) => {
+    const origin = req.get('origin');
+    if (!isAllowedOrigin(origin, req)) {
         return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true
+    }
+    return callback(null, {
+        origin: origin || false,
+        credentials: true,
+        maxAge: 600
+    });
 }));
 
 // Keep request bodies below Vercel's buffered request limit. The current
