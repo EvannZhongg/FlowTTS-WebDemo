@@ -33,14 +33,14 @@
           <div class="home-demo-panel active" data-home-panel="tts">
             <div class="use-cases">
               <span class="muted">场景示例</span>
-              <button class="use-chip" type="button" data-home-example="课堂教育" data-text="同学们，今天我们来认识声音是怎样产生的。请把手轻轻放在喉咙上，读出一个长音，感受声带的振动。">课堂教育</button>
-              <button class="use-chip active" type="button" data-home-example="客服场景" data-text="您好，欢迎致电腾讯云智能客服中心。请问有什么可以帮您？">客服场景</button>
-              <button class="use-chip" type="button" data-home-example="游戏" data-text="勇者，前方的迷雾森林危机四伏。握紧你的武器，真正的冒险现在才刚刚开始。">游戏</button>
-              <button class="use-chip" type="button" data-home-example="有声书" data-text="夜色渐深，他站在旧城墙下，想起了那封迟到了十年的信。">有声书</button>
+              <button class="use-chip" type="button" data-home-example data-scene="education">课堂教育</button>
+              <button class="use-chip active" type="button" data-home-example data-scene="customer-service">客服场景</button>
+              <button class="use-chip" type="button" data-home-example data-scene="game">游戏</button>
+              <button class="use-chip" type="button" data-home-example data-scene="audiobook">有声书</button>
             </div>
             <div class="home-demo-grid">
               <div class="textarea-wrap">
-                <textarea id="home-demo-text" maxlength="1000">您好，欢迎致电腾讯云智能客服中心。请问有什么可以帮您？</textarea>
+                <textarea id="home-demo-text" maxlength="1000">您好，感谢您致电客户服务中心，我是您的智能语音助手。请问有什么可以帮助您的？如果您需要查询订单状态，请按一；如果您需要办理退换货服务，请按二；如果您需要技术支持或故障报修，请按三；如需转接人工客服，请按零。在等待过程中，我想提醒您，我们最新推出的会员积分兑换活动已经上线，消费满一百积分即可兑换精美好礼。您也可以通过我们的官方小程序随时查看物流进度、修改收货地址或申请电子发票。感谢您的耐心等待，我们将竭诚为您服务。</textarea>
                 <div class="text-toolbar"><span>情绪与停顿由模型自动处理</span><span><span class="mono" id="home-demo-count">0 / 1000</span> · <button class="link-btn" id="home-demo-clear" type="button">清空</button></span></div>
               </div>
               <div class="home-demo-side">
@@ -57,12 +57,12 @@
                 </label>
                 <label class="home-config-card" for="home-demo-voice">
                   <span class="home-config-head"><span>推荐音色</span><span class="api-tag">Voice</span></span>
-                  <span class="home-select-wrap"><select class="select" id="home-demo-voice"><option value="female-kefu-xiaomei">客服小美</option><option value="v-female-R2s4N9qJ">温柔姐姐</option><option value="v-male-W1tH9jVc">自然男声</option></select></span>
+                  <span class="home-select-wrap"><select class="select" id="home-demo-voice"><option value="v-female-A7c9QmP2">温柔女老师</option><option value="female-kefu-xiaomei" selected>客服小美</option><option value="v-male-D6p3KxN8">深沉男评析</option><option value="v-female-p9Xy7Q1L">清晰女旁白</option></select></span>
                 </label>
               </div>
             </div>
             <div class="action-row">
-              <a class="primary-button" id="home-try-tts" href="tts.html">带入体验台 · 消耗 100 点</a>
+              <a class="primary-button" id="home-try-tts" href="tts.html">带入体验台</a>
               <a class="secondary-button" href="voices.html">先浏览音色</a>
             </div>
           </div>

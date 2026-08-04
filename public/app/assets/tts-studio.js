@@ -29,6 +29,30 @@
     ['fearful', 'fearful — 恐惧'], ['disgusted', 'disgusted — 厌恶'], ['surprised', 'surprised — 惊讶'],
     ['calm', 'calm — 平静'], ['fluent', 'fluent — 流畅'], ['whisper', 'whisper — 低语']
   ];
+  const SCENE_PRESETS = {
+    education: {
+      voice: 'v-female-A7c9QmP2',
+      zh: `同学们好，欢迎来到今天的物理课堂。今天我们要学习的内容是"牛顿第三定律"——也就是作用力与反作用力的关系。在我们日常生活中，这个定律无处不在。比如，当你站在地面上，你的脚向下压地面，地面同时给你一个向上的支撑力，这两个力大小相等、方向相反。再比如，火箭发射时，向下喷射的高温气体给火箭一个强大的向上推力。大家注意，作用力和反作用力一定作用在两个不同的物体上，而且它们是同时产生、同时消失的。接下来，请翻开课本第四十二页，我们一起来看几道经典例题，巩固一下今天的知识。`,
+      en: `Hello everyone, welcome to today's physics class. Today we'll be exploring Newton's Third Law of Motion — the principle of action and reaction. This law is at work all around us in daily life. For example, when you stand on the ground, your feet push down on the surface, and the ground pushes back up with an equal and opposite force. Another great example is a rocket launch: the hot gases expelled downward generate a powerful upward thrust. Remember, action and reaction forces always act on two different objects, and they appear and disappear simultaneously. Now, please turn to page forty-two in your textbook, and let's work through some classic problems together to reinforce what we've learned today.`
+    },
+    'customer-service': {
+      voice: 'female-kefu-xiaomei',
+      zh: `您好，感谢您致电客户服务中心，我是您的智能语音助手。请问有什么可以帮助您的？如果您需要查询订单状态，请按一；如果您需要办理退换货服务，请按二；如果您需要技术支持或故障报修，请按三；如需转接人工客服，请按零。在等待过程中，我想提醒您，我们最新推出的会员积分兑换活动已经上线，消费满一百积分即可兑换精美好礼。您也可以通过我们的官方小程序随时查看物流进度、修改收货地址或申请电子发票。感谢您的耐心等待，我们将竭诚为您服务。`,
+      en: `Hello and thank you for calling Customer Service Center. I'm your virtual assistant. How may I help you today? For order status inquiries, please press one. For returns and exchanges, press two. For technical support or to report a malfunction, press three. To speak with a live agent, please press zero. While you wait, I'd like to let you know that our new loyalty rewards program is now live — redeem your points for exclusive gifts with just one hundred points. You can also track your delivery, update your shipping address, or request an electronic invoice anytime through our official app. Thank you for your patience, and we look forward to assisting you.`
+    },
+    game: {
+      voice: 'v-male-D6p3KxN8',
+      zh: `你竟能走到这里……百年了，云隐峰的石阶早已碎了大半，能踏完最后一级的人，寥寥无几。看你周身灵气尚浅，却有一股不肯回头的倔劲儿，倒让我想起从前那个人。我叫苏长渊。这名字，江湖上怕是早没人记得了。当年天玄宗八百弟子，我排剑榜第一，一柄「霜落」横扫六合，自以为天下无敌。直到那场浩劫降临，妖潮涌入中原——我的剑斩了三天三夜，最终也没能护住身后的人。从那以后，我把「霜落」插在这崖顶，再没拔出来过。你若想取这柄剑，我不拦你。但我得提醒你一句——剑无对错，持剑之人才分善恶。想清楚你为何而战，再去握它。否则，这柄剑会比妖魔更先吞噬你。
+
+去吧，崖顶风大，别让心也跟着乱了。`,
+      en: `Another visitor... You've walked a long way through rubble and ash to reach my door. See this hammer? It's been with me for forty years — it's struck more steel than you've seen roads. Back in the day, the Royal Knight Order — now those were men of iron and fire — every blade they carried was quenched in this very forge. I remember the last night I lit the furnace. The sky beyond the walls was burning red, and I was mending Captain Alven's broken sword. He told me, "One last edge, old Morgen. This will be my final battle." ...He never came back for that blade. And after that? Well, you see what's left of this city now. But I suppose you didn't come here to listen to an old man's stories. Place your weapon on the anvil and let me take a look — these hands may be weathered, but they haven't forgotten the feel of fire and steel.`
+    },
+    audiobook: {
+      voice: 'v-female-p9Xy7Q1L',
+      zh: `那年深秋，林小晚独自走在回家的路上。梧桐叶在晚风中旋转着落下，铺满了整条青石小巷。远处传来若有若无的桂花香气，混合着老街坊炖煮晚饭的烟火气息。她不自觉地放慢了脚步，目光落在巷口那盏昏黄的路灯上——那是外婆每晚都会亮起的灯。然而今天，老屋的窗户暗着，门前的藤椅空空荡荡。她的心猛地一沉，脚步变得沉重起来。推开那扇褪色的木门，屋内一切如旧，桌上的茶杯还冒着微微的热气。"外婆？"她轻轻喊了一声，声音在空旷的老屋里回荡，久久没有回应。`,
+      en: `That late autumn evening, Jane walked home alone. Plane tree leaves spiraled down in the evening breeze, carpeting the old cobblestone alley in gold and amber. A faint fragrance of osmanthus drifted from somewhere far away, mingling with the warm, smoky aroma of neighbors' suppers simmering on stoves. She slowed her pace without thinking, her gaze settling on the dim yellow streetlamp at the alley's entrance — the one her grandmother always kept lit each night. But tonight, the old house windows were dark, and the rattan chair by the door sat empty. Her heart sank, and her footsteps grew heavy. She pushed open the faded wooden door. Inside, everything remained as it always had — the teacup on the table still trailed a wisp of steam. "Grandma?" she called softly. Her voice echoed through the hollow old house, met only with silence.`
+    }
+  };
 
   const translateOptions = (options) => options.map(([value, label]) => [value, label.includes(' — ')
     ? `${label.split(' — ')[0]} — ${t(label.split(' — ').slice(1).join(' — '))}`
@@ -43,6 +67,7 @@
     languageMap: {},
     languageMaps: {},
     selectedVoice: '',
+    activeScene: '',
     mode: 'tts',
     ttsAudioBlob: null,
     ttsDownloadBlob: null,
@@ -88,6 +113,21 @@
   function orbStyle(voiceId) {
     const hue = hashHue(voiceId) % 360;
     return `--c1:hsl(${hue} 76% 75%);--c2:hsl(${(hue + 65) % 360} 62% 42%)`;
+  }
+
+  function currentSceneLocale() {
+    return i18n?.getLocale?.() === 'en' ? 'en' : 'zh';
+  }
+
+  function sceneText(sceneId) {
+    const scene = SCENE_PRESETS[sceneId];
+    return scene?.[currentSceneLocale()] || scene?.zh || '';
+  }
+
+  function voiceDisplayName(voice) {
+    return i18n?.getLocale?.() === 'en'
+      ? (voice?.nameEn || voice?.name || t('未命名音色'))
+      : (voice?.name || voice?.nameEn || t('未命名音色'));
   }
 
   function getSession() {
@@ -400,7 +440,7 @@
           </button>
         </span>
       </div>
-      <div class="voice-name">${escapeHtml(voice.name || voice.nameEn || t('未命名音色'))}</div>
+      <div class="voice-name">${escapeHtml(voiceDisplayName(voice))}</div>
       <div class="voice-badges"><span class="voice-badge">${escapeHtml(voice.language || 'auto')}</span>${isExtended ? '<span class="voice-badge ex">ex</span>' : ''}</div>
       <div class="voice-meta">${escapeHtml(langs)}<br>${escapeHtml(voice.id)}</div>
       ${library ? `<div class="voice-desc">${escapeHtml(voice.description || voice.scenarios || t('预设音色'))}</div>` : ''}
@@ -522,6 +562,7 @@
       updateTryLink();
     }));
     const text = $('home-demo-text');
+    const selectedHomeScene = () => qsa('[data-home-example].active')[0]?.dataset.scene || '';
     const updateHomeCount = () => { if ($('home-demo-count')) $('home-demo-count').textContent = `${text.value.length} / 1000`; };
     text?.addEventListener('input', updateHomeCount);
     $('home-demo-clear')?.addEventListener('click', () => {
@@ -534,28 +575,38 @@
     qsa('[data-home-example]').forEach((button) => button.addEventListener('click', () => {
       qsa('[data-home-example]').forEach((item) => item.classList.remove('active'));
       button.classList.add('active');
-      text.value = button.dataset.text || '';
+      const scene = SCENE_PRESETS[button.dataset.scene];
+      text.value = sceneText(button.dataset.scene);
       text.dataset.i18nUserEdited = '0';
-      const voiceByScene = {
-        '课堂教育': 'v-female-Z3x9LmQ2',
-        '客服场景': 'female-kefu-xiaomei',
-        '游戏': 'v-male-Bk7vD3xP',
-        '有声书': 'v-male-D1a3XyN1'
-      };
-      if ($('home-demo-voice')) $('home-demo-voice').value = voiceByScene[button.dataset.homeExample] || '';
+      if ($('home-demo-voice')) $('home-demo-voice').value = scene?.voice || '';
       updateHomeCount();
+      updateTryLink();
     }));
     const updateTryLink = () => {
       const params = new URLSearchParams({
         text: text?.value || '',
         voice: $('home-demo-voice')?.value || '',
         model: getHomeModel(),
-        language: $('home-demo-language')?.value || ''
+        language: $('home-demo-language')?.value || '',
+        scene: selectedHomeScene()
       });
       $('home-try-tts').href = `tts.html?${params.toString()}`;
     };
     ['home-demo-text', 'home-demo-language', 'home-demo-voice'].forEach((id) => $(id)?.addEventListener('input', updateTryLink));
     $('home-try-tts')?.addEventListener('pointerdown', updateTryLink);
+    window.addEventListener('localeChanged', () => {
+      const sceneId = selectedHomeScene();
+      if (!sceneId || text.dataset.i18nUserEdited === '1') return;
+      text.value = sceneText(sceneId);
+      updateHomeCount();
+      updateTryLink();
+    });
+    const initialScene = selectedHomeScene();
+    if (initialScene) {
+      text.value = sceneText(initialScene);
+      text.dataset.i18nUserEdited = '0';
+      if ($('home-demo-voice')) $('home-demo-voice').value = SCENE_PRESETS[initialScene]?.voice || '';
+    }
     updateHomeCount();
     updateTryLink();
   }
@@ -570,7 +621,7 @@
       const voiceModel = effectiveVoiceModel(voice);
       return voiceMatches(voice, query, category) && (!model || voiceModel === model);
     });
-    container.innerHTML = list.slice(0, 36).map((voice) => voiceCardHtml(voice, voice.id === state.selectedVoice)).join('') || `<div class="voice-empty">${t('没有匹配的音色')}</div>`;
+    container.innerHTML = list.map((voice) => voiceCardHtml(voice, voice.id === state.selectedVoice)).join('') || `<div class="voice-empty">${t('没有匹配的音色')}</div>`;
     const summary = $('studio-model-summary');
     if (summary) summary.textContent = i18n?.getLocale?.() === 'en'
       ? `Current model: ${model || t('自动')} · ${list.length} available voices`
@@ -597,6 +648,42 @@
       updateCharCount();
     }
     renderStudioVoices();
+  }
+
+  function scrollToStudioVoice(voiceId, behavior = 'smooth') {
+    const container = $('studio-voice-list');
+    const escapedVoiceId = window.CSS?.escape
+      ? window.CSS.escape(voiceId)
+      : String(voiceId).replace(/["\\]/g, '\\$&');
+    const card = container?.querySelector(`[data-voice-id="${escapedVoiceId}"]`);
+    if (!container || !card) return;
+    const targetLeft = card.offsetLeft - Math.max(0, (container.clientWidth - card.offsetWidth) / 2);
+    container.scrollTo({ left: Math.max(0, targetLeft), behavior });
+  }
+
+  function setActiveStudioScene(sceneId) {
+    qsa('[data-example]').forEach((button) => button.classList.toggle('active', button.dataset.scene === sceneId));
+  }
+
+  function applyStudioScene(sceneId, options = {}) {
+    const scene = SCENE_PRESETS[sceneId];
+    if (!scene) return false;
+    const text = $('studio-text');
+    state.activeScene = sceneId;
+    setActiveStudioScene(sceneId);
+    text.value = sceneText(sceneId);
+    text.dataset.userEdited = '0';
+    text.dataset.i18nUserEdited = '0';
+    updateCharCount();
+
+    const voice = state.voiceById.get(scene.voice);
+    if (!voice) return false;
+    const recommendedModel = effectiveVoiceModel(voice);
+    qsa('#studio-model .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.model === recommendedModel));
+    updateModelControls();
+    chooseStudioVoice(scene.voice, false);
+    requestAnimationFrame(() => scrollToStudioVoice(scene.voice, options.behavior || 'smooth'));
+    return true;
   }
 
   function updateCharCount() {
@@ -803,6 +890,13 @@
   }
 
   function initTtsPage() {
+    const defaultScene = qsa('[data-example].active')[0]?.dataset.scene || '';
+    if (defaultScene) {
+      state.activeScene = defaultScene;
+      $('studio-text').value = sceneText(defaultScene);
+      $('studio-text').dataset.userEdited = '0';
+      $('studio-text').dataset.i18nUserEdited = '0';
+    }
     setSelectOptions($('studio-language'), languageOptionsTurbo());
     setSelectOptions($('studio-emotion'), emotionOptions());
     qsa('.ctab').forEach((tab) => tab.addEventListener('click', () => setMode(tab.dataset.mode)));
@@ -817,18 +911,19 @@
       updateStudioBitrateField();
     }));
     qsa('[data-example]').forEach((button) => button.addEventListener('click', () => {
-      $('studio-text').value = button.dataset.example; $('studio-text').dataset.userEdited = '1'; updateCharCount();
-      if (button.dataset.voice && state.voiceById.has(button.dataset.voice)) {
-        const recommendedModel = effectiveVoiceModel(state.voiceById.get(button.dataset.voice));
-        qsa('#studio-model .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.model === recommendedModel));
-        updateModelControls();
-        chooseStudioVoice(button.dataset.voice, false);
-      }
+      applyStudioScene(button.dataset.scene, { behavior: 'smooth' });
     }));
-    $('studio-text').addEventListener('input', () => { $('studio-text').dataset.userEdited = '1'; updateCharCount(); });
+    $('studio-text').addEventListener('input', () => {
+      $('studio-text').dataset.userEdited = '1';
+      state.activeScene = '';
+      setActiveStudioScene('');
+      updateCharCount();
+    });
     $('studio-clear').addEventListener('click', () => {
       $('studio-text').value = '';
       $('studio-text').dataset.userEdited = '1';
+      state.activeScene = '';
+      setActiveStudioScene('');
       $('studio-text').focus();
       updateCharCount();
     });
@@ -872,16 +967,30 @@
     bindVoiceCards($('studio-voice-list'), (voiceId) => chooseStudioVoice(voiceId));
     loadVoices(true).then(() => {
       const params = new URLSearchParams(location.search);
-      if (params.get('voice') && state.voiceById.has(params.get('voice'))) state.selectedVoice = params.get('voice');
-      if (params.get('model')) {
+      const sceneId = params.get('scene');
+      if (sceneId && SCENE_PRESETS[sceneId]) {
+        applyStudioScene(sceneId, { behavior: 'auto' });
+      } else if (params.get('voice') && state.voiceById.has(params.get('voice'))) {
+        state.selectedVoice = params.get('voice');
+      }
+      if ((!sceneId || !SCENE_PRESETS[sceneId]) && params.get('model')) {
         qsa('#studio-model .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.model === params.get('model')));
       }
-      updateModelControls();
+      if (!sceneId || !SCENE_PRESETS[sceneId]) updateModelControls();
       if (params.get('language') && availableLanguageOptions(currentStudioModel()).some(([value]) => value === params.get('language'))) {
         $('studio-language').value = params.get('language');
       }
       chooseStudioVoice(state.selectedVoice, false);
+      requestAnimationFrame(() => scrollToStudioVoice(state.selectedVoice, 'auto'));
     }).catch((error) => showMessage('studio-message', 'error', t(`音色加载失败：${error.message}`)));
+    window.addEventListener('localeChanged', () => {
+      if (state.activeScene && $('studio-text').dataset.userEdited !== '1') {
+        $('studio-text').value = sceneText(state.activeScene);
+        updateCharCount();
+      }
+      renderStudioVoices();
+      requestAnimationFrame(() => scrollToStudioVoice(state.selectedVoice, 'auto'));
+    });
     updateCharCount(); updateModelControls(); updateStudioBitrateField(); setMode(new URLSearchParams(location.search).get('mode') === 'streaming' ? 'streaming' : 'tts');
   }
 
@@ -1449,8 +1558,9 @@
   function applyUrlState() {
     const params = new URLSearchParams(location.search);
     if (PAGE === 'tts') {
-      if (params.get('text')) { $('studio-text').value = params.get('text'); $('studio-text').dataset.userEdited = '1'; }
-      if (params.get('voice')) { $('studio-custom-voice').value = params.get('voice'); state.selectedVoice = params.get('voice'); }
+      const hasScene = Boolean(params.get('scene') && SCENE_PRESETS[params.get('scene')]);
+      if (!hasScene && params.get('text')) { $('studio-text').value = params.get('text'); $('studio-text').dataset.userEdited = '1'; }
+      if (!hasScene && params.get('voice')) { $('studio-custom-voice').value = params.get('voice'); state.selectedVoice = params.get('voice'); }
       updateCharCount();
     }
     if (PAGE === 'clone') {
