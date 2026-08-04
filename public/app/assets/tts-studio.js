@@ -371,10 +371,10 @@
     return String(voice.language || '').toLowerCase() === category;
   }
 
-  function languageFilterHtml(model = 'all', expanded = false, activeCategory = 'all') {
+  function languageFilterHtml(model = 'all', expanded = false, activeCategory = 'all', modelMatcher = voiceSupportsModel) {
     const counts = new Map();
     state.voices.forEach((voice) => {
-      if (!voiceSupportsModel(voice, model)) return;
+      if (!modelMatcher(voice, model)) return;
       counts.set(voice.language, (counts.get(voice.language) || 0) + 1);
     });
     const items = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
@@ -422,6 +422,10 @@
       ? voice.models
       : [effectiveVoiceModel(voice)];
     return models.includes(model);
+  }
+
+  function libraryVoiceSupportsModel(voice, model) {
+    return !model || model === 'all' || effectiveVoiceModel(voice) === model;
   }
 
   function currentStudioModel() {
@@ -551,7 +555,12 @@
         loadClonedVoices();
       }
       if (PAGE === 'voices') {
-        $('library-filters').innerHTML = languageFilterHtml(state.libraryModel, state.languageFiltersExpanded.library, state.libraryCategory);
+        $('library-filters').innerHTML = languageFilterHtml(
+          state.libraryModel,
+          state.languageFiltersExpanded.library,
+          state.libraryCategory,
+          libraryVoiceSupportsModel
+        );
         renderLibrary();
       }
       if (PAGE === 'history') renderHistoryPage();
@@ -1197,7 +1206,7 @@
     const grid = $('library-grid'); if (!grid) return;
     const query = $('library-search').value; const category = state.libraryCategory;
     const list = state.voices.filter((voice) => voiceMatches(voice, query, category)
-      && voiceSupportsModel(voice, state.libraryModel));
+      && libraryVoiceSupportsModel(voice, state.libraryModel));
     $('library-count').textContent = i18n?.getLocale?.() === 'en' ? `${list.length} voices` : `${list.length} 个音色`;
     grid.innerHTML = list.map((voice) => voiceCardHtml(voice, false, true)).join('') || `<div class="empty-state">${t('没有匹配的音色')}</div>`;
   }
@@ -1208,7 +1217,12 @@
       state.libraryModel = $('library-model').value;
       state.libraryCategory = 'all';
       state.languageFiltersExpanded.library = false;
-      $('library-filters').innerHTML = languageFilterHtml(state.libraryModel, false, 'all');
+      $('library-filters').innerHTML = languageFilterHtml(
+        state.libraryModel,
+        false,
+        'all',
+        libraryVoiceSupportsModel
+      );
       renderLibrary();
     });
     bindFilterChips($('library-filters'), (category) => {
@@ -1216,7 +1230,12 @@
       renderLibrary();
     }, () => {
       state.languageFiltersExpanded.library = !state.languageFiltersExpanded.library;
-      $('library-filters').innerHTML = languageFilterHtml(state.libraryModel, state.languageFiltersExpanded.library, state.libraryCategory);
+      $('library-filters').innerHTML = languageFilterHtml(
+        state.libraryModel,
+        state.languageFiltersExpanded.library,
+        state.libraryCategory,
+        libraryVoiceSupportsModel
+      );
     });
     bindVoiceCards($('library-grid'), (voiceId) => {
       const voice = state.voiceById.get(voiceId);
@@ -1224,7 +1243,7 @@
       location.href = `tts.html?voice=${encodeURIComponent(voiceId)}&model=${encodeURIComponent(model)}`;
     });
     loadVoices(true).then(() => {
-      $('library-filters').innerHTML = languageFilterHtml('all', false, 'all');
+      $('library-filters').innerHTML = languageFilterHtml('all', false, 'all', libraryVoiceSupportsModel);
       renderLibrary();
     }).catch((error) => { $('library-grid').innerHTML = `<div class="empty-state">${escapeHtml(t(`音色加载失败：${error.message}`))}</div>`; });
   }
