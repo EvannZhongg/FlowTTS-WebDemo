@@ -34,6 +34,7 @@
         // Supabase 公开配置由后端 /api/config 加载
         SUPABASE_URL: '',
         SUPABASE_PUBLISHABLE_KEY: '',
+        AUTH_REDIRECT_URL: '',
 
         // 配额设置
         QUOTA: {
@@ -52,6 +53,7 @@
     const i18n = window.TTSI18n;
     const t = (text, variables) => i18n?.t(text, variables) || text;
     const QUOTA_SNAPSHOT_KEY = 'flowtts-quota-snapshot';
+    const AUTH_UI_SNAPSHOT_KEY = 'flowtts-auth-ui-snapshot';
     const QUOTA_CACHE_FRESH_MS = 5 * 60 * 1000;
 
     // ==================== 全局状态 ====================
@@ -60,7 +62,8 @@
         supabase: null,
         session: null,
         user: null,
-        quota: null  // 配额信息 { daily, used, remaining }
+        quota: null,  // 配额信息 { daily, used, remaining }
+        resolved: false
     };
 
     // ==================== 工具函数 ====================
@@ -93,8 +96,7 @@
     
     async function loadPublicConfig() {
         const response = await fetch(`${APP_CONFIG.API_BASE}/api/config`, {
-            headers: { Accept: 'application/json' },
-            cache: 'no-cache'
+            headers: { Accept: 'application/json' }
         });
         if (!response.ok) {
             const raw = await response.text();
@@ -108,6 +110,7 @@
         }
         APP_CONFIG.SUPABASE_URL = config.supabaseUrl;
         APP_CONFIG.SUPABASE_PUBLISHABLE_KEY = config.supabasePublishableKey;
+        APP_CONFIG.AUTH_REDIRECT_URL = config.authRedirectUrl || '';
     }
 
     function initSupabase() {
@@ -216,6 +219,24 @@
                 font-size: 13px;
                 color: var(--supabase-text-muted);
                 line-height: 1.6;
+            }
+            .supabase-auth-loading {
+                min-height: 190px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 14px;
+                color: var(--supabase-text-muted);
+                text-align: center;
+            }
+            .supabase-auth-loading .spinner {
+                width: 24px;
+                height: 24px;
+            }
+            .supabase-auth-loading p {
+                margin: 0;
+                font-size: 13px;
             }
             .supabase-modal-tag {
                 display: inline-flex;
@@ -818,7 +839,11 @@
                     </div>
                 </div>
                 <div class="supabase-modal-body">
-                    <div id="email-form" class="supabase-form-step">
+                    <div id="auth-loading-form" class="supabase-form-step supabase-auth-loading">
+                        <div class="spinner"></div>
+                        <p>正在恢复登录状态...</p>
+                    </div>
+                    <div id="email-form" class="supabase-form-step" style="display:none;">
                         <div class="supabase-input-group">
                             <label for="supabase-email">邮箱地址</label>
                             <input type="email" id="supabase-email" placeholder="name@example.com" autocomplete="email" />
@@ -1075,7 +1100,8 @@
                 email,
                 options: {
                     shouldCreateUser: true,
-                    emailRedirectTo: `${window.location.origin}/app/index.html`,
+                    emailRedirectTo: APP_CONFIG.AUTH_REDIRECT_URL ||
+                        new URL('/app/index.html', window.location.origin).toString(),
                     data: {
                         company: company,
                         full_name: company,  // 同步到 Display name
@@ -1165,6 +1191,7 @@
             authState.user = null;
             authState.quota = null;
             localStorage.removeItem(QUOTA_SNAPSHOT_KEY);
+            localStorage.removeItem(AUTH_UI_SNAPSHOT_KEY);
 
             updateLoginStatus(null);
             toggleModal();
@@ -1474,20 +1501,42 @@
 
     // ==================== 状态管理 ====================
 
+    function writeAuthUiSnapshot(user) {
+        try {
+            if (!user?.email) {
+                localStorage.removeItem(AUTH_UI_SNAPSHOT_KEY);
+                return;
+            }
+            localStorage.setItem(AUTH_UI_SNAPSHOT_KEY, JSON.stringify({
+                id: user.id || '',
+                email: user.email,
+                company: user.user_metadata?.company || '',
+                timestamp: Date.now()
+            }));
+        } catch (_) {}
+    }
+
     function updateLoginStatus(user) {
         const btn = document.getElementById('studio-account-button');
         const avatar = document.getElementById('studio-account-avatar');
         const accountLabel = document.getElementById('studio-account-label');
+        const authLoadingForm = document.getElementById('auth-loading-form');
         const loginForm = document.getElementById('email-form');
         const logoutForm = document.getElementById('logout-form');
 
+        btn?.classList.remove('auth-pending', 'auth-cached');
+        btn?.setAttribute('aria-busy', 'false');
+        if (authLoadingForm) authLoadingForm.style.display = 'none';
+
         if (user) {
+            writeAuthUiSnapshot(user);
             btn?.classList.add('logged-in');
             if (avatar) avatar.textContent = (user.email?.[0] || 'U').toUpperCase();
             if (accountLabel) accountLabel.textContent = user.email || t('账户');
             if (btn) {
                 btn.title = i18n?.getLocale?.() === 'en' ? `Signed in: ${user.email}` : `已登录: ${user.email}`;
                 btn.setAttribute('aria-label', t('查看账户状态'));
+                btn.dataset.i18nDynamicAttrs = 'title,aria-label';
             }
             if (loginForm) loginForm.style.display = 'none';
             if (logoutForm) logoutForm.style.display = 'flex';
@@ -1530,12 +1579,14 @@
                 detail: { isLoggedIn: true, user }
             }));
         } else {
+            writeAuthUiSnapshot(null);
             btn?.classList.remove('logged-in');
             if (avatar) avatar.textContent = '👤';
             if (accountLabel) accountLabel.textContent = `${t('登录')} / ${t('注册')}`;
             if (btn) {
                 btn.title = t('邮箱登录');
                 btn.setAttribute('aria-label', t('打开登录窗口'));
+                btn.dataset.i18nDynamicAttrs = 'title,aria-label';
             }
             if (loginForm) loginForm.style.display = 'block';
             if (logoutForm) logoutForm.style.display = 'none';
@@ -1634,20 +1685,25 @@
 
     async function init() {
         log('正在初始化...');
+        injectLoginUI();
 
         try {
             await loadPublicConfig();
         } catch (error) {
             log('加载 Supabase 公开配置失败: ' + error.message, 'error');
+            authState.resolved = true;
+            updateLoginStatus(null);
+            showStatus('登录服务暂时不可用，请刷新页面后重试。', 'error');
             return;
         }
 
         if (!initSupabase()) {
             log('Supabase 初始化失败', 'error');
+            authState.resolved = true;
+            updateLoginStatus(null);
+            showStatus('登录服务初始化失败，请刷新页面后重试。', 'error');
             return;
         }
-
-        injectLoginUI();
 
         // 监听 Auth 状态变化
         authState.supabase.auth.onAuthStateChange(async (event, session) => {
@@ -1681,26 +1737,36 @@
         });
 
         // 检查当前登录状态
-        const { data: { session } } = await authState.supabase.auth.getSession();
-        if (session?.user && !isEmailUser(session.user)) {
-            await authState.supabase.auth.signOut({ scope: 'local' });
+        try {
+            const { data: { session } } = await authState.supabase.auth.getSession();
+            if (session?.user && !isEmailUser(session.user)) {
+                await authState.supabase.auth.signOut({ scope: 'local' });
+                authState.session = null;
+                authState.user = null;
+                updateLoginStatus(null);
+            } else if (session?.user) {
+                authState.session = session;
+                authState.user = session.user;
+                updateLoginStatus(session.user);
+
+                // 获取用户配额信息
+                fetchUserQuota();
+            } else {
+                authState.session = null;
+                authState.user = null;
+                updateLoginStatus(null);
+            }
+        } catch (error) {
+            log('恢复登录状态失败: ' + error.message, 'error');
             authState.session = null;
             authState.user = null;
             updateLoginStatus(null);
-        } else if (session?.user) {
-            authState.session = session;
-            authState.user = session.user;
-            updateLoginStatus(session.user);
-
-            // 获取用户配额信息
-            fetchUserQuota();
-
-            // 触发自定义事件，通知页面用户已登录
-            window.dispatchEvent(new CustomEvent('authReady', {
-                detail: { user: session.user }
-            }));
         }
 
+        authState.resolved = true;
+        window.dispatchEvent(new CustomEvent('authReady', {
+            detail: { user: authState.user }
+        }));
         log('初始化完成');
     }
 

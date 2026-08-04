@@ -455,8 +455,14 @@
       localStorage.setItem('theme', document.body.classList.contains('dark') ? 'dark' : 'light');
     });
     window.addEventListener('quotaUpdated', (event) => updateQuota(event.detail));
-    window.addEventListener('authReady', () => {
-      if (PAGE === 'history') loadHistoryPage();
+    window.addEventListener('authReady', (event) => {
+      if (PAGE === 'history') {
+        if (event.detail?.user) loadHistoryPage();
+        else {
+          resetHistoryState();
+          renderHistoryPage();
+        }
+      }
     });
     window.addEventListener('authStateChanged', (event) => {
       if (PAGE !== 'history') return;
@@ -1051,6 +1057,10 @@
     const list = $('cloned-voice-list');
     if (!list) return;
     if (!getSession()?.access_token) {
+      if (!window.SupabaseAuthInject?.getState?.()?.resolved) {
+        list.innerHTML = `<div class="empty-state">${t('正在恢复登录状态...')}</div>`;
+        return;
+      }
       list.innerHTML = `<div class="empty-state">${t('登录后可查看已保存音色')}</div>`;
       return;
     }
@@ -1114,7 +1124,8 @@
       if (button.classList.contains('copy-clone')) copyText(id, button);
       if (button.classList.contains('delete-clone')) deleteClone(id);
     });
-    window.addEventListener('authReady', loadClonedVoices); loadClonedVoices();
+    window.addEventListener('authReady', loadClonedVoices);
+    loadClonedVoices();
   }
 
   function renderLibrary() {
@@ -1298,6 +1309,11 @@
     const session = getSession();
     const userId = session?.user?.id;
     if (!session?.access_token || !userId) {
+      if (!window.SupabaseAuthInject?.getState?.()?.resolved) {
+        list.innerHTML = `<div class="empty-state">${t('正在恢复登录状态...')}</div>`;
+        if ($('history-clear')) $('history-clear').disabled = true;
+        return;
+      }
       resetHistoryState();
       renderHistoryPage();
       return;
