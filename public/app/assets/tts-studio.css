@@ -123,6 +123,7 @@ body.side-collapsed .side-toggle svg { transform: rotate(180deg); }
 .model-seg, .format-seg, .sub-tabs { width: max-content; max-width: 100%; padding: 3px; gap: 3px; border-radius: 9px; background: #f0eee8; }
 .seg-item, .sub-tab { position: relative; border: 0; border-radius: 7px; background: transparent; }
 .seg-item.on, .sub-tab.active { color: var(--blue); background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.07); font-weight: 650; }
+.format-seg .seg-item:disabled { cursor: not-allowed; color: var(--ink-4); opacity: .45; }
 .new-badge { position: absolute; top: -8px; right: -5px; padding: 1px 5px; color: #fff; background: var(--blue); border-radius: 999px; font-size: 9px; }
 
 .textarea-wrap { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fbfaf7; transition: .15s; }

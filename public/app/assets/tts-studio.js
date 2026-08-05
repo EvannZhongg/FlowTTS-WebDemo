@@ -692,7 +692,6 @@
   function getStudioRequest() {
     const customVoice = $('studio-custom-voice').value.trim();
     const model = currentStudioModel();
-    const format = qsa('#studio-format .seg-item').find((button) => button.classList.contains('on'))?.dataset.format || 'mp3';
     return {
       text: $('studio-text').value.trim(),
       voiceId: customVoice || state.selectedVoice,
@@ -702,15 +701,14 @@
       speed: Number($('studio-speed').value),
       volume: Number($('studio-volume').value),
       pitch: Number($('studio-pitch').value),
-      format,
-      sampleRate: Number($('studio-sample-rate').value),
-      ...(format === 'mp3' ? { bitrate: Number($('studio-bitrate').value) } : {})
+      format: 'mp3',
+      sampleRate: 24000,
+      bitrate: 64
     };
   }
 
   function updateStudioBitrateField() {
-    const format = qsa('#studio-format .seg-item').find((button) => button.classList.contains('on'))?.dataset.format || 'mp3';
-    $('studio-bitrate-field')?.classList.toggle('hidden', format !== 'mp3');
+    $('studio-bitrate-field')?.classList.remove('hidden');
   }
 
   function showStudioResult(blob, processingTime, size, firstChunk = null, options = {}) {
@@ -898,8 +896,8 @@
       $('studio-language').value = '';
       $('studio-voice-search').value = '';
       qsa('#studio-format .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.format === 'mp3'));
-      $('studio-sample-rate').value = '24000';
-      $('studio-bitrate').value = '128';
+      $('studio-sample-rate').value = '24000 Hz';
+      $('studio-bitrate').value = '64 kbps';
       updateStudioBitrateField();
       clearMessage('studio-message');
       $('studio-player').classList.remove('active');
