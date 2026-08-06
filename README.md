@@ -24,7 +24,6 @@ node server.js
 浏览器访问：`http://localhost:9000/app/index.html`
 
 也可以从仓库根目录启动：
-
 ```bash
 npm install
 npm run dev
