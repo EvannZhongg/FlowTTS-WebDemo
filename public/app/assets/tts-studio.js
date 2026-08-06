@@ -207,7 +207,9 @@
     const badge = $('studio-quota-badge');
     if (!badge) return;
     $('studio-quota-remaining').textContent = formatCompactQuota(remaining);
-    badge.title = `剩余 ${remaining.toLocaleString()} / ${daily.toLocaleString()} 点体验配额`;
+    badge.title = i18n?.getLocale?.() === 'en'
+      ? `${remaining.toLocaleString()} / ${daily.toLocaleString()} credits remaining`
+      : `剩余 ${remaining.toLocaleString()} / ${daily.toLocaleString()} 点体验配额`;
     badge.style.display = 'inline-flex';
     badge.classList.toggle('warning', remaining >= 500 && remaining < 1500);
     badge.classList.toggle('danger', remaining < 500);
@@ -432,9 +434,8 @@
     return qsa('#studio-model .seg-item').find((button) => button.classList.contains('on'))?.dataset.model || '';
   }
 
-  function voiceCardHtml(voice, selected = false, library = false) {
+  function voiceCardHtml(voice, selected = false) {
     const langs = Array.isArray(voice.supportedLanguages) ? voice.supportedLanguages.join(' · ') : (voice.language || 'auto');
-    const isExtended = effectiveVoiceModel(voice) === 'flow_01_ex';
     return `<article class="voice-card ${selected ? 'selected' : ''}" data-voice-id="${escapeHtml(voice.id)}" tabindex="0">
       <div class="voice-top">
         <span class="voice-orb" style="${orbStyle(voice.id)}"></span>
@@ -453,12 +454,10 @@
         </span>
       </div>
       <div class="voice-name">${escapeHtml(voiceDisplayName(voice))}</div>
-      <div class="voice-badges"><span class="voice-badge">${escapeHtml(voice.language || 'auto')}</span>${isExtended ? '<span class="voice-badge ex">ex</span>' : ''}</div>
       <div class="voice-meta">
         <span class="voice-langs">${escapeHtml(langs)}</span>
         <span class="voice-id">${escapeHtml(voice.id)}</span>
       </div>
-      ${library ? `<div class="voice-desc">${escapeHtml(voice.description || voice.scenarios || t('预设音色'))}</div>` : ''}
     </article>`;
   }
 
@@ -896,8 +895,8 @@
       $('studio-language').value = '';
       $('studio-voice-search').value = '';
       qsa('#studio-format .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.format === 'mp3'));
-      $('studio-sample-rate').value = '24000 Hz';
-      $('studio-bitrate').value = '64 kbps';
+      if ($('studio-sample-rate')) $('studio-sample-rate').value = '24000 Hz';
+      if ($('studio-bitrate')) $('studio-bitrate').value = '64 kbps';
       updateStudioBitrateField();
       clearMessage('studio-message');
       $('studio-player').classList.remove('active');
@@ -1206,7 +1205,7 @@
     const list = state.voices.filter((voice) => voiceMatches(voice, query, category)
       && libraryVoiceSupportsModel(voice, state.libraryModel));
     $('library-count').textContent = i18n?.getLocale?.() === 'en' ? `${list.length} voices` : `${list.length} 个音色`;
-    grid.innerHTML = list.map((voice) => voiceCardHtml(voice, false, true)).join('') || `<div class="empty-state">${t('没有匹配的音色')}</div>`;
+    grid.innerHTML = list.map((voice) => voiceCardHtml(voice)).join('') || `<div class="empty-state">${t('没有匹配的音色')}</div>`;
   }
 
   function initVoicesPage() {

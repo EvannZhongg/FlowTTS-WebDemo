@@ -58,10 +58,10 @@ function requireQuota(operation) {
             const { hasQuota, remaining, dailyQuota, usedQuota, subscriptionTier } = await checkQuota(userId, cost);
 
             if (!hasQuota) {
-                logger.warn({ userId, email: req.user.email, remaining, dailyQuota, cost }, 'Insufficient quota');
+                logger.warn({ userId, email: req.user.email, remaining, dailyQuota, cost }, 'Insufficient credits');
                 return res.status(429).json({
                     code: 'quota_exceeded',
-                    message: `Insufficient quota. You have ${remaining} remaining, but this operation requires ${cost}.`
+                    message: `Insufficient credits. You have ${remaining} credits remaining, but this operation requires ${cost} credits.`
                 });
             }
 
@@ -106,7 +106,7 @@ function requireQuota(operation) {
             logger.error({ error: error.message }, 'Quota check failed');
             return res.status(500).json({
                 code: 'internal_error',
-                message: 'Failed to check quota: ' + error.message
+                message: 'Failed to check credits: ' + error.message
             });
         }
     };
@@ -140,10 +140,10 @@ async function checkAndDeductQuota(userId, operation, customCost = null) {
         const { hasQuota, remaining, dailyQuota, usedQuota, subscriptionTier } = await checkQuota(userId, cost);
 
         if (!hasQuota) {
-            logger.warn({ userId, remaining, dailyQuota, cost }, 'Insufficient quota');
+            logger.warn({ userId, remaining, dailyQuota, cost }, 'Insufficient credits');
             return {
                 success: false,
-                error: `Insufficient quota. ${remaining} remaining, ${cost} required.`,
+                error: `Insufficient credits. ${remaining} credits remaining, ${cost} credits required.`,
                 quotaInfo: { daily: dailyQuota, used: usedQuota, remaining, tier: subscriptionTier }
             };
         }

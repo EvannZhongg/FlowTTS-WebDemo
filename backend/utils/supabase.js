@@ -229,7 +229,7 @@ async function updateQuota(userId, amount) {
 
     // Ensure it doesn't exceed daily_quota
     if (newUsedQuota > profile.daily_quota) {
-        throw new Error(`Quota exceeded: ${newUsedQuota}/${profile.daily_quota}`);
+        throw new Error(`Credits exceeded: ${newUsedQuota}/${profile.daily_quota}`);
     }
 
     // Update used_quota
