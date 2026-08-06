@@ -266,8 +266,14 @@
     '查收邮件': 'Check email',
     '完成登录': 'Complete sign-in',
     '邮箱地址': 'Email address',
+    '请输入邮箱地址': 'Enter your email address.',
+    '邮箱格式不正确': 'Enter a valid email address.',
     '公司名称': 'Company',
     '可选': 'Optional',
+    '公司名称说明': 'About company',
+    '公司名称仅在首次注册时保存，已有账户不会被覆盖；登录后可在账户设置中修改。': 'Company is saved only when you first register. Existing accounts are not overwritten, and you can update it later in account settings.',
+    '请输入公司名称': 'Enter company name',
+    '请在当前设备打开邮件中的登录链接。': 'Open the sign-in link from your email on this device.',
     '仅首次注册时保存，登录后可在账户中修改': 'Saved only during first registration. You can update it from your account after signing in.',
     '发送登录链接': 'Send sign-in link',
     '同一邮箱会进入同一账户。公司名称仅在首次注册时保存，已有账户不会因再次填写而被覆盖。': 'The same email always opens the same account. Company is saved only at first registration and is not overwritten by later sign-in attempts.',
@@ -323,6 +329,10 @@
     '账户': 'Account',
     '剩余': 'Remaining',
     '发送中...': 'Sending...',
+    '已退出登录': 'Signed out.',
+    '登录服务暂时不可用，请刷新页面后重试。': 'The sign-in service is temporarily unavailable. Refresh the page and try again.',
+    '登录服务初始化失败，请刷新页面后重试。': 'The sign-in service could not be initialized. Refresh the page and try again.',
+    '当前仅支持邮箱登录，请使用邮箱重新登录。': 'Only email sign-in is currently supported. Please sign in again with your email.',
     '升级到企业版': 'Upgrade to Enterprise',
     '重新订阅': 'Resubscribe',
     '申请续费': 'Request renewal',
@@ -373,6 +383,9 @@
     if ((match = source.match(/^(\d+)天后到期$/))) return `Expires in ${match[1]} days`;
     if ((match = source.match(/^已登录: (.+)$/))) return `Signed in: ${match[1]}`;
     if ((match = source.match(/^公司：(.+)$/))) return `Company: ${match[1]}`;
+    if ((match = source.match(/^登录链接已发送至 (.+)，请前往邮箱点击链接完成登录。$/))) return `A sign-in link was sent to ${match[1]}. Open the email and click the link to complete sign-in.`;
+    if ((match = source.match(/^❌ 发送失败: (.+)$/))) return `❌ Failed to send: ${match[1]}`;
+    if ((match = source.match(/^退出失败: (.+)$/))) return `Sign-out failed: ${match[1]}`;
     if ((match = source.match(/^请求失败（(\d+)）$/))) return `Request failed (${match[1]})`;
     if ((match = source.match(/^请求失败：(.+)$/))) return `Request failed: ${match[1]}`;
     if ((match = source.match(/^音色加载失败：(.+)$/))) return `Failed to load voices: ${match[1]}`;
