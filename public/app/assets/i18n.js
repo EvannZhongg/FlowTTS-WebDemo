@@ -155,7 +155,6 @@
     '声音克隆': 'Voice cloning',
     '6-30秒参考音频即可复刻音色。限时免费，生成后即可用于合成': 'Clone a voice from 6–30 seconds of reference audio. Ready to use immediately.',
     '创建克隆音色': 'Create a cloned voice',
-    '限时体验': 'Limited-time trial',
     '音色名称': 'Voice name',
     '仅限数字、英文字母和下划线，最多 36 位': 'Use up to 36 letters, numbers, or underscores',
     '名称格式不正确，请仅使用数字、字母和下划线': 'Invalid name. Use letters, numbers, and underscores only',

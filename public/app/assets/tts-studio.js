@@ -896,8 +896,8 @@
       $('studio-language').value = '';
       $('studio-voice-search').value = '';
       qsa('#studio-format .seg-item').forEach((item) => item.classList.toggle('on', item.dataset.format === 'mp3'));
-      $('studio-sample-rate').value = '24000 Hz';
-      $('studio-bitrate').value = '64 kbps';
+      if ($('studio-sample-rate')) $('studio-sample-rate').value = '24000 Hz';
+      if ($('studio-bitrate')) $('studio-bitrate').value = '64 kbps';
       updateStudioBitrateField();
       clearMessage('studio-message');
       $('studio-player').classList.remove('active');

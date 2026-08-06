@@ -244,7 +244,6 @@ input[type=range] { width: 100%; accent-color: var(--blue); }
 .clone-studio-body { gap: 22px; padding: 18px; }
 .clone-section { display: flex; flex-direction: column; gap: 15px; }
 .clone-section-head { justify-content: flex-start; }
-.clone-free-badge { display: inline-flex; align-items: center; width: max-content; padding: 3px 8px; color: var(--blue); background: var(--blue-light); border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .clone-source-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .clone-source-toolbar .sub-tabs { flex: none; }
 .clone-model-field { min-width: 0; display: flex; align-items: center; gap: 8px; }
