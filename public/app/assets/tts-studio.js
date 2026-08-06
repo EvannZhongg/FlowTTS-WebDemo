@@ -656,6 +656,15 @@
     $('studio-speed-value').textContent = '1.0';
     $('studio-volume-value').textContent = '1.0';
     $('studio-pitch-value').textContent = '0';
+    qsa('input[type=range]').forEach(updateRangeProgress);
+  }
+
+  function updateRangeProgress(input) {
+    const min = Number(input.min || 0);
+    const max = Number(input.max || 100);
+    const value = Number(input.value);
+    const percentage = max > min ? ((value - min) / (max - min)) * 100 : 0;
+    input.style.setProperty('--range-progress', `${Math.min(100, Math.max(0, percentage))}%`);
   }
 
   function setMode(mode) {
@@ -911,9 +920,13 @@
       renderStudioVoices();
       updateCharCount();
     });
-    qsa('input[type=range]').forEach((input) => input.addEventListener('input', () => {
-      const output = $(`${input.id}-value`); if (output) output.textContent = Number(input.value).toFixed(input.step.includes('.') ? 1 : 0);
-    }));
+    qsa('input[type=range]').forEach((input) => {
+      updateRangeProgress(input);
+      input.addEventListener('input', () => {
+        updateRangeProgress(input);
+        const output = $(`${input.id}-value`); if (output) output.textContent = Number(input.value).toFixed(input.step.includes('.') ? 1 : 0);
+      });
+    });
     $('studio-submit').addEventListener('click', runStudioSynthesis);
     $('studio-download').addEventListener('click', () => {
       if (state.mode === 'streaming') downloadBlob(state.streamAudioBlob, state.mode, 'wav');
