@@ -972,7 +972,7 @@
                         </div>
                         <div class="supabase-quota-section" id="quota-section">
                             <div class="quota-header">
-                                <span class="quota-title">今日配额</span>
+                                <span class="quota-title">体验额度</span>
                                 <span class="quota-count" id="quota-count">0 / 10000</span>
                             </div>
                             <div class="quota-progress">
@@ -1022,7 +1022,7 @@
                                 </div>
                             </div>
                             <ul class="plan-features">
-                                <li>✅ 每日 300 次配额</li>
+                                <li>✅ 300 点额度</li>
                                 <li>✅ 优先技术支持</li>
                                 <li>✅ 高级音色库访问</li>
                                 <li>✅ 无限次声音克隆</li>
@@ -1039,7 +1039,7 @@
                                 </div>
                             </div>
                             <ul class="plan-features">
-                                <li>✅ 每日 1000 次配额</li>
+                                <li>✅ 1,000 点额度</li>
                                 <li>✅ 专属客服支持</li>
                                 <li>✅ 定制开发服务</li>
                                 <li>✅ 优先新功能体验</li>

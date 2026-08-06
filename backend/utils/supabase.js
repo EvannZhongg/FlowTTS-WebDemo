@@ -168,28 +168,6 @@ async function getUserProfile(userId) {
         throw new Error(`Failed to fetch user profile: ${error.message}`);
     }
 
-    // Check if quota should reset (daily reset)
-    const today = new Date().toISOString().split('T')[0];
-    if (data.last_reset_date !== today) {
-        // Reset quota
-        const { data: resetData, error: resetError } = await supabaseDb
-            .from('user_profile')
-            .update({
-                used_quota: 0,
-                last_reset_date: today
-            })
-            .eq('user_id', userId)
-            .select()
-            .single();
-
-        if (resetError) {
-            throw new Error(`Failed to reset quota: ${resetError.message}`);
-        }
-
-        logger.info({ userId, oldDate: data.last_reset_date, newDate: today }, 'Quota reset for user');
-        return resetData;
-    }
-
     return data;
 }
 
