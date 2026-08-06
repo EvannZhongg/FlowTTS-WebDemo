@@ -368,21 +368,101 @@
                 flex-direction: column;
                 gap: 16px;
             }
+            #email-form {
+                gap: 0;
+            }
+            #email-form .supabase-input-group + .supabase-input-group {
+                margin-top: 22px;
+            }
+            #email-form #supabase-send-link {
+                margin-top: 24px;
+            }
+            #email-form .supabase-helper {
+                margin-top: 12px;
+            }
+            #email-form .supabase-status {
+                margin-top: 16px;
+            }
             .supabase-input-group {
                 display: flex;
                 flex-direction: column;
-                gap: 6px;
+                gap: 8px;
             }
             .supabase-input-group label {
                 font-size: 13px;
                 font-weight: 600;
                 color: var(--supabase-text-muted);
             }
+            .supabase-input-label-row {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                width: max-content;
+                max-width: 100%;
+            }
             .supabase-input-group label .optional {
                 font-weight: 400;
                 font-size: 12px;
                 margin-left: 6px;
                 color: rgba(148, 163, 184, 0.8);
+            }
+            .supabase-tooltip {
+                position: relative;
+                width: 17px;
+                height: 17px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex: none;
+                padding: 0;
+                color: var(--supabase-primary);
+                background: rgba(31, 111, 235, 0.1);
+                border: 0;
+                border-radius: 50%;
+                font-size: 11px;
+                font-weight: 700;
+                line-height: 1;
+                cursor: help;
+            }
+            .supabase-tooltip-content {
+                position: absolute;
+                z-index: 20;
+                left: 50%;
+                bottom: calc(100% + 9px);
+                width: min(280px, calc(100vw - 56px));
+                padding: 10px 12px;
+                color: #ffffff;
+                background: #172033;
+                border-radius: 9px;
+                box-shadow: 0 10px 30px rgba(15, 23, 42, 0.22);
+                font-size: 12px;
+                font-weight: 400;
+                line-height: 1.55;
+                text-align: left;
+                transform: translate(-18px, 4px);
+                opacity: 0;
+                visibility: hidden;
+                pointer-events: none;
+                transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+            }
+            .supabase-tooltip-content::after {
+                content: '';
+                position: absolute;
+                top: 100%;
+                left: 14px;
+                border: 6px solid transparent;
+                border-top-color: #172033;
+            }
+            .supabase-tooltip:hover .supabase-tooltip-content,
+            .supabase-tooltip:focus .supabase-tooltip-content,
+            .supabase-tooltip:focus-visible .supabase-tooltip-content {
+                opacity: 1;
+                visibility: visible;
+                transform: translate(-18px, 0);
+            }
+            .supabase-tooltip:focus-visible {
+                outline: 2px solid rgba(31, 111, 235, 0.35);
+                outline-offset: 2px;
             }
             .supabase-input-group input {
                 width: 100%;
@@ -849,12 +929,17 @@
                             <input type="email" id="supabase-email" placeholder="name@example.com" autocomplete="email" />
                         </div>
                         <div class="supabase-input-group">
-                            <label for="supabase-company">公司名称 <span class="optional">可选</span></label>
-                            <input type="text" id="supabase-company" maxlength="100" placeholder="仅首次注册时保存，登录后可在账户中修改" autocomplete="organization" />
+                            <div class="supabase-input-label-row">
+                                <label for="supabase-company">公司名称 <span class="optional">可选</span></label>
+                                <button class="supabase-tooltip" type="button" aria-label="公司名称说明" aria-describedby="supabase-company-tooltip">
+                                    ?
+                                    <span class="supabase-tooltip-content" id="supabase-company-tooltip" role="tooltip">公司名称仅在首次注册时保存，已有账户不会被覆盖；登录后可在账户设置中修改。</span>
+                                </button>
+                            </div>
+                            <input type="text" id="supabase-company" maxlength="100" placeholder="请输入公司名称" autocomplete="organization" />
                         </div>
                         <button class="supabase-btn primary" id="supabase-send-link">发送登录链接</button>
-                        <p class="supabase-helper">同一邮箱会进入同一账户。公司名称仅在首次注册时保存，已有账户不会因再次填写而被覆盖。</p>
-                        <p class="supabase-helper">请在希望保持登录的设备上打开邮件链接。登录状态会保存在该设备，除非主动退出或清除浏览器数据。</p>
+                        <p class="supabase-helper">请在当前设备打开邮件中的登录链接。</p>
                         <div class="supabase-status" id="supabase-status"></div>
                     </div>
                     <div id="logout-form" class="supabase-form-step" style="display:none;">
@@ -1038,7 +1123,7 @@
 
     function showStatus(message, type = 'success') {
         const status = document.getElementById('supabase-status');
-        status.textContent = message;
+        status.textContent = t(message);
         status.className = `supabase-status ${type}`;
     }
 
@@ -1094,7 +1179,7 @@
 
         try {
             btn.disabled = true;
-            btn.textContent = '发送中...';
+            btn.textContent = t('发送中...');
 
             const { error } = await authState.supabase.auth.signInWithOtp({
                 email,

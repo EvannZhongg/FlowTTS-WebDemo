@@ -88,7 +88,7 @@
   const link = ([page, href, label]) => `<a class="side-item ${active === page ? 'active' : ''}" data-page="${page}" href="${href}"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${icons[page]}</svg><span>${label}</span></a>`;
   document.write(`
     <header class="topbar">
-      <a class="top-brand" href="index.html"><span class="brand-mark">T</span><span>TTS Studio</span></a>
+      <a class="top-brand" href="index.html">TTS Studio</a>
       <div class="top-actions">
         <span class="quota-badge${quotaClass}" id="studio-quota-badge" title="${quotaTitle}" style="${quotaSnapshot ? 'display:inline-flex' : ''}"><span class="quota-lightning" aria-hidden="true">ϟ</span><strong id="studio-quota-remaining">${quotaSnapshot ? formatQuota(quotaSnapshot.remaining) : '--'}</strong></span>
         <div class="locale-switch" aria-label="界面语言"><button class="${locale === 'zh-CN' ? 'on' : ''}" data-locale="zh-CN" aria-pressed="${locale === 'zh-CN'}" type="button">中文</button><button class="${locale === 'en' ? 'on' : ''}" data-locale="en" aria-pressed="${locale === 'en'}" type="button">EN</button></div>
