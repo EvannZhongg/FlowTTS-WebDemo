@@ -207,7 +207,9 @@
     const badge = $('studio-quota-badge');
     if (!badge) return;
     $('studio-quota-remaining').textContent = formatCompactQuota(remaining);
-    badge.title = `剩余 ${remaining.toLocaleString()} / ${daily.toLocaleString()} 点体验配额`;
+    badge.title = i18n?.getLocale?.() === 'en'
+      ? `${remaining.toLocaleString()} / ${daily.toLocaleString()} credits remaining`
+      : `剩余 ${remaining.toLocaleString()} / ${daily.toLocaleString()} 点体验配额`;
     badge.style.display = 'inline-flex';
     badge.classList.toggle('warning', remaining >= 500 && remaining < 1500);
     badge.classList.toggle('danger', remaining < 500);

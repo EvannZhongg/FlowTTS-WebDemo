@@ -1409,7 +1409,7 @@
         // 更新剩余
         const remainingEl = document.getElementById('quota-remaining');
         if (remainingEl) {
-            remainingEl.textContent = i18n?.getLocale?.() === 'en' ? `${remaining} remaining` : `剩余 ${remaining}`;
+            remainingEl.textContent = i18n?.getLocale?.() === 'en' ? `${remaining} credits remaining` : `剩余 ${remaining}`;
         }
 
         // 更新订阅等级徽章

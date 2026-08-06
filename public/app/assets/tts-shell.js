@@ -63,8 +63,10 @@
         : ''
     : '';
   const quotaTitle = quotaSnapshot
-    ? `剩余 ${Number(quotaSnapshot.remaining).toLocaleString()} / ${Number(quotaSnapshot.daily || 0).toLocaleString()} 点体验配额`
-    : '剩余体验配额';
+    ? locale === 'en'
+      ? `${Number(quotaSnapshot.remaining).toLocaleString()} / ${Number(quotaSnapshot.daily || 0).toLocaleString()} credits remaining`
+      : `剩余 ${Number(quotaSnapshot.remaining).toLocaleString()} / ${Number(quotaSnapshot.daily || 0).toLocaleString()} 点体验配额`
+    : (locale === 'en' ? 'Remaining credits' : '剩余体验配额');
   const accountInitial = (authSnapshot?.email?.[0] || '').toUpperCase();
   const accountClass = authSnapshot ? ' logged-in auth-cached' : ' auth-pending';
   const accountTitle = authSnapshot
