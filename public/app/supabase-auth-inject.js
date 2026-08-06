@@ -725,10 +725,18 @@
                 cursor: pointer;
                 transition: all 0.2s ease;
             }
-            .supabase-upgrade-btn:hover {
+            .supabase-upgrade-btn:hover:not(:disabled) {
                 background: var(--supabase-primary-dark);
                 border-color: var(--supabase-primary-dark);
                 transform: translateY(-1px);
+            }
+            .supabase-upgrade-btn:disabled {
+                color: var(--supabase-text-muted);
+                background: rgba(148, 163, 184, 0.14);
+                border-color: rgba(148, 163, 184, 0.28);
+                cursor: not-allowed;
+                opacity: 0.72;
+                transform: none;
             }
             .pricing-plans {
                 display: grid;
@@ -972,7 +980,7 @@
                             </div>
                             <div class="quota-footer">
                                 <span class="quota-remaining" id="quota-remaining">剩余 10000</span>
-                                <button class="supabase-upgrade-btn" id="upgrade-btn">升级</button>
+                                <button class="supabase-upgrade-btn" id="upgrade-btn" type="button" disabled aria-disabled="true">升级</button>
                             </div>
                             <div class="subscription-timing" id="subscription-timing" style="margin-top: 10px; font-size: 12px; color: var(--supabase-text-muted); display: none;">
                                 <div class="timing-row" id="subscription-end" style="margin-top: 4px;">
@@ -1066,7 +1074,7 @@
 
         // 升级相关事件
         document.getElementById('supabase-close-upgrade').addEventListener('click', () => toggleUpgradeModal(false));
-        document.getElementById('upgrade-btn').addEventListener('click', () => toggleUpgradeModal(true));
+        // 升级入口暂时停用；恢复时移除 disabled 并重新绑定打开升级弹窗的事件。
         document.getElementById('supabase-upgrade-modal').addEventListener('click', (e) => {
             if (e.target.id === 'supabase-upgrade-modal') toggleUpgradeModal(false);
         });
@@ -1422,6 +1430,8 @@
         // 显示升级按钮（所有等级都显示，但文字不同）
         const upgradeBtn = document.getElementById('upgrade-btn');
         if (upgradeBtn) {
+            upgradeBtn.disabled = true;
+            upgradeBtn.setAttribute('aria-disabled', 'true');
             if (subscription_tier === 'free') {
                 upgradeBtn.style.display = 'inline-flex';
                 upgradeBtn.textContent = t('升级');
