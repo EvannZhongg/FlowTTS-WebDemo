@@ -236,7 +236,6 @@ input[type=range] {
 .stream-row b.good { color: #00c896; }
 
 .panel { display: flex; flex-direction: column; gap: 16px; padding: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 16px 42px -32px rgba(40,30,10,.35); }
-.clone-page-heading { margin-bottom: 40px; }
 .clone-page-heading .page-kicker { margin-bottom: 12px; }
 .clone-page-heading h1 { margin: 0; font-size: clamp(30px, 4vw, 34px); }
 .clone-page-heading p { max-width: 640px; margin-top: 10px; font-size: 15px; line-height: 1.75; }
@@ -453,7 +452,6 @@ body.dark .dropzone.has-file { background: var(--blue-light); }
   .library-toolbar { align-items: stretch; }
   .library-controls { grid-template-columns: minmax(120px, .8fr) minmax(160px, 1.2fr); width: 100%; }
   .page-shell { width: min(100% - 24px, 1100px); padding-top: 28px; }
-  .clone-page-heading { margin-bottom: 28px; }
   .clone-page-heading p { font-size: 14px; }
   .library-page-heading p { white-space: normal; }
   .console-body, .panel { padding: 14px; }
