@@ -680,10 +680,23 @@
                 font-weight: 600;
                 color: var(--supabase-text-muted);
             }
-            .quota-count {
-                font-size: 13px;
-                font-weight: 700;
+            .quota-balance {
+                display: flex;
+                align-items: baseline;
+                gap: 4px;
                 color: var(--supabase-text);
+                white-space: nowrap;
+            }
+            .quota-balance-value {
+                font-size: 22px;
+                line-height: 1;
+                font-weight: 750;
+                letter-spacing: -0.35px;
+            }
+            .quota-balance-unit {
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--supabase-text-muted);
             }
             .quota-progress {
                 width: 100%;
@@ -691,7 +704,7 @@
                 background: rgba(148, 163, 184, 0.2);
                 border-radius: 999px;
                 overflow: hidden;
-                margin-bottom: 8px;
+                margin-bottom: 9px;
             }
             .quota-bar {
                 height: 100%;
@@ -709,10 +722,15 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                gap: 12px;
             }
-            .quota-remaining {
+            .quota-usage {
                 font-size: 12px;
                 color: var(--supabase-text-muted);
+            }
+            .quota-usage strong {
+                font-weight: 700;
+                color: var(--supabase-text);
             }
             .supabase-upgrade-btn {
                 padding: 6px 12px;
@@ -973,13 +991,16 @@
                         <div class="supabase-quota-section" id="quota-section">
                             <div class="quota-header">
                                 <span class="quota-title">体验额度</span>
-                                <span class="quota-count" id="quota-count">0 / 10000</span>
+                                <span class="quota-balance" aria-label="可用额度">
+                                    <strong class="quota-balance-value" id="quota-remaining">10,000</strong>
+                                    <span class="quota-balance-unit">点可用</span>
+                                </span>
                             </div>
-                            <div class="quota-progress">
+                            <div class="quota-progress" role="progressbar" aria-label="额度使用进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                                 <div class="quota-bar" id="quota-bar" style="width: 0%"></div>
                             </div>
                             <div class="quota-footer">
-                                <span class="quota-remaining" id="quota-remaining">剩余 10000</span>
+                                <span class="quota-usage">已使用 <strong id="quota-used">0</strong> 点</span>
                                 <button class="supabase-upgrade-btn" id="upgrade-btn" type="button" disabled aria-disabled="true">升级</button>
                             </div>
                             <div class="subscription-timing" id="subscription-timing" style="margin-top: 10px; font-size: 12px; color: var(--supabase-text-muted); display: none;">
@@ -1396,11 +1417,12 @@
         const { daily, used, remaining, subscription_tier, subscription_end } = quota;
         const percentage = daily > 0 ? (used / daily) * 100 : 0;
 
-        // 更新计数
-        const countEl = document.getElementById('quota-count');
-        if (countEl) {
-            countEl.textContent = `${used} / ${daily}`;
-        }
+        // 以可用额度作为唯一主指标，避免与“已使用 / 总额度”重复表达。
+        const remainingEl = document.getElementById('quota-remaining');
+        if (remainingEl) remainingEl.textContent = remaining.toLocaleString();
+
+        const usedEl = document.getElementById('quota-used');
+        if (usedEl) usedEl.textContent = used.toLocaleString();
 
         // 更新进度条
         const barEl = document.getElementById('quota-bar');
@@ -1413,12 +1435,8 @@
                 barEl.classList.add('warning');
             }
         }
-
-        // 更新剩余
-        const remainingEl = document.getElementById('quota-remaining');
-        if (remainingEl) {
-            remainingEl.textContent = i18n?.getLocale?.() === 'en' ? `${remaining} credits remaining` : `剩余 ${remaining}`;
-        }
+        const progressEl = barEl?.parentElement;
+        if (progressEl) progressEl.setAttribute('aria-valuenow', String(Math.round(Math.min(percentage, 100))));
 
         // 更新订阅等级徽章
         const tierBadge = document.getElementById('user-tier');
