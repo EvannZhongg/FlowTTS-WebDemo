@@ -146,3 +146,5 @@ reference
 
 # Local Vercel project metadata
 .vercel/
+
+.DS_Store
