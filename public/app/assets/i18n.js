@@ -222,6 +222,8 @@
     '正在加载音频': 'Loading audio',
     '复用': 'Reuse',
     '下载': 'Download',
+    '音频已过期': 'Audio expired',
+    '过期于': 'Expires',
 
     '英语': 'English',
     '日语': 'Japanese',

@@ -14,6 +14,10 @@ const crypto = require('crypto');
 const { supabaseDb, validateUserId } = require('./supabase');
 
 const HISTORY_BUCKET = process.env.SUPABASE_HISTORY_BUCKET || 'tts-history-audio';
+const RETENTION_DAYS = Number(process.env.HISTORY_RETENTION_DAYS) > 0
+    ? Number(process.env.HISTORY_RETENTION_DAYS)
+    : 10;
+const RETENTION_MS = RETENTION_DAYS * 24 * 60 * 60 * 1000;
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
 const DOWNLOAD_URL_TTL_SECONDS = 60;
 const MAX_AUDIO_BYTES = 20 * 1024 * 1024;
@@ -109,6 +113,13 @@ async function uploadFile(path, body, contentType) {
         .from(HISTORY_BUCKET)
         .upload(path, body, { contentType, upsert: false, cacheControl: '3600' });
     if (error) throw new Error(`Failed to upload history file: ${error.message}`);
+}
+
+async function updateFile(path, body, contentType) {
+    const { error } = await supabaseDb.storage
+        .from(HISTORY_BUCKET)
+        .upload(path, body, { contentType, upsert: true, cacheControl: '3600' });
+    if (error) throw new Error(`Failed to update history file: ${error.message}`);
 }
 
 async function removeFiles(paths) {
@@ -216,8 +227,14 @@ async function downloadMetadata(path) {
 }
 
 async function addSignedUrls(item) {
+    const createdAtMs = Date.parse(item.createdAt);
+    const expiresAt = Number.isNaN(createdAtMs)
+        ? null
+        : new Date(createdAtMs + RETENTION_MS).toISOString();
+    const audioExpired = Boolean(item.audioExpiredAt);
+
     const paths = [...new Set([item.playbackPath, item.audioPath].filter(Boolean))];
-    if (!paths.length) return { ...item, audioUrl: null, downloadUrl: null };
+    if (!paths.length) return { ...item, expiresAt, audioExpired, audioUrl: null, downloadUrl: null };
 
     const { data, error } = await supabaseDb.storage
         .from(HISTORY_BUCKET)
@@ -227,6 +244,8 @@ async function addSignedUrls(item) {
     const urlByPath = new Map((data || []).map((entry) => [entry.path, entry.signedUrl]));
     return {
         ...item,
+        expiresAt,
+        audioExpired,
         audioUrl: item.playbackPath ? urlByPath.get(item.playbackPath) || null : null,
         downloadUrl: item.audioPath ? urlByPath.get(item.audioPath) || null : null
     };
@@ -310,12 +329,134 @@ async function clearHistoryItems(userId) {
     return metadataItems.filter((item) => item?.userId === userId).length;
 }
 
+async function listUserFolders() {
+    const folders = [];
+    let offset = 0;
+    const limit = 100;
+
+    while (true) {
+        const { data, error } = await supabaseDb.storage
+            .from(HISTORY_BUCKET)
+            .list('', { limit, offset, sortBy: { column: 'name', order: 'asc' } });
+        if (error) throw new Error(`Failed to list history users: ${error.message}`);
+        // Storage folders come back with a null id; real files have a non-null id.
+        const batch = (data || []).filter((entry) => entry.id === null && entry.name);
+        folders.push(...batch.map((entry) => entry.name));
+        if ((data || []).length < limit) break;
+        offset += limit;
+    }
+
+    return folders;
+}
+
+/**
+ * Collect a user's expired metadata files without walking their whole history.
+ *
+ * Metadata names are `<createdAtMs>-<recordId>.json`. The timestamp prefix is a
+ * fixed-width 13-digit millisecond value (stays 13 digits until year 2286), so
+ * lexicographic name order equals chronological order. Listing ascending and
+ * stopping at the first non-expired file means:
+ *   - a user whose oldest record is still fresh costs a single list call;
+ *   - otherwise we only page over the expired prefix, never the newer tail.
+ */
+async function collectExpiredMetadataFiles(userId, cutoff) {
+    const expired = [];
+    let offset = 0;
+    const limit = 100;
+
+    while (true) {
+        const { data, error } = await supabaseDb.storage
+            .from(HISTORY_BUCKET)
+            .list(`${userId}/metadata`, {
+                limit,
+                offset,
+                sortBy: { column: 'name', order: 'asc' }
+            });
+        if (error) throw new Error(`Failed to list history: ${error.message}`);
+
+        const batch = (data || []).filter((file) => file.name.endsWith('.json'));
+        let reachedFresh = false;
+        for (const file of batch) {
+            const createdAtMs = Number.parseInt(file.name.split('-')[0], 10);
+            if (!Number.isFinite(createdAtMs)) continue;
+            if (createdAtMs < cutoff) {
+                expired.push(file);
+            } else {
+                // Sorted ascending: this and everything after it is still fresh.
+                reachedFresh = true;
+                break;
+            }
+        }
+
+        if (reachedFresh) break;
+        if ((data || []).length < limit) break;
+        offset += limit;
+    }
+
+    return expired;
+}
+
+/**
+ * Delete audio files for history records older than the retention window while
+ * keeping their metadata. The metadata JSON is rewritten with the audio paths
+ * cleared and an `audioExpiredAt` marker so listings can flag the record as
+ * expired instead of dropping it.
+ */
+async function pruneExpiredHistoryAudio() {
+    await ensureHistoryBucket();
+    const cutoff = Date.now() - RETENTION_MS;
+    const users = await listUserFolders();
+    let prunedRecords = 0;
+
+    for (const userId of users) {
+        let candidates;
+        try {
+            candidates = await collectExpiredMetadataFiles(userId, cutoff);
+        } catch (_) {
+            continue;
+        }
+
+        for (const file of candidates) {
+            const metadataPath = `${userId}/metadata/${file.name}`;
+            let metadata;
+            try {
+                metadata = await downloadMetadata(metadataPath);
+            } catch (_) {
+                continue;
+            }
+            if (metadata.userId !== userId) continue;
+            if (metadata.audioExpiredAt) continue;
+            if (!metadata.audioPath && !metadata.playbackPath) continue;
+
+            try {
+                await removeFiles([metadata.audioPath, metadata.playbackPath]);
+                const updated = {
+                    ...metadata,
+                    audioPath: null,
+                    playbackPath: null,
+                    audioMimeType: null,
+                    playbackMimeType: null,
+                    audioExpiredAt: new Date().toISOString()
+                };
+                await updateFile(metadataPath, Buffer.from(JSON.stringify(updated)), 'application/json');
+                prunedRecords += 1;
+            } catch (_) {
+                // Skip this record; a later run will retry.
+            }
+        }
+    }
+
+    return { retentionDays: RETENTION_DAYS, scannedUsers: users.length, prunedRecords };
+}
+
 module.exports = {
     HISTORY_BUCKET,
+    RETENTION_DAYS,
     ensureHistoryBucket,
     createHistoryItem,
     listHistoryItems,
     createHistoryDownloadUrl,
     deleteHistoryItem,
-    clearHistoryItems
+    clearHistoryItems,
+    pruneExpiredHistoryAudio
 };
