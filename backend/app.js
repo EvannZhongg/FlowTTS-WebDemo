@@ -7,6 +7,7 @@ const ttsRoutes = require('./routes/tts');
 const voiceCloneRoutes = require('./routes/voice-clone');
 const userRoutes = require('./routes/user');
 const historyRoutes = require('./routes/history');
+const { pruneExpiredHistoryAudio } = require('./utils/history-store');
 
 const app = express();
 
@@ -129,6 +130,25 @@ app.use('/api/tts', ttsRoutes);
 app.use('/api/voice', voiceCloneRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/history', historyRoutes);
+
+// Scheduled cleanup of expired history audio. Invoked by Vercel Cron, which
+// automatically sends `Authorization: Bearer <CRON_SECRET>`. Deletes audio
+// files past the retention window while keeping the metadata records.
+app.get('/api/cron/cleanup-history', async (req, res) => {
+    const secret = process.env.CRON_SECRET;
+    const auth = req.get('authorization') || '';
+    if (!secret || auth !== `Bearer ${secret}`) {
+        return res.status(401).json({ code: 'unauthorized', message: 'Invalid cron secret' });
+    }
+    try {
+        const result = await pruneExpiredHistoryAudio();
+        logger.info(result, 'History cleanup done');
+        return res.json({ code: 'success', ...result });
+    } catch (error) {
+        logger.error({ error: error.message }, 'History cleanup failed');
+        return res.status(500).json({ code: 'cleanup_failed', message: error.message });
+    }
+});
 
 app.use((req, res) => {
     res.status(404).json({
