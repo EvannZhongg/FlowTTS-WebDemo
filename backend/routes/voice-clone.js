@@ -5,6 +5,7 @@
  */
 
 const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
 
 const logger = require('../utils/logger');
@@ -20,8 +21,19 @@ const TTS_VERSION = '2019-07-22';
 const TTS_REGION = process.env.TRTC_REGION || 'ap-beijing';
 const SDK_APP_ID = process.env.TRTC_SDK_APP_ID || '';
 const MIN_CLONE_AUDIO_SECONDS = 6;
-const MAX_CLONE_AUDIO_SECONDS = 30;
+const MAX_CLONE_AUDIO_SECONDS = 180;
+const MAX_CLONE_AUDIO_BYTES = 7 * 1024 * 1024;
+const CLONE_AUDIO_BUCKET = process.env.SUPABASE_HISTORY_BUCKET || 'tts-history-audio';
 const VALID_CLONE_MODELS = ['flow_02_turbo', 'flow_01_ex'];
+const VALID_CLONE_AUDIO_MIME_TYPES = new Set([
+    'audio/wav',
+    'audio/x-wav',
+    'audio/mpeg',
+    'audio/mp3',
+    'audio/mp4',
+    'audio/m4a',
+    'audio/x-m4a'
+]);
 
 async function insertClonedVoice(record) {
     const insert = (row) => supabaseDb
@@ -42,11 +54,11 @@ async function insertClonedVoice(record) {
 }
 
 function validateCloneAudio(req, res, next) {
-    const { audioData, audioDuration } = req.body || {};
-    if (!audioData) {
+    const { audioData, audioPath, audioDuration } = req.body || {};
+    if (!audioData && !audioPath) {
         return res.status(400).json({
             code: 'missing_audio_data',
-            message: 'Missing required field: audioData (base64 encoded audio)'
+            message: 'Missing required field: audioData or audioPath'
         });
     }
 
@@ -64,22 +76,149 @@ function validateCloneAudio(req, res, next) {
     next();
 }
 
+async function ensureCloneAudioBucket() {
+    const { data: buckets, error: listError } = await supabaseDb.storage.listBuckets();
+    if (listError) throw new Error(`Failed to list Storage buckets: ${listError.message}`);
+    if (buckets?.some((bucket) => bucket.id === CLONE_AUDIO_BUCKET)) return;
+
+    const { error } = await supabaseDb.storage.createBucket(CLONE_AUDIO_BUCKET, {
+        public: false,
+        fileSizeLimit: MAX_CLONE_AUDIO_BYTES,
+        allowedMimeTypes: [...VALID_CLONE_AUDIO_MIME_TYPES, 'application/json']
+    });
+    if (error && !String(error.message).toLowerCase().includes('already exists')) {
+        throw new Error(`Failed to create clone audio bucket: ${error.message}`);
+    }
+}
+
+function cloneAudioPathForUser(userId) {
+    return `${userId}/clone-prompts/${Date.now()}-${crypto.randomUUID()}.wav`;
+}
+
+function isOwnedCloneAudioPath(userId, audioPath) {
+    return typeof audioPath === 'string'
+        && audioPath.startsWith(`${userId}/clone-prompts/`)
+        && !audioPath.includes('..');
+}
+
+async function resolveCloneAudio(req, res, next) {
+    try {
+        if (req.body.audioData) {
+            req.cloneAudioData = req.body.audioData;
+            return next();
+        }
+
+        const audioPath = req.body.audioPath;
+        if (!isOwnedCloneAudioPath(req.user.id, audioPath)) {
+            return res.status(400).json({
+                code: 'invalid_audio_path',
+                message: 'Invalid or unauthorized clone audio path'
+            });
+        }
+
+        const { data, error } = await supabaseDb.storage
+            .from(CLONE_AUDIO_BUCKET)
+            .download(audioPath);
+        if (error) throw new Error(`Failed to download clone audio: ${error.message}`);
+
+        const buffer = Buffer.from(await data.arrayBuffer());
+        if (!buffer.length || buffer.length > MAX_CLONE_AUDIO_BYTES) {
+            await removeUploadedCloneAudio(audioPath);
+            return res.status(400).json({
+                code: 'invalid_audio_size',
+                message: `Clone audio must be between 1 byte and ${MAX_CLONE_AUDIO_BYTES} bytes`
+            });
+        }
+
+        req.cloneAudioData = buffer.toString('base64');
+        req.cloneAudioPath = audioPath;
+        req.cleanupRequestResource = async () => {
+            if (!req.cloneAudioPath) return;
+            const pathToRemove = req.cloneAudioPath;
+            req.cloneAudioPath = null;
+            await removeUploadedCloneAudio(pathToRemove);
+        };
+        next();
+    } catch (error) {
+        if (isOwnedCloneAudioPath(req.user?.id, req.body?.audioPath)) {
+            await removeUploadedCloneAudio(req.body.audioPath);
+        }
+        logger.error({ userId: req.user?.id, error: error.message }, '[Voice Clone] Audio resolution failed');
+        res.status(500).json({
+            code: 'clone_audio_resolution_failed',
+            message: error.message
+        });
+    }
+}
+
+async function removeUploadedCloneAudio(audioPath) {
+    if (!audioPath) return;
+    const { error } = await supabaseDb.storage.from(CLONE_AUDIO_BUCKET).remove([audioPath]);
+    if (error) {
+        logger.warn({ audioPath, error: error.message }, '[Voice Clone] Failed to remove uploaded prompt');
+    }
+}
+
+/**
+ * POST /api/voice/clone-upload-url
+ * Create a short-lived signed URL so long clone samples bypass the serverless
+ * request body limit while remaining private and scoped to the current user.
+ */
+router.post('/clone-upload-url', authenticate, async (req, res) => {
+    try {
+        const size = Number(req.body?.size);
+        const mimeType = String(req.body?.mimeType || '').toLowerCase();
+        if (!Number.isFinite(size) || size <= 0 || size > MAX_CLONE_AUDIO_BYTES) {
+            return res.status(400).json({
+                code: 'invalid_audio_size',
+                message: `Clone audio must be no larger than ${MAX_CLONE_AUDIO_BYTES} bytes`
+            });
+        }
+        if (!VALID_CLONE_AUDIO_MIME_TYPES.has(mimeType)) {
+            return res.status(400).json({
+                code: 'invalid_audio_type',
+                message: 'Clone audio must be WAV, MP3, or M4A'
+            });
+        }
+
+        await ensureCloneAudioBucket();
+        const audioPath = cloneAudioPathForUser(req.user.id);
+        const { data, error } = await supabaseDb.storage
+            .from(CLONE_AUDIO_BUCKET)
+            .createSignedUploadUrl(audioPath);
+        if (error) throw new Error(`Failed to create signed upload URL: ${error.message}`);
+
+        res.json({
+            code: 'success',
+            bucket: CLONE_AUDIO_BUCKET,
+            audioPath,
+            token: data.token
+        });
+    } catch (error) {
+        logger.error({ userId: req.user?.id, error: error.message }, '[Voice Clone] Upload URL failed');
+        res.status(500).json({
+            code: 'clone_upload_url_failed',
+            message: error.message
+        });
+    }
+});
+
 /**
  * POST /api/voice/clone
- * Clone voice from a 6–30 second audio sample (50 quota)
+ * Clone voice from a 6–180 second audio sample (50 quota)
  *
  * Body:
  * {
- *   "audioData": "base64...",
+ *   "audioPath": "<user-id>/clone-prompts/...", // recommended; returned by /clone-upload-url
+ *   "audioData": "base64...",                   // legacy fallback for short payloads
  *   "voiceName": "My Voice",           // optional, 用户自定义名称
- *   "audioDuration": 8.5,              // required, 6–30 秒
+ *   "audioDuration": 8.5,              // required, 6–180 秒
  *   "description": "Description"       // optional, 描述信息
  * }
  */
-router.post('/clone', authenticate, validateCloneAudio, requireQuota('voice-clone'), async (req, res) => {
+router.post('/clone', authenticate, validateCloneAudio, resolveCloneAudio, requireQuota('voice-clone'), async (req, res) => {
     try {
         const {
-            audioData,
             voiceName,
             description,
             model // 可选: flow_02_turbo | flow_01_ex
@@ -99,7 +238,7 @@ router.post('/clone', authenticate, validateCloneAudio, requireQuota('voice-clon
         logger.info({ userId: req.user.id, model, resolvedModel }, '🎙️ Voice Clone model');
         const params = {
             SdkAppId: parseInt(SDK_APP_ID),
-            PromptAudio: audioData,
+            PromptAudio: req.cloneAudioData,
             ...(resolvedModel ? { Model: resolvedModel } : {})
         };
 
@@ -174,6 +313,10 @@ router.post('/clone', authenticate, validateCloneAudio, requireQuota('voice-clon
         res.status(500).json({
             code: 'voice_clone_failed',
             message: error.message
+        });
+    } finally {
+        await req.cleanupRequestResource?.().catch((cleanupError) => {
+            logger.warn({ error: cleanupError.message }, '[Voice Clone] Request cleanup failed');
         });
     }
 });

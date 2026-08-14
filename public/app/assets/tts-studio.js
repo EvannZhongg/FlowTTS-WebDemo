@@ -1006,6 +1006,24 @@
     } finally { await context.close(); }
   }
 
+  async function uploadCloneAudio(blob) {
+    const upload = await apiFetch('/api/voice/clone-upload-url', {
+      method: 'POST',
+      headers: authHeaders(true),
+      body: JSON.stringify({ size: blob.size, mimeType: blob.type || 'audio/wav' })
+    });
+    const client = window.SupabaseAuthInject?.getSupabaseClient?.();
+    if (!client) throw new Error(t('上传服务尚未就绪，请刷新页面后重试'));
+    const { error } = await client.storage
+      .from(upload.bucket)
+      .uploadToSignedUrl(upload.audioPath, upload.token, blob, {
+        contentType: blob.type || 'audio/wav',
+        cacheControl: '3600'
+      });
+    if (error) throw error;
+    return upload.audioPath;
+  }
+
   function validateCloneName() {
     const input = $('clone-name');
     const hint = $('clone-name-hint');
@@ -1105,8 +1123,8 @@
       state.recordingStartedAt = Date.now(); state.recorder.start(); $('record-button').classList.add('recording'); $('record-status').textContent = t('录音中，再次点击停止');
       state.recordTimer = setInterval(() => {
         const seconds = (Date.now() - state.recordingStartedAt) / 1000;
-        $('record-time').textContent = `${seconds.toFixed(1)}s`; $('record-progress').style.width = `${Math.min(seconds / 30 * 100, 100)}%`;
-        if (seconds >= 30) state.recorder.stop();
+        $('record-time').textContent = `${seconds.toFixed(1)}s`; $('record-progress').style.width = `${Math.min(seconds / 180 * 100, 100)}%`;
+        if (seconds >= 180) state.recorder.stop();
       }, 100);
     } catch (error) { showMessage('clone-message', 'error', t(`无法开始录音：${error.message}`)); }
   }
@@ -1121,10 +1139,12 @@
     try {
       showMessage('clone-message', 'info', t('正在转换并检查音频...'));
       const processed = await processAudioForCloning(source);
-      if (processed.duration < 6 || processed.duration > 30) throw new Error(t(`音频时长为 ${processed.duration.toFixed(1)} 秒，请使用 6–30 秒音频`));
+      if (processed.duration < 6 || processed.duration > 180) throw new Error(t(`音频时长为 ${processed.duration.toFixed(1)} 秒，请使用 6–180 秒音频`));
+      showMessage('clone-message', 'info', t('正在安全上传参考音频...'));
+      const audioPath = await uploadCloneAudio(processed.blob);
       const response = await apiFetch('/api/voice/clone', {
         method: 'POST', headers: authHeaders(true), body: JSON.stringify({
-          voiceName: name, audioData: await blobToBase64(processed.blob), audioDuration: processed.duration,
+          voiceName: name, audioPath, audioDuration: processed.duration,
           model: $('clone-model').value || undefined
         })
       }, 'response');

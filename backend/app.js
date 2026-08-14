@@ -77,8 +77,9 @@ app.use(cors((req, callback) => {
     });
 }));
 
-// Keep request bodies below Vercel's buffered request limit. The current
-// 6-30 second, 16 kHz mono clone payload remains comfortably below this cap.
+// Keep request bodies below Vercel's buffered request limit. Long voice-clone
+// samples are uploaded directly to private Storage using a signed upload URL,
+// so API requests only carry metadata and a private object path.
 app.use(express.json({ limit: '4.3mb' }));
 app.use(express.urlencoded({ extended: true, limit: '4.3mb' }));
 

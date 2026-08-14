@@ -39,6 +39,17 @@ const QUOTA_COSTS = {
     'video-download-subtitle': 1 // 仅下载字幕消耗 1 配额
 };
 
+async function cleanupRequestResource(req) {
+    if (typeof req.cleanupRequestResource !== 'function') return;
+    const cleanup = req.cleanupRequestResource;
+    req.cleanupRequestResource = null;
+    try {
+        await cleanup();
+    } catch (error) {
+        logger.warn({ error: error.message }, 'Request resource cleanup failed');
+    }
+}
+
 /**
  * Create quota middleware with specific cost
  * @param {string} operation - Operation name (key in QUOTA_COSTS)
@@ -59,6 +70,7 @@ function requireQuota(operation) {
 
             if (!hasQuota) {
                 logger.warn({ userId, email: req.user.email, remaining, dailyQuota, cost }, 'Insufficient credits');
+                await cleanupRequestResource(req);
                 return res.status(429).json({
                     code: 'quota_exceeded',
                     message: `Insufficient credits. You have ${remaining} credits remaining, but this operation requires ${cost} credits.`
@@ -104,6 +116,7 @@ function requireQuota(operation) {
             next();
         } catch (error) {
             logger.error({ error: error.message }, 'Quota check failed');
+            await cleanupRequestResource(req);
             return res.status(500).json({
                 code: 'internal_error',
                 message: 'Failed to check credits: ' + error.message
