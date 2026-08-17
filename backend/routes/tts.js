@@ -32,6 +32,11 @@ const TTS_VERSION = '2019-07-22';
 const TTS_REGION = process.env.TRTC_REGION || 'ap-beijing';
 const SDK_APP_ID = parseInt(process.env.TRTC_SDK_APP_ID, 10) || 0;
 
+function clampNumber(value, min, max, fallback) {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : fallback;
+}
+
 // 旧的 loadVoiceLibrary() 和 getModelForVoice() 函数已移除
 // 现在使用 VoiceLibraryManager 统一管理
 
@@ -133,9 +138,9 @@ router.post('/synthesize', authenticate, requireQuota((req) => (
         }
 
         // 验证并限制参数范围 (腾讯云 API 范围: Speed 0.5-2.0, Volume 0-10, Pitch -12 to 12)
-        const validatedSpeed = Math.max(0.5, Math.min(2.0, parseFloat(speed) || 1));
-        const validatedVolume = Math.max(0, Math.min(10, parseFloat(volume) || 1));
-        const validatedPitch = Math.max(-12, Math.min(12, parseFloat(pitch) || 0));
+        const validatedSpeed = clampNumber(speed, 0.5, 2.0, 1);
+        const validatedVolume = clampNumber(volume, 0, 10, 1);
+        const validatedPitch = clampNumber(pitch, -12, 12, 0);
 
         // 非流式接口原生支持 pcm/wav/mp3/opus，默认保持服务端原始 PCM 输出。
         const VALID_FORMATS = ['pcm', 'wav', 'mp3', 'opus'];
@@ -271,6 +276,9 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
             voiceId = 'v-female-R2s4N9qJ', // 默认音色：温柔姐姐
             language, // 可选语言参数
             model: requestedModel, // 可选 model 参数: flow_02_turbo | flow_01_ex
+            speed = 1, // 语速 (0.5-2.0)
+            volume = 1, // 音量 (0-10)
+            pitch = 0, // 音高 (-12 to 12)
             emotion // 情感风格 (可选, 仅 flow_01_ex 模型生效): happy|sad|angry|fearful|disgusted|surprised|calm|fluent|whisper
         } = req.body;
 
@@ -283,6 +291,10 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
 
         // Get Tencent Cloud credentials from environment
         const { secretId, secretKey } = getTencentCredentials();
+
+        const validatedSpeed = clampNumber(speed, 0.5, 2.0, 1);
+        const validatedVolume = clampNumber(volume, 0, 10, 1);
+        const validatedPitch = clampNumber(pitch, -12, 12, 0);
 
         // Set SSE headers
         res.setHeader('Content-Type', 'text/event-stream');
@@ -322,6 +334,9 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
             ...(model ? { Model: model } : {}), // 仅 Ex 音色传 Model
             Voice: {
                 VoiceId: voiceId,
+                Speed: validatedSpeed,
+                Volume: validatedVolume,
+                Pitch: validatedPitch,
                 ...(validatedEmotion ? { Emotion: validatedEmotion } : {}) // 情感风格，仅 flow_01_ex 生效
             },
             ...(requestedLanguage ? { Language: requestedLanguage } : {}) // 未指定时由云端自动检测
@@ -334,10 +349,13 @@ router.post('/synthesize-stream', authenticate, requireQuota('tts-stream'), asyn
             email: req.user.email,
             voiceId,
             language: requestedLanguage || '(provider-auto)',
+            speed: validatedSpeed,
+            volume: validatedVolume,
+            pitch: validatedPitch,
             emotion: validatedEmotion,
             providerAutoDetect: !requestedLanguage,
             textLength: text.length
-        }, `🎤 TTS Synthesize Stream: ${voiceId} (${requestedLanguage || 'provider-auto'}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
+        }, `🎤 TTS Synthesize Stream: ${voiceId} (${requestedLanguage || 'provider-auto'}, speed: ${validatedSpeed}, volume: ${validatedVolume}, pitch: ${validatedPitch}, emotion: ${validatedEmotion || 'none'}, ${text.length} chars)`);
 
         await callTencentAPIStream(
             TTS_SERVICE,

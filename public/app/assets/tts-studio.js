@@ -783,7 +783,8 @@
     const response = await apiFetch('/api/tts/synthesize-stream', {
       method: 'POST', headers: authHeaders(true), body: JSON.stringify({
         text: request.text, voiceId: request.voiceId, language: request.language,
-        model: request.model, emotion: request.emotion
+        model: request.model, emotion: request.emotion,
+        speed: request.speed, volume: request.volume, pitch: request.pitch
       })
     }, 'response');
     readQuotaFromResponse(response);
