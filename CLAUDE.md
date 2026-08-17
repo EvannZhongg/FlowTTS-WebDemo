@@ -37,7 +37,8 @@ cd backend && npm install && node server.js
 GET  /api/tts/voices              公开，返回预设音色列表
 POST /api/tts/synthesize          需登录，普通合成，返回 base64 音频
 POST /api/tts/synthesize-stream   需登录，SSE 流式合成
-POST /api/voice/clone             需登录，声音克隆（消耗 10 配额）
+POST /api/voice/clone             需登录，声音克隆（消耗 50 配额）
+POST /api/voice/clone-upload-url  需登录，获取克隆参考音频的私有直传 URL
 GET  /api/voice/list              需登录，获取用户克隆音色
 DELETE /api/voice/:voiceId        需登录，软删除克隆音色
 GET  /health                      健康检查
