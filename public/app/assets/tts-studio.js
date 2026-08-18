@@ -92,9 +92,8 @@
     historyAudioItemId: '',
     historyAudioStatus: 'idle',
     libraryCategory: 'all',
-    libraryModel: 'all',
+    libraryModel: 'flow_02_turbo',
     languageFiltersExpanded: { studio: false, library: false },
-    previewAudio: new Audio(),
     objectUrls: new Set()
   };
 
@@ -440,7 +439,6 @@
       <div class="voice-top">
         <span class="voice-orb" style="${orbStyle(voice.id)}"></span>
         <span class="voice-actions">
-          ${voice.previewUrl ? `<button class="icon-btn preview-voice" type="button" title="${t('试听')}" data-preview-url="${escapeHtml(voice.previewUrl)}">▶</button>` : ''}
           <button class="icon-btn copy-voice" type="button" title="${t('复制 Voice ID')}" aria-label="${t('复制 Voice ID')}">
             <svg class="copy-icon" viewBox="0 0 24 24" aria-hidden="true">
               <rect x="8" y="8" width="11" height="11" rx="2"></rect>
@@ -464,14 +462,6 @@
   function bindVoiceCards(container, onPick) {
     if (!container) return;
     container.onclick = (event) => {
-      const preview = event.target.closest('.preview-voice');
-      if (preview) {
-        event.stopPropagation();
-        state.previewAudio.pause();
-        state.previewAudio.src = preview.dataset.previewUrl;
-        state.previewAudio.play().catch(() => {});
-        return;
-      }
       const copy = event.target.closest('.copy-voice');
       const card = event.target.closest('.voice-card');
       if (copy && card) {
@@ -1243,6 +1233,12 @@
   }
 
   function initVoicesPage() {
+    const modelSelect = $('library-model');
+    if (modelSelect) {
+      modelSelect.value = state.libraryModel;
+      modelSelect.disabled = true;
+      modelSelect.setAttribute('aria-disabled', 'true');
+    }
     $('library-search').addEventListener('input', renderLibrary);
     $('library-model').addEventListener('change', () => {
       state.libraryModel = $('library-model').value;
@@ -1274,7 +1270,7 @@
       location.href = `tts.html?voice=${encodeURIComponent(voiceId)}&model=${encodeURIComponent(model)}`;
     });
     loadVoices(true).then(() => {
-      $('library-filters').innerHTML = languageFilterHtml('all', false, 'all', libraryVoiceSupportsModel);
+      $('library-filters').innerHTML = languageFilterHtml(state.libraryModel, false, 'all', libraryVoiceSupportsModel);
       renderLibrary();
     }).catch((error) => { $('library-grid').innerHTML = `<div class="empty-state">${escapeHtml(t(`音色加载失败：${error.message}`))}</div>`; });
   }

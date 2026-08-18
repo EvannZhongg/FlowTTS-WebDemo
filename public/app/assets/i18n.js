@@ -70,7 +70,7 @@
     '创建、管理并立即应用自己的专属 Voice ID。': 'Create, manage, and immediately use your own Voice ID.',
     '创建音色 →': 'Create voice →',
     '精品音色库': 'Curated voice library',
-    '搜索、筛选、试听并复制后端真实可用音色。': 'Search, filter, preview, and copy voices available from the backend.',
+    '搜索、筛选并复制后端真实可用音色。': 'Search, filter, and copy voices available from the backend.',
     '浏览音色 →': 'Browse voices →',
     '播放、下载、复用与管理本次浏览器中的体验结果。': 'Play, download, reuse, and manage results stored in this browser.',
     '查看记录 →': 'View history →',
@@ -204,7 +204,7 @@
 
     '音色库 · TTS Studio': 'Voice Library · TTS Studio',
     '精品音色，开箱即用': 'Curated voices, ready to use',
-    '可用音色随模型能力变化。搜索、筛选、试听并复制 Voice ID，点击卡片即可带入文本转语音。': 'Available voices vary by model. Search, filter, preview, and copy a Voice ID, or click a card to open it in Text-to-Speech.',
+    '可用音色随模型能力变化。搜索、筛选、复制 Voice ID，点击卡片即可带入文本转语音。': 'Available voices vary by model. Search, filter, and copy a Voice ID, or click a card to open it in Text-to-Speech.',
     '全部可用音色': 'All available voices',
     '全部模型': 'All models',
     '正在加载音色...': 'Loading voices...',

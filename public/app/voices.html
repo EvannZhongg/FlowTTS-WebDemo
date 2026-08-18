@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>音色库 · TTS Studio</title><link rel="stylesheet" href="assets/tts-studio.css"><script src="assets/i18n.js"></script><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase-auth-inject.js"></script><script src="quota-interceptor.js"></script></head>
 <body data-page="voices"><script src="assets/tts-shell.js"></script><main class="app-main"><div class="page-shell">
-<header class="page-heading library-page-heading"><div class="page-kicker">VOICE LIBRARY</div><h1>精品音色，开箱即用</h1><p>可用音色随模型能力变化。搜索、筛选、试听并复制 Voice ID，点击卡片即可带入文本转语音。</p></header>
+<header class="page-heading library-page-heading"><div class="page-kicker">VOICE LIBRARY</div><h1>精品音色，开箱即用</h1><p>可用音色随模型能力变化。搜索、筛选、复制 Voice ID，点击卡片即可带入文本转语音。</p></header>
 <section class="panel">
-  <div class="library-toolbar"><div><span class="section-title">全部可用音色</span> <span class="muted" id="library-count"></span></div><div class="library-controls"><select class="library-control mono" id="library-model" aria-label="选择模型"><option value="all">全部模型</option><option value="flow_02_turbo">flow_02_turbo</option><option value="flow_01_ex">flow_01_ex</option></select><input class="library-control library-search" id="library-search" placeholder="搜索音色 / Voice ID" aria-label="搜索音色"></div></div>
+  <div class="library-toolbar"><div><span class="section-title">全部可用音色</span> <span class="muted" id="library-count"></span></div><div class="library-controls"><select class="library-control mono" id="library-model" aria-label="选择模型" disabled aria-disabled="true"><option value="all">全部模型</option><option value="flow_02_turbo" selected>flow_02_turbo</option><option value="flow_01_ex">flow_01_ex</option></select><input class="library-control library-search" id="library-search" placeholder="搜索音色 / Voice ID" aria-label="搜索音色"></div></div>
   <div class="chips library-filter-chips" id="library-filters"><button class="chip on" data-category="all" type="button">全部</button></div>
   <div class="library-grid" id="library-grid"><div class="empty-state">正在加载音色...</div></div><p class="pagination-note">flow_02_turbo 提供 101 个精选音色；flow_01_ex 提供 327 个音色。</p>
 </section>
